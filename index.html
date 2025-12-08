@@ -84,9 +84,9 @@
     display:flex; align-items:center; justify-content:center; 
     box-shadow:0 8px 30px rgba(30,40,60,0.06); 
     position: relative; 
-    /* Dòng dưới đây quan trọng để JS có thể đọc width */
     width: auto; 
     height: auto; 
+    aspect-ratio: 600 / 2050; /* DEFAULT: Vertical strip ratio (W/H) */
   }
   .final-preview img{ width:100%; height:100%; object-fit:cover; }
 
@@ -138,7 +138,7 @@
         align-items: center; 
         margin-top: 10px;
         width: 100%; 
-        overflow: hidden; /* FIX: Ngăn tràn ngang */
+        overflow-x: hidden; /* FIX: Ngăn tràn ngang */
     }
     
     /* FIX CỨNG: Bắt buộc final-preview phải chiếm 90% chiều rộng màn hình */
@@ -507,6 +507,7 @@ layoutSelect.addEventListener('change', () => {
     if (captures.length > 0) mergeAndShowFinal(); 
     // Cập nhật kích thước preview khi đổi layout
     if (finalImageDataUrl) showFinal(finalImageDataUrl);
+    else resetAll(); // Cập nhật aspect ratio cho placeholder
 });
 
 
@@ -980,38 +981,26 @@ function loadImage(dataUrl){
   });
 }
 
-// HÀM CHÍNH ĐÃ CẬP NHẬT (Rely on clientWidth)
+// HÀM CHÍNH ĐÃ CẬP NHẬT: SỬ DỤNG CSS ASPECT-RATIO
 function showFinal(dataUrl){
   finalPreview.innerHTML = ''; 
   finalImageDataUrl = dataUrl; 
   finalActionsEl.style.display = 'flex'; 
 
   const layout = layoutSelect.value;
-  const aspectRatio = layout === 'vertical' ? (2050 / 600) : (1125 / 1200);
+  // Thiết lập tỷ lệ W/H dưới dạng chuỗi (Ví dụ: '600 / 2050')
+  const aspectRatioString = layout === 'vertical' ? '600 / 2050' : '1200 / 1125'; 
 
-  // 1. Reset width/height styles để CSS (90vw) xác định chiều rộng
-  finalPreview.style.width = 'auto';
-  finalPreview.style.height = 'auto';
+  // 1. Áp dụng aspect-ratio vào CSS. Browser sẽ tự động tính height.
+  finalPreview.style.aspectRatio = aspectRatioString;
 
   const img = document.createElement('img');
   img.src = dataUrl;
   finalPreview.appendChild(img);
-
-  // 2. Đọc chiều rộng thực tế (đã được CSS giới hạn 90vw trên mobile)
-  let finalWidth = finalPreview.clientWidth;
   
-  // Xử lý trường hợp hiếm gặp clientWidth = 0
-  if (finalWidth === 0 && window.innerWidth <= 500) {
-      // Nếu không đọc được width, ước tính 90% view-port
-      finalWidth = window.innerWidth * 0.90;
-  }
-  
-  // 3. Tính toán chiều cao dựa trên tỷ lệ
-  const finalHeight = finalWidth * aspectRatio;
-  
-  // 4. Áp dụng lại width/height chính xác bằng PX để chứa ảnh
-  finalPreview.style.width = finalWidth + 'px';
-  finalPreview.style.height = finalHeight + 'px';
+  // KHÔNG CẦN DÙNG JS ĐỂ ĐẶT WIDTH/HEIGHT BẰNG PX NỮA
+  finalPreview.style.width = 'auto'; // Đảm bảo CSS @media query kiểm soát width
+  finalPreview.style.height = 'auto'; // Đảm bảo CSS aspect-ratio kiểm soát height
 }
 
 
@@ -1022,12 +1011,12 @@ function resetAll(){
   finalImageDataUrl = null; 
   finalActionsEl.style.display = 'none'; 
 
-  // Reset width/height để CSS kiểm soát
+  // Reset và đặt lại aspect ratio mặc định (vertical)
+  finalPreview.style.aspectRatio = '600 / 2050'; 
   finalPreview.style.width = 'auto';
   finalPreview.style.height = 'auto';
-  
-  // CRITICAL: Buộc element có width theo CSS trước khi đọc clientWidth
-  let finalWidth;
+
+  // Thêm lại width cần thiết để placeholder hiển thị đúng kích thước
   if (window.innerWidth <= 500) {
       finalPreview.style.width = '90vw';
   } else if (window.innerWidth <= 900) {
@@ -1035,16 +1024,6 @@ function resetAll(){
   } else {
       finalPreview.style.width = '220px';
   }
-  
-  // Đọc chiều rộng đã được set (được đảm bảo bằng CSS/style set ở trên)
-  finalWidth = finalPreview.clientWidth;
-  
-  // Tính toán chiều cao cho placeholder vertical (2050/600)
-  const finalHeight = finalWidth * (2050 / 600); 
-
-  // Áp dụng lại width/height chính xác bằng PX
-  finalPreview.style.width = finalWidth + 'px';
-  finalPreview.style.height = finalHeight + 'px';
 }
 
 function triggerDownload(dataUrl, filename){
@@ -1058,6 +1037,7 @@ function triggerDownload(dataUrl, filename){
 
 window.addEventListener('load', async () => {
   try { await startCamera(); } catch(e){}
+  resetAll(); // Đảm bảo placeholder có kích thước đúng khi load
 });
 
 window.addEventListener('resize', () => {
