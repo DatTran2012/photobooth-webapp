@@ -26,28 +26,98 @@
     display:flex; align-items:flex-start; justify-content:center; padding:28px 16px;
   }
 
+  /* Container chứa tất cả màn hình */
   .container{
     width:980px; max-width:100%; background:var(--panel); border-radius:14px; box-shadow:0 10px 30px rgba(20,30,50,0.08);
-    padding:22px; display:grid; grid-template-columns:420px 1fr; gap:18px;
+    padding:22px; 
+    display:flex; 
+    flex-direction: column;
+    gap: 18px; 
   }
 
-  .left { display:flex; flex-direction:column; align-items:center; }
-  .camera-wrap{ position:relative; width:380px; height:520px; border-radius:14px; overflow:hidden;
-    box-shadow:0 6px 18px rgba(13,25,40,0.06); background:linear-gradient(180deg,#111 0%, #333 100%); }
+  /* ---------------------------------- MÀN HÌNH WELCOME ---------------------------------- */
+  #welcomeScreen {
+    width: 100%;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    min-height: 600px; /* Chiều cao tối thiểu */
+    flex-direction: column;
+  }
+
+  /* ---------------------------------- MÀN HÌNH CHỤP ---------------------------------- */
+  #captureScreen {
+    /* Mặc định ẩn, sẽ được hiển thị bằng JS khi cần */
+    display: none;
+    grid-template-columns: 1fr 320px; 
+    gap: 18px;
+    width: 100%;
+  }
+
+  /* Khối Camera và Controls (Chiếm cột 1 - phần mở rộng) */
+  #cameraAndControls { 
+    grid-column: 1 / 2;
+    display: flex; 
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Khối Settings Sidebar (Chiếm cột 2 - phần cố định) */
+  #settingsSidebar {
+    grid-column: 2 / 3;
+    display: flex;
+    flex-direction: column;
+    padding: 8px; 
+    background: var(--bg); 
+    border-radius: 10px;
+  }
+
+  /* Điều chỉnh Camera Wrap để chiếm 100% của cột 1 */
+  .camera-wrap{ 
+    position:relative; 
+    width:100%; 
+    height: 600px; 
+    max-width: none; 
+    border-radius:14px; 
+    overflow:hidden;
+    box-shadow:0 6px 18px rgba(13,25,40,0.06); 
+    background:linear-gradient(180deg,#111 0%, #333 100%); 
+  }
   video#video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform: scaleX(-1); }
   canvas#overlay{ position:absolute; inset:0; pointer-events:none; } 
+  
+  /* Controls (nút Start, Reset) nằm dưới camera, căn giữa */
   .controls{ margin-top:12px; width:100%; display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
-  .btn { background: linear-gradient(180deg,var(--accent1),var(--accent3)); border:none; padding:10px 14px; border-radius:10px; cursor:pointer;
-    box-shadow:0 6px 18px rgba(155,107,255,0.08); font-weight:700; color:#2b2335; }
-  .btn.secondary{ background:transparent; border:1px solid #eee; box-shadow:none; font-weight:600; color:var(--muted); }
+  
+  /* Style chung cho nút - có icon */
+  .btn { 
+    background: linear-gradient(180deg,var(--accent1),var(--accent3)); border:none; padding:10px 14px; border-radius:10px; cursor:pointer;
+    box-shadow:0 6px 18px rgba(155,107,255,0.08); font-weight:700; color:#2b2335; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 6px; 
+  }
+  
+  .btn.secondary{ 
+    background:transparent; border:1px solid #eee; box-shadow:none; font-weight:600; color:var(--muted); 
+    padding: 8px 12px; 
+  }
 
   .option-row{ margin-top:12px; display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap; }
   select, input[type=number], input[type=text]{ padding:8px 10px; border-radius:8px; border:1px solid #eee; background:#fff; outline:none; font-weight:600; }
+  
+  .left { display: none; } 
 
-  .right { padding:8px 14px; display:flex; flex-direction:column; }
+  /* ---------------------------------- MÀN HÌNH REVIEW ---------------------------------- */
+  #reviewScreen {
+      width: 100%;
+      display: none; 
+      flex-direction: column;
+  }
+  .review-inner { padding:8px 14px; display:flex; flex-direction:column; }
   .preview-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:8px; }
   
-  /* Instax style for small previews */
   .instax-thumb-frame {
     display: flex;
     flex-direction: column;
@@ -74,19 +144,17 @@
     height: auto; 
   }
 
-
   .final-wrap{ margin-top:12px; display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; }
   
-  /* CẬP NHẬT CSS: Bỏ width/height cố định, thay bằng max-width */
   .final-preview{ 
-    max-width:220px; /* Desktop max width */
+    max-width:220px; 
     border-radius:8px; overflow:hidden; background:#f9f9fa; 
     display:flex; align-items:center; justify-content:center; 
     box-shadow:0 8px 30px rgba(30,40,60,0.06); 
     position: relative; 
     width: auto; 
     height: auto; 
-    aspect-ratio: 600 / 2050; /* DEFAULT: Vertical strip ratio (W/H) */
+    aspect-ratio: 600 / 2050; 
   }
   .final-preview img{ 
     width:100%; 
@@ -103,76 +171,62 @@
 
   footer{ margin-top:12px; font-size:12px; color:var(--muted); text-align:center; grid-column:1/-1; }
 
-  /* Tối ưu cho Tablet và màn hình ngang nhỏ */
+  /* ---------------------------------- TỐI ƯU MOBILE ---------------------------------- */
   @media (max-width:900px){
-    .container{ grid-template-columns:1fr; width:92%; }
-    .camera-wrap{ width:100%; height:420px; }
-    .final-preview{ 
-        max-width: 140px; /* Tablet max width */
-    } 
+    .container{ width:92%; }
+    
+    #welcomeScreen { min-height: 400px; }
+
+    #captureScreen {
+        grid-template-columns: 1fr; 
+        gap: 0;
+    }
+    
+    #cameraAndControls { grid-column: 1 / -1; }
+    .camera-wrap{ height: 420px; }
+
+    #settingsSidebar {
+        grid-column: 1 / -1; 
+        margin-top: 18px; 
+        padding: 0; 
+        background: transparent;
+        border-radius: 0;
+    }
+    
+    .theme-line, .option-row { padding: 0 10px; }
+
+    .final-preview{ max-width: 140px; } 
     .final-wrap{ justify-content: center; } 
   }
 
-  /* Tối ưu cho Mobile Phones (dưới 500px - ví dụ iPhone) */
   @media (max-width:500px){
     body{ padding: 12px 6px; }
     .container{ padding: 10px; width: 100%; }
     
-    .camera-wrap{ 
-        height: 380px; 
-    }
+    .camera-wrap{ height: 380px; }
     
     .controls{ justify-content: center; gap: 4px; }
-    .btn { 
-        font-size: 13px; 
-        padding: 8px 10px; 
-        flex-grow: 1; 
-        min-width: 45%; 
-    }
+    
+    /* Điều chỉnh nút cho mobile */
+    .btn { font-size: 13px; padding: 8px 10px; flex-grow: 1; min-width: 45%; }
     .btn#startBtn { min-width: 60%; } 
     
-    /* Các tùy chọn xếp dọc */
     .option-row{ flex-direction: column; align-items: stretch; margin-top: 8px; }
     .option-row label.small { width: 100%; text-align: left; margin-bottom: 2px; }
     
-    /* Khu vực preview cuối xếp dọc */
-    .final-wrap{ 
-        flex-direction: column; 
-        gap: 12px;
-        align-items: center; 
-        margin-top: 10px;
-        width: 100%; 
-        overflow-x: hidden; 
-    }
-
-    /* FIX 1: Thêm padding và width: 100% cho khối cha của ảnh để tạo khoảng trống và ngăn tràn */
+    .final-wrap{ flex-direction: column; gap: 12px; align-items: center; margin-top: 10px; width: 100%; overflow-x: hidden; }
     .final-wrap > div:first-child {
         width: 100%;
         display: flex;
         flex-direction: column;
         align-items: center; 
-        padding: 0 10px; /* TẠO LỀ MOBILE 10PX HAI BÊN */
+        padding: 0 10px;
         box-sizing: border-box;
     }
     
-    /* FIX 2: Bắt buộc ảnh preview lấp đầy khối cha của nó (đã có lề) */
-    .final-preview {
-        /* Thiết lập giới hạn tối đa cả ngang và dọc, để browser tự scale theo aspect-ratio */
-        max-width: 100%; /* SỬA TỪ 90% */
-        /* max-height: 75vh;  <-- ĐÃ BỎ GIỚI HẠN CHIỀU CAO ĐỂ CHO PHÉP CUỘN HẾT ẢNH STRIP */
-        
-        width: 100%; /* SỬA: Bắt buộc lấp đầy chiều ngang của khối cha */
-        height: auto;
-        
-        flex-shrink: 0; 
-    }
-    /* ------------------------------------------------ */
+    .final-preview { max-width: 100%; width: 100%; height: auto; flex-shrink: 0; }
     
-    .right { 
-        padding: 4px; 
-        overflow-x: hidden; 
-    }
-    .right { padding: 4px; }
+    .review-inner { padding: 4px; overflow-x: hidden; }
     #finalActions { padding-top: 0 !important; }
   }
 </style>
@@ -180,98 +234,148 @@
 <body>
 
 <div class="container">
-  <div class="left">
-    <div class="camera-wrap" id="cameraWrap">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="overlay"></canvas>
-      <div class="countdown" id="countdown" style="display:none"></div>
+  
+  <div id="welcomeScreen" style="display: flex;">
+      <div style="text-align:center; padding: 40px 20px;">
+          <h1 style="color: var(--primary); font-size: 2.2em; margin-bottom: 5px;">
+              📸 Photobooth Instax Studio
+          </h1>
+          <p style="color: var(--muted); font-size: 1.1em; max-width: 500px; margin: 0 auto 30px;">
+              Sẵn sàng tạo ảnh strip 4 pose phong cách Instax với các tùy chọn khung ảnh và nền độc đáo.
+          </p>
+          
+          <div style="display: inline-block; text-align: left; background: var(--bg); padding: 18px 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px;">
+              <strong style="color: #3b2b47;">Hướng dẫn:</strong>
+              <ul style="list-style: none; padding: 0; margin: 10px 0 0; font-size: 0.95em;">
+                  <li style="margin-bottom: 5px;">✅ Bấm **Bắt Đầu** và cấp quyền Camera.</li>
+                  <li style="margin-bottom: 5px;">✅ Đếm ngược **3 giây** giữa mỗi lần chụp (tổng 4 pose).</li>
+                  <li>✅ Tùy chỉnh Khung, Nền và Chữ viết ở thanh bên phải.</li>
+              </ul>
+          </div>
+
+          <button class="btn" id="startPhotoboothBtn" style="font-size: 1.2em; padding: 12px 20px;">
+              Bắt Đầu Chụp Ảnh <span style="font-size: 1.1em;">→</span>
+          </button>
+      </div>
+  </div>
+
+  <div id="captureScreen">
+    
+    <div id="cameraAndControls">
+        <div class="camera-wrap" id="cameraWrap">
+            <video id="video" autoplay playsinline muted></video>
+            <canvas id="overlay"></canvas>
+            <div class="countdown" id="countdown" style="display:none"></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="startBtn">
+                <span style="font-size: 1.2em; line-height: 1;">📸</span> Start Photobooth
+            </button>
+            <button class="btn secondary" id="redoBtn">
+                <span style="font-size: 1.1em; line-height: 1;">🗑️</span> Reset Ảnh Chụp
+            </button> 
+            <button class="btn secondary" id="stopCamBtn">
+                <span style="font-size: 1.1em; line-height: 1;">🛑</span> Tắt Camera
+            </button> 
+            <button class="btn secondary" id="switchCamBtn">
+                <span style="font-size: 1.1em; line-height: 1;">🔄</span> Đổi Camera
+            </button> 
+            <button class="btn secondary" id="refreshBtn">
+                <span style="font-size: 1.1em; line-height: 1;">⚡</span> Refresh Trang
+            </button> 
+        </div>
     </div>
 
-    <div class="controls">
-      <button class="btn" id="startBtn">Start Photobooth</button>
-      <button class="btn secondary" id="redoBtn">Reset Ảnh Chụp</button> 
-      <button class="btn secondary" id="stopCamBtn">Tắt Camera</button> 
-      <button class="btn secondary" id="switchCamBtn">🔄 Đổi Camera</button> 
-      <button class="btn secondary" id="refreshBtn">🔄 Refresh Trang</button> 
-    </div>
-    
-    <div class="option-row" style="width:100%; margin-top:20px;">
-        <label class="small">Khung Ảnh Instax:</label>
-        <select id="frameSelect" style="flex:1;">
-          <option value="instax_mini">1. Instax Mini Classic (Trắng)</option>
-          <option value="instax_square_black">2. Instax Square (Đen)</option>
-          <option value="instax_wide_pastel">3. Instax Wide (Pastel Mint)</option>
+
+    <div id="settingsSidebar">
+      <div style="font-weight:700; color: #3b2b47; margin-bottom: 10px;">TÙY CHỌN ẢNH STRIP</div>
+      
+      <div class="option-row" style="width:100%; margin-top:0px;">
+          <label class="small">Khung Ảnh Instax:</label>
+          <select id="frameSelect" style="flex:1;">
+            <option value="instax_mini">1. Instax Mini Classic (Trắng)</option>
+            <option value="instax_square_black">2. Instax Square (Đen)</option>
+            <option value="instax_wide_pastel">3. Instax Wide (Pastel Mint)</option>
+          </select>
+      </div>
+      
+      <div class="option-row" style="width:100%; margin-top:10px;">
+          <label class="small">Background Instax:</label>
+          <select id="backgroundSelect" style="flex:1;">
+            <option value="default">Mặc định (Theo Khung)</option>
+            <option value="pastel_ombre_pink_blue">1. Ombre Hồng - Xanh Pastel</option>
+            <option value="minimal_white_texture">2. Texture Trắng Tối Giản</option>
+            <option value="light_pink_stripes">3. Sọc Hồng Nhạt Dịu Mát</option>
+            <option value="watercolor_blush">4. Màu Nước Hồng Phớt</option>
+            <option value="cream_daisy_pattern">5. Họa tiết Hoa Cúc Kem</option>
+            <option value="golden_dots">6. Chấm Bi Vàng Kim Dịu</option>
+            <option value="soft_tartan_lavender">7. Kẻ Sọc Lavender Nhạt</option>
+            <option value="cloud_pattern">8. Họa Tiết Mây Bồng Bềnh</option>
+            <option value="subtle_rose_pattern">9. Họa Tiết Hoa Hồng Mờ</option>
+            <option value="peach_gradient">10. Gradient Cam Đào Nhẹ</option>
+          </select>
+      </div>
+
+      <div class="option-row" style="width:100%; justify-content:space-between; flex-wrap:nowrap; margin-top:12px;">
+        <label class="small">Timer (giữa mỗi pose):</label>
+        <input id="intervalSec" type="number" value="2" min="1" style="width:70px"/>
+      </div>
+      
+      <div class="option-row" style="width:100%; justify-content:flex-start; flex-wrap:nowrap; margin-top:5px;">
+        <label class="small" style="white-space:nowrap; margin-left:10px;">Text Strip:</label>
+        <input id="customStripText" type="text" value="INSTAX MOMENT" style="flex:1;" maxlength="30" placeholder="VD: INSTAX MOMENT"/>
+      </div>
+      
+      <div class="option-row" style="width:100%; margin-top:10px;">
+        <label class="small">Layout In Ảnh:</label>
+        <select id="layoutSelect" style="flex:1;">
+          <option value="vertical">1. Dọc (Strip) - 600×2050</option>
+          <option value="grid">2. Lưới (2x2) - 1200×1125</option>
         </select>
-    </div>
-    
-    <div class="option-row" style="width:100%; margin-top:10px;">
-        <label class="small">Background Instax:</label>
-        <select id="backgroundSelect" style="flex:1;">
-          <option value="default">Mặc định (Theo Khung)</option>
-          <option value="pastel_ombre_pink_blue">1. Ombre Hồng - Xanh Pastel</option>
-          <option value="minimal_white_texture">2. Texture Trắng Tối Giản</option>
-          <option value="light_pink_stripes">3. Sọc Hồng Nhạt Dịu Mát</option>
-          <option value="watercolor_blush">4. Màu Nước Hồng Phớt</option>
-          <option value="cream_daisy_pattern">5. Họa tiết Hoa Cúc Kem</option>
-          <option value="golden_dots">6. Chấm Bi Vàng Kim Dịu</option>
-          <option value="soft_tartan_lavender">7. Kẻ Sọc Lavender Nhạt</option>
-          <option value="cloud_pattern">8. Họa Tiết Mây Bồng Bềnh</option>
-          <option value="subtle_rose_pattern">9. Họa Tiết Hoa Hồng Mờ</option>
-          <option value="peach_gradient">10. Gradient Cam Đào Nhẹ</option>
-        </select>
-    </div>
+      </div>
 
-    <div class="option-row" style="width:100%; justify-content:space-between; flex-wrap:nowrap; margin-top:12px;">
-      <label class="small">Timer (giữa mỗi pose):</label>
-      <input id="intervalSec" type="number" value="2" min="1" style="width:70px"/>
-      <div style="flex-grow:1;"></div> 
-    </div>
-    
-    <div class="option-row" style="width:100%; justify-content:flex-start; flex-wrap:nowrap; margin-top:5px;">
-      <label class="small" style="white-space:nowrap; margin-left:10px;">Text Strip:</label>
-      <input id="customStripText" type="text" value="INSTAX MOMENT" style="flex:1;" maxlength="30" placeholder="VD: INSTAX MOMENT"/>
-    </div>
-    
-    <div class="option-row" style="width:100%; margin-top:10px;">
-      <label class="small">Layout In Ảnh:</label>
-      <select id="layoutSelect" style="flex:1;">
-        <option value="vertical">1. Dọc (Strip) - 600×2050</option>
-        <option value="grid">2. Lưới (2x2) - 1200×1125</option>
-      </select>
-    </div>
-
-    <div class="theme-line" style="width:100%; margin-top:10px;">
-      <div class="theme-tag">Photobooth - Made by Dat Tran</div>
-      <div class="small">Photobooth Studio • 4 pose</div>
+      <div class="theme-line" style="width:100%; margin-top:10px;">
+        <div class="theme-tag">Photobooth - Made by Dat Tran</div>
+        <div class="small">Photobooth Studio • 4 pose</div>
+      </div>
     </div>
   </div>
 
-  <div class="right">
-    <div style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
-      <div>
-        <strong>Preview (4 pose)</strong>
-        <div class="small">Click vào khung ảnh để download từng tấm</div>
-      </div>
-      <div class="small" id="stripSizeText">Strip size: 600×2050</div> 
-    </div>
-
-    <div class="preview-grid" id="previewGrid" style="margin-top:8px;"></div>
+  <div id="reviewScreen">
+    <button class="btn secondary" id="backToCaptureBtn" style="margin-bottom: 12px; margin-left: 10px;">
+        <span style="font-size: 1.1em; line-height: 1;">←</span> Quay lại trang Chụp Ảnh
+    </button>
     
-    <div class="final-wrap">
-      <div>
-        <div style="font-weight:700">Final Preview</div>
-        <div class="final-preview" id="finalPreview">
-          <div class="small">Chưa có ảnh</div>
+    <div class="review-inner">
+      <div style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
+        <div>
+          <strong>Preview (4 pose)</strong>
+          <div class="small">Click vào khung ảnh để download từng tấm</div>
+        </div>
+        <div class="small" id="stripSizeText">Strip size: 600×2050</div> 
+      </div>
+
+      <div class="preview-grid" id="previewGrid" style="margin-top:8px;"></div>
+      
+      <div class="final-wrap">
+        <div>
+          <div style="font-weight:700">Final Preview</div>
+          <div class="final-preview" id="finalPreview">
+            <div class="small">Chưa có ảnh</div>
+          </div>
+        </div>
+        <div id="finalActions" style="display:none; flex-direction:column; gap:8px; align-items:flex-start; padding-top:20px;">
+          <div class="small">Ảnh đã ghép xong.</div>
+          <button class="btn" id="downloadFinalBtn">
+            <span style="font-size: 1.1em; line-height: 1;">📥</span> Download Final
+          </button>
         </div>
       </div>
-      <div id="finalActions" style="display:none; flex-direction:column; gap:8px; align-items:flex-start; padding-top:20px;">
-        <div class="small">Ảnh đã ghép xong.</div>
-        <button class="btn" id="downloadFinalBtn">📥 Download Final</button>
-      </div>
     </div>
-
-    <footer>Made for you — Instax Classic • Timezone: Asia/Ho_Chi_Minh</footer>
   </div>
+
+  <footer>Made for you — Instax Classic • Timezone: Asia/Ho_Chi_Minh</footer>
 </div>
 
 <script>
@@ -288,6 +392,12 @@ const backgroundSelect = document.getElementById('backgroundSelect');
 const stripSizeText = document.getElementById('stripSizeText'); 
 const finalActionsEl = document.getElementById('finalActions'); 
 
+// NEW UI ELEMENTS FOR SCREEN SWITCHING
+const welcomeScreen = document.getElementById('welcomeScreen');
+const captureScreen = document.getElementById('captureScreen');
+const reviewScreen = document.getElementById('reviewScreen');
+const backToCaptureBtn = document.getElementById('backToCaptureBtn');
+
 let captures = [];
 const timeZone = 'Asia/Ho_Chi_Minh';
 let stream = null;
@@ -301,20 +411,31 @@ const VERT_TEXT_H = 250;
 // devicePixelRatio helper
 function getDPR(){ return window.devicePixelRatio || 1; }
 
-// helper: show debug (Chỉ log ra console)
-function showDbg(msg, persist=false){
-  console.log('Photobooth Status:', msg);
+/* --------------- UI SWITCHING LOGIC (ĐÃ CẬP NHẬT) --------------- */
+
+function showWelcomeScreen() {
+    captureScreen.style.display = 'none';
+    reviewScreen.style.display = 'none';
+    welcomeScreen.style.display = 'flex';
+    resetAll(); 
+    stopCamera(); 
 }
 
-// enumerate devices for debugging
-async function listDevices(){
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const cams = devices.filter(d=>d.kind==='videoinput');
-    if (cams.length === 0) console.warn('Không tìm thấy camera (videoinput).');
-    else console.log(`Phát hiện ${cams.length} camera`);
-  } catch(e){ console.warn(e); }
+function showReviewScreen() {
+    welcomeScreen.style.display = 'none';
+    captureScreen.style.display = 'none';
+    reviewScreen.style.display = 'flex'; 
+    window.scrollTo({ top: 0, behavior: 'smooth' }); 
 }
+
+function showCaptureScreen() {
+    welcomeScreen.style.display = 'none';
+    reviewScreen.style.display = 'none';
+    // Đặt captureScreen thành 'grid' để áp dụng bố cục 2 cột (Camera mở rộng + Sidebar)
+    captureScreen.style.display = 'grid'; 
+}
+
+/* --------------- END UI SWITCHING LOGIC --------------- */
 
 // start camera
 async function startCamera(){
@@ -345,7 +466,6 @@ async function startCamera(){
 
     video.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'none';
 
-    await listDevices();
   } catch(e) {
     console.error('startCamera error', e);
     const name = e && e.name ? e.name : 'UnknownError';
@@ -493,8 +613,17 @@ function getFormattedNow(){
 }
 
 /* --------------- Capture & flow --------------- */
+// NEW: Handler cho nút Bắt Đầu ở màn hình Welcome
+document.getElementById('startPhotoboothBtn').addEventListener('click', async () => {
+  showCaptureScreen(); 
+  await startCamera();
+});
+
+// Handler cho nút Start Photobooth sau khi camera đã bật
 document.getElementById('startBtn').addEventListener('click', async () => {
   if (!stream) {
+    // Trường hợp này không xảy ra nếu người dùng đã bấm startPhotoboothBtn
+    // Nhưng nếu người dùng tắt camera thì bấm nút này sẽ bật lại
     await startCamera();
     await new Promise(r=>setTimeout(r,300));
   }
@@ -507,13 +636,12 @@ document.getElementById('switchCamBtn').addEventListener('click', switchCamera);
 frameSelect.addEventListener('change', drawFrameLoop); 
 
 document.getElementById('refreshBtn').addEventListener('click', () => {
-    window.location.reload(); // Tải lại toàn bộ trang
+    window.location.reload(); 
 });
 
 // Listener for background change
 backgroundSelect.addEventListener('change', () => {
-    // Tự động ghép lại để cập nhật background nếu đã chụp ảnh
-    if (captures.length > 0) mergeAndShowFinal(); 
+    if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal(); 
 });
 
 layoutSelect.addEventListener('change', () => {
@@ -523,12 +651,9 @@ layoutSelect.addEventListener('change', () => {
     } else {
         stripSizeText.textContent = 'Grid size: 1200×1125';
     }
-    // Tự động ghép lại để cập nhật kích thước nếu đã chụp ảnh
-    if (captures.length > 0) mergeAndShowFinal(); 
-    // Cập nhật kích thước preview khi đổi layout
-    else resetAll(); // Cập nhật aspect ratio cho placeholder
+    if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal(); 
+    else resetAll(); 
 });
-
 
 document.getElementById('downloadFinalBtn').addEventListener('click', () => {
   if (finalImageDataUrl) {
@@ -538,38 +663,41 @@ document.getElementById('downloadFinalBtn').addEventListener('click', () => {
   }
 });
 
+backToCaptureBtn.addEventListener('click', showWelcomeScreen); // Quay lại màn hình Welcome
 
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
 async function startPhotobooth(){
   captures = []; previewGrid.innerHTML = ''; finalPreview.innerHTML = '<div class="small">Đang chụp...</div>';
   finalActionsEl.style.display = 'none'; 
+  
+  // Đảm bảo đang ở màn hình chụp
+  if (captureScreen.style.display === 'none') {
+      showCaptureScreen(); 
+  }
+  
   const interval = Math.max(1, parseInt(document.getElementById('intervalSec').value||2,10));
   
-  // NEW: Define step labels
   const stepLabels = ['FIRST', 'SECOND', 'THIRD', 'FINAL']; 
 
-  for (let i=1;i<=4;i++){
-    const label = stepLabels[i - 1] + ' PHOTO'; // Get the label
-    await doCountdown(3, label); // Pass the label
+  for (let i=1;i<=4;i++){ 
+    const label = stepLabels[i - 1] + ' PHOTO'; 
+    await doCountdown(3, label); 
     const img = takeSnapshot();
     captures.push(img);
     addThumbnail(img);
     if (i < 4) await sleep(interval*1000);
   }
 
-  // CẬP NHẬT: Hiện chữ "DONE!" và cuộn trang
   countdownEl.textContent = 'DONE!';
-  countdownEl.style.flexDirection = 'row'; // Reset flex direction
+  countdownEl.style.flexDirection = 'row'; 
   countdownEl.style.display = 'flex';
-  await sleep(1000); // Hiện 1 giây
+  await sleep(1000); 
   countdownEl.style.display = 'none';
 
-  // Tự động ghép ảnh sau khi chụp pose cuối cùng
   await mergeAndShowFinal();
   
-  // Scroll tới khu vực final preview
-  document.getElementById('finalPreview').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  showReviewScreen();
 }
 
 async function mergeAndShowFinal(){
@@ -578,7 +706,6 @@ async function mergeAndShowFinal(){
   showFinal(merged);
 }
 
-// Cập nhật để tạo khung Instax cho ảnh thumbnail
 function addThumbnail(imgDataUrl){
   const frameDiv = document.createElement('div');
   frameDiv.className = 'instax-thumb-frame';
@@ -597,21 +724,18 @@ function dateForFilename(){
   return fmt.format(now).replace(/[: ]/g,'-');
 }
 
-// UPDATED: Added stepLabel argument and implemented vertical stacking
 function doCountdown(sec, stepLabel){ 
   return new Promise(async (resolve)=>{
     countdownEl.style.display = 'flex';
-    countdownEl.style.flexDirection = 'column'; // Enable vertical stacking
+    countdownEl.style.flexDirection = 'column'; 
     
     for (let s=sec; s>=1; s--){
-      // Display label above the number
       countdownEl.innerHTML = `<span style="font-size: 0.35em; font-weight: 600; margin-bottom: 5px; opacity: 0.8;">${stepLabel}</span><span style="line-height: 1;">${s}</span>`;
       
       playBeep();
       await sleep(850);
     }
     
-    // Reset back to default direction and clear content before hiding
     countdownEl.style.flexDirection = 'row'; 
     countdownEl.textContent = ''; 
     countdownEl.style.display = 'none';
@@ -665,33 +789,28 @@ function takeSnapshot(){
   return tmp.toDataURL('image/png');
 }
 
-/* --------------- NEW: Background Drawing Function (Sáng & Dịu) --------------- */
 function drawComplexBackground(ctx, W, H, backgroundId){
     
-    // Default fill (Light background for all new options)
     ctx.fillStyle = '#FFFFFF'; 
     ctx.fillRect(0, 0, W, H);
 
     if (backgroundId === 'pastel_ombre_pink_blue') {
-        // 1. Ombre gradient from soft pink to light sky blue
         const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#FFD1DC'); // Soft Pink
-        grad.addColorStop(0.5, '#E6E6FA'); // Light Lavender
-        grad.addColorStop(1, '#B3E5FC'); // Light Sky Blue
+        grad.addColorStop(0, '#FFD1DC'); 
+        grad.addColorStop(0.5, '#E6E6FA'); 
+        grad.addColorStop(1, '#B3E5FC'); 
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
         
     } else if (backgroundId === 'minimal_white_texture') {
-        // 2. Very light textured background (subtle noise)
         ctx.fillStyle = '#FDFDFD';
         ctx.fillRect(0, 0, W, H);
         
-        // Add subtle noise/texture
         const noiseCanvas = document.createElement('canvas');
         noiseCanvas.width = 100; noiseCanvas.height = 100;
         const nCtx = noiseCanvas.getContext('2d');
         for (let i = 0; i < 2000; i++) {
-            nCtx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.03})`; // Very low opacity black dots
+            nCtx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.03})`; 
             nCtx.fillRect(Math.random() * 100, Math.random() * 100, 1, 1);
         }
         const pattern = ctx.createPattern(noiseCanvas, 'repeat');
@@ -699,17 +818,16 @@ function drawComplexBackground(ctx, W, H, backgroundId){
         ctx.fillRect(0, 0, W, H);
 
     } else if (backgroundId === 'light_pink_stripes') {
-        // 3. Wide, soft pink and white vertical stripes.
         const patternCanvas = document.createElement('canvas');
         const stripeW = 100;
         patternCanvas.width = stripeW * 2;
         patternCanvas.height = 1; 
         const pCtx = patternCanvas.getContext('2d');
         
-        pCtx.fillStyle = '#F5F5F5'; // Off-White
+        pCtx.fillStyle = '#F5F5F5'; 
         pCtx.fillRect(0, 0, stripeW * 2, 1);
         
-        pCtx.fillStyle = '#FDEEFF'; // Very light Pink
+        pCtx.fillStyle = '#FDEEFF'; 
         pCtx.fillRect(0, 0, stripeW, 1);
 
         const pattern = ctx.createPattern(patternCanvas, 'repeat-y');
@@ -717,27 +835,24 @@ function drawComplexBackground(ctx, W, H, backgroundId){
         ctx.fillRect(0, 0, W, H);
         
     } else if (backgroundId === 'watercolor_blush') {
-        // 4. Light, airy pink/peach watercolor wash
         const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W/2);
-        grad.addColorStop(0, '#FFF5F0'); // Very Light Peach/Cream center
-        grad.addColorStop(0.7, '#FFDADA'); // Blush Pink
-        grad.addColorStop(1, '#F0F0F0'); // Light Grayish edge
+        grad.addColorStop(0, '#FFF5F0'); 
+        grad.addColorStop(0.7, '#FFDADA'); 
+        grad.addColorStop(1, '#F0F0F0'); 
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
     } else if (backgroundId === 'cream_daisy_pattern') {
-        // 5. Tiny, sparse daisy pattern on a cream/off-white background.
         const patternCanvas = document.createElement('canvas');
         const patternSize = 80;
         patternCanvas.width = patternSize;
         patternCanvas.height = patternSize;
         const pCtx = patternCanvas.getContext('2d');
         
-        pCtx.fillStyle = '#FFFFF0'; // Cream/Ivory background
+        pCtx.fillStyle = '#FFFFF0'; 
         pCtx.fillRect(0, 0, patternSize, patternSize);
         
-        // Draw a tiny daisy (or just a stylized flower dot)
-        pCtx.fillStyle = 'rgba(255, 105, 180, 0.1)'; // Very soft pink dot
+        pCtx.fillStyle = 'rgba(255, 105, 180, 0.1)'; 
         pCtx.beginPath();
         pCtx.arc(patternSize * 0.75, patternSize * 0.25, 4, 0, Math.PI * 2);
         pCtx.fill();
@@ -747,8 +862,7 @@ function drawComplexBackground(ctx, W, H, backgroundId){
         ctx.fillRect(0, 0, W, H);
 
     } else if (backgroundId === 'golden_dots') {
-        // 6. Soft gold/yellow dots scattered on a light beige/white background.
-        ctx.fillStyle = '#FCFBF5'; // Very light beige
+        ctx.fillStyle = '#FCFBF5'; 
         ctx.fillRect(0, 0, W, H);
 
         const patternCanvas = document.createElement('canvas');
@@ -757,7 +871,7 @@ function drawComplexBackground(ctx, W, H, backgroundId){
         patternCanvas.height = patternSize;
         const pCtx = patternCanvas.getContext('2d');
         
-        pCtx.fillStyle = 'rgba(255, 215, 0, 0.15)'; // Soft Gold dot
+        pCtx.fillStyle = 'rgba(255, 215, 0, 0.15)'; 
         pCtx.beginPath();
         pCtx.arc(patternSize * 0.25, patternSize * 0.25, 3, 0, Math.PI * 2);
         pCtx.fill();
@@ -770,22 +884,19 @@ function drawComplexBackground(ctx, W, H, backgroundId){
         ctx.fillRect(0, 0, W, H);
 
     } else if (backgroundId === 'soft_tartan_lavender') {
-        // 7. Light lavender and white soft tartan/plaid pattern.
         const patternCanvas = document.createElement('canvas');
         const patternSize = 100;
         patternCanvas.width = patternSize;
         patternCanvas.height = patternSize;
         const pCtx = patternCanvas.getContext('2d');
         
-        pCtx.fillStyle = '#F5F5FA'; // Very light Lavender base
+        pCtx.fillStyle = '#F5F5FA'; 
         pCtx.fillRect(0, 0, patternSize, patternSize);
         
-        // Vertical lines (lightest pink)
         pCtx.fillStyle = 'rgba(255, 192, 203, 0.4)';
         pCtx.fillRect(10, 0, 5, patternSize);
         pCtx.fillRect(45, 0, 2, patternSize);
         
-        // Horizontal lines (lightest blue)
         pCtx.fillStyle = 'rgba(173, 216, 230, 0.4)';
         pCtx.fillRect(0, 10, patternSize, 5);
         pCtx.fillRect(0, 60, patternSize, 2);
@@ -795,18 +906,16 @@ function drawComplexBackground(ctx, W, H, backgroundId){
         ctx.fillRect(0, 0, W, H);
 
     } else if (backgroundId === 'cloud_pattern') {
-        // 8. Light blue/pink fluffy cloud pattern.
         const patternCanvas = document.createElement('canvas');
         const patternSize = 120;
         patternCanvas.width = patternSize;
         patternCanvas.height = patternSize;
         const pCtx = patternCanvas.getContext('2d');
 
-        pCtx.fillStyle = '#E6F0FF'; // Very Light Blue/Sky base
+        pCtx.fillStyle = '#E6F0FF'; 
         pCtx.fillRect(0, 0, patternSize, patternSize);
 
-        // Simple fluffy cloud shape (opacity low)
-        pCtx.fillStyle = 'rgba(255, 255, 255, 0.6)'; // White-ish cloud
+        pCtx.fillStyle = 'rgba(255, 255, 255, 0.6)'; 
         pCtx.beginPath();
         pCtx.arc(30, 40, 15, 0, Math.PI * 2);
         pCtx.arc(50, 30, 18, 0, Math.PI * 2);
@@ -818,18 +927,16 @@ function drawComplexBackground(ctx, W, H, backgroundId){
         ctx.fillRect(0, 0, W, H);
         
     } else if (backgroundId === 'subtle_rose_pattern') {
-        // 9. Very light gray/pink continuous rose line pattern.
         const patternCanvas = document.createElement('canvas');
         const patternSize = 70;
         patternCanvas.width = patternSize;
         patternCanvas.height = patternSize;
         const pCtx = patternCanvas.getContext('2d');
         
-        pCtx.fillStyle = '#F7F7F7'; // Light Grayish background
+        pCtx.fillStyle = '#F7F7F7'; 
         pCtx.fillRect(0, 0, patternSize, patternSize);
         
-        // Draw a subtle 'rose' shape or swirl
-        pCtx.strokeStyle = 'rgba(255, 105, 180, 0.1)'; // Very light Rose line
+        pCtx.strokeStyle = 'rgba(255, 105, 180, 0.1)'; 
         pCtx.lineWidth = 1;
         pCtx.beginPath();
         pCtx.moveTo(patternSize * 0.2, patternSize * 0.5);
@@ -841,26 +948,21 @@ function drawComplexBackground(ctx, W, H, backgroundId){
         ctx.fillRect(0, 0, W, H);
 
     } else if (backgroundId === 'peach_gradient') {
-        // 10. Soft radial gradient from peach center to light yellow edges.
         const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W, H) / 2);
-        grad.addColorStop(0, '#FFE0B2'); // Soft Peach center
-        grad.addColorStop(0.7, '#FFF8E1'); // Light Yellow
-        grad.addColorStop(1, '#FFFFFF'); // White edge
+        grad.addColorStop(0, '#FFE0B2'); 
+        grad.addColorStop(0.7, '#FFF8E1'); 
+        grad.addColorStop(1, '#FFFFFF'); 
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
     }
 }
-/* --------------- END Background Drawing Function --------------- */
 
-
-// Ghép ảnh với 2 lựa chọn layout (Instax Style)
 async function mergeStrip(images){
   const layout = layoutSelect.value;
   const frameStyle = frameSelect.value;
   const backgroundId = backgroundSelect.value; 
   let W, H;
 
-  // 1. Định nghĩa kích thước canvas (kích thước gốc)
   if (layout === 'vertical') {
     W = 600; 
     H = 4 * PHOTO_STRIP_H + VERT_TEXT_H; 
@@ -889,7 +991,6 @@ async function mergeStrip(images){
       innerBorderColor = '#333333';
   }
 
-  // 1b. Vẽ nền Instax Border 
   if (backgroundId !== 'default') {
       drawComplexBackground(ctx, W, H, backgroundId);
       instaxTextColor = '#4A4A4A'; 
@@ -900,7 +1001,6 @@ async function mergeStrip(images){
   }
 
 
-  // 2. Định nghĩa margins cho ảnh để tạo viền
   const photoMargin = layout === 'vertical' ? 30 : 40; 
   const innerBorder = 3; 
 
@@ -939,7 +1039,6 @@ async function mergeStrip(images){
     }
   }
 
-  // 3. VẼ TEXT STRIP
   const textStripYStart = layout === 'vertical' ? 4 * PHOTO_STRIP_H : 2 * PHOTO_STRIP_H;
   const textStripH = H - textStripYStart; 
   const customText = document.getElementById('customStripText').value.toUpperCase();
@@ -978,12 +1077,10 @@ async function mergeStrip(images){
       ctx.restore();
   }
 
-  // 4. Vẽ border ngoài cùng 
   ctx.strokeStyle = '#444444'; 
   ctx.lineWidth = 4;
   ctx.strokeRect(2, 2, W-4, H-4);
 
-  // 5. date left-bottom 
   ctx.save();
   ctx.font = '600 16px Nunito, system-ui, sans-serif';
   
@@ -998,15 +1095,10 @@ async function mergeStrip(images){
   return c.toDataURL('image/png');
 }
 
-/**
- * HÀM NÀY ĐÃ ĐƯỢC SỬA: Thay đổi 'cy' từ căn giữa sang căn trên (cy = 0) 
- * để fix lỗi khuôn mặt bị cắt khi chụp.
- */
 function drawCover(ctx, img, x, y, w, h){
   const iw = img.width, ih = img.height;
   const r = Math.max(w/iw, h/ih);
   const nw = iw * r, nh = ih * r;
-  // FIX CẮT ẢNH: Căn từ trên xuống (giữ lại phần trên của ảnh, nơi khuôn mặt thường nằm)
   const cx = (nw - w)/2, cy = 0; 
   ctx.drawImage(img, -cx + x, -cy + y, nw, nh);
 }
@@ -1020,24 +1112,20 @@ function loadImage(dataUrl){
   });
 }
 
-// HÀM CHÍNH ĐÃ ĐƯỢC DỌN DẸP SẠCH SẼ
 function showFinal(dataUrl){
   finalPreview.innerHTML = ''; 
   finalImageDataUrl = dataUrl; 
   finalActionsEl.style.display = 'flex'; 
 
   const layout = layoutSelect.value;
-  // Thiết lập tỷ lệ W/H dưới dạng chuỗi (Ví dụ: '600 / 2050')
   const aspectRatioString = layout === 'vertical' ? '600 / 2050' : '1200 / 1125'; 
 
-  // 1. Áp dụng aspect-ratio vào style. Browser sẽ tự động tính height.
   finalPreview.style.aspectRatio = aspectRatioString;
 
   const img = document.createElement('img');
   img.src = dataUrl;
   finalPreview.appendChild(img);
   
-  // KHÔNG CẦN DÙNG JS ĐỂ ĐẶT WIDTH/HEIGHT NỮA. CSS SẼ KIỂM SOÁT
   finalPreview.style.width = 'auto'; 
   finalPreview.style.height = 'auto'; 
 }
@@ -1050,10 +1138,8 @@ function resetAll(){
   finalImageDataUrl = null; 
   finalActionsEl.style.display = 'none'; 
 
-  // Reset và đặt lại aspect ratio mặc định (vertical)
   finalPreview.style.aspectRatio = '600 / 2050'; 
   
-  // XÓA BỎ MỌI THIẾT LẬP WIDTH BẰNG JAVASCRIPT ĐỂ TRÁNH XUNG ĐỘT TRÊN MOBILE
   finalPreview.style.width = 'auto';
   finalPreview.style.height = 'auto';
 }
@@ -1067,16 +1153,15 @@ function triggerDownload(dataUrl, filename){
   a.remove();
 }
 
+// KHỞI TẠO: Bắt đầu bằng màn hình Welcome và KHÔNG bật camera ngay
 window.addEventListener('load', async () => {
-  try { await startCamera(); } catch(e){}
   resetAll(); 
+  showWelcomeScreen(); 
 });
 
 window.addEventListener('resize', () => {
     resizeOverlay();
-    // Cập nhật kích thước final preview
-    if (finalImageDataUrl) showFinal(finalImageDataUrl);
-    else resetAll(); 
+    if (finalImageDataUrl && reviewScreen.style.display !== 'none') showFinal(finalImageDataUrl);
 });
 </script>
   
