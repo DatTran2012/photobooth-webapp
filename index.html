@@ -53,7 +53,6 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* Tỷ lệ gần Instax Mini */
     width: 100%; 
     aspect-ratio: 0.7 / 1; 
     padding: 6px 6px 20px 6px; 
@@ -72,19 +71,22 @@
     box-shadow: none; 
   }
   .preview-grid img { 
-    height: auto; /* Ghi đè style cũ */
+    height: auto; 
   }
 
 
   .final-wrap{ margin-top:12px; display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; }
-  /* Container for the final preview */
+  
+  /* CẬP NHẬT CSS: Bỏ width/height cố định, thay bằng max-width */
   .final-preview{ 
-    width:220px; /* Base width for desktop */
-    height:752px; /* Base height for desktop (calc based on 220px/vertical ratio) */
+    max-width:220px; /* Desktop max width */
     border-radius:8px; overflow:hidden; background:#f9f9fa; 
     display:flex; align-items:center; justify-content:center; 
     box-shadow:0 8px 30px rgba(30,40,60,0.06); 
     position: relative; 
+    /* Dòng dưới đây quan trọng để JS có thể đọc width */
+    width: auto; 
+    height: auto; 
   }
   .final-preview img{ width:100%; height:100%; object-fit:cover; }
 
@@ -101,8 +103,9 @@
   @media (max-width:900px){
     .container{ grid-template-columns:1fr; width:92%; }
     .camera-wrap{ width:100%; height:420px; }
-    /* Giữ nguyên kích thước nhỏ cho desktop/tablet */
-    .final-preview{ width:140px; height:479px; } 
+    .final-preview{ 
+        max-width: 140px; /* Tablet max width */
+    } 
     .final-wrap{ justify-content: center; } 
   }
 
@@ -135,20 +138,20 @@
         align-items: center; 
         margin-top: 10px;
         width: 100%; 
-    }
-
-    /* Giới hạn tối đa cho khối preview (title + final-preview) */
-    .final-wrap > div:first-child {
-        max-width: 100%;
+        overflow: hidden; /* FIX: Ngăn tràn ngang */
     }
     
-    /* Fix: Giới hạn cứng bằng CSS để dự phòng */
+    /* FIX CỨNG: Bắt buộc final-preview phải chiếm 90% chiều rộng màn hình */
     .final-preview {
-        /* Bỏ fixed width/height ở đây, thay vào đó dùng logic tính toán trong JS */
+        width: 90vw; 
         max-width: 90vw; 
-        box-sizing: border-box; 
+        flex-shrink: 0; /* FIX: Bảo vệ khỏi bị co lại ngoài ý muốn */
     }
     
+    .right { 
+        padding: 4px; 
+        overflow-x: hidden; /* FIX: Ngăn tràn ngang ở cột phải */
+    }
     .right { padding: 4px; }
     #finalActions { padding-top: 0 !important; }
   }
@@ -541,7 +544,6 @@ async function startPhotobooth(){
   await mergeAndShowFinal();
   
   // Scroll tới khu vực final preview
-  // Cuộn đến phần tử cha gần nhất có khả năng hiển thị rõ nhất (final-wrap hoặc finalPreview)
   document.getElementById('finalPreview').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
@@ -823,7 +825,7 @@ async function mergeStrip(images){
   const backgroundId = backgroundSelect.value; 
   let W, H;
 
-  // 1. Định nghĩa kích thước canvas
+  // 1. Định nghĩa kích thước canvas (kích thước gốc)
   if (layout === 'vertical') {
     W = 600; 
     H = 4 * PHOTO_STRIP_H + VERT_TEXT_H; 
@@ -839,10 +841,9 @@ async function mergeStrip(images){
   const ctx = c.getContext('2d');
   
   let backgroundColor = '#FFFFFF'; 
-  let instaxTextColor = '#FF69B4'; // Mặc định là Hot Pink
+  let instaxTextColor = '#FF69B4'; 
   let innerBorderColor = '#444444'; 
 
-  // 1a. Tùy chỉnh màu sắc dựa trên Khung Instax (Chỉ dùng khi Background là 'default')
   if (frameStyle === 'instax_square_black' && backgroundId === 'default') {
       backgroundColor = '#333333'; 
       instaxTextColor = '#FFFFFF'; 
@@ -853,16 +854,12 @@ async function mergeStrip(images){
       innerBorderColor = '#333333';
   }
 
-  // 1b. Vẽ nền Instax Border (Tùy thuộc vào lựa chọn background)
+  // 1b. Vẽ nền Instax Border 
   if (backgroundId !== 'default') {
       drawComplexBackground(ctx, W, H, backgroundId);
-      
-      // Tất cả 10 background mới đều sáng/dịu, nên dùng màu chữ tối để dễ đọc
       instaxTextColor = '#4A4A4A'; 
       innerBorderColor = '#4A4A4A';
-      
   } else {
-      // Dùng màu mặc định theo Frame Style
       ctx.fillStyle = backgroundColor;
       ctx.fillRect(0,0,W,H);
   }
@@ -873,7 +870,6 @@ async function mergeStrip(images){
   const innerBorder = 3; 
 
   if (layout === 'vertical') {
-    // 2a. Layout Dọc (Strip)
     const photoW = W - 2 * photoMargin; 
     const photoH = PHOTO_STRIP_H - 2 * photoMargin; 
     
@@ -881,16 +877,13 @@ async function mergeStrip(images){
       const img = await loadImage(images[i]);
       const photoY = i * PHOTO_STRIP_H;
       
-      // Viền đen/trắng mỏng sát ảnh (dùng innerBorderColor)
       ctx.fillStyle = innerBorderColor;
       ctx.fillRect(photoMargin - innerBorder, photoY + photoMargin - innerBorder, photoW + 2*innerBorder, photoH + 2*innerBorder);
       
-      // Vẽ ảnh lùi vào trong
       drawCover(ctx, img, photoMargin, photoY + photoMargin, photoW, photoH); 
     }
 
   } else { 
-    // 2b. Layout Lưới (2x2)
     const photoW = W / 2 - 2 * photoMargin; 
     const photoH = PHOTO_STRIP_H - 2 * photoMargin; 
     const positions = [
@@ -904,11 +897,9 @@ async function mergeStrip(images){
       const photoX = pos.x + photoMargin;
       const photoY = pos.y + photoMargin;
       
-      // Viền đen/trắng mỏng sát ảnh (dùng innerBorderColor)
       ctx.fillStyle = innerBorderColor;
       ctx.fillRect(photoX - innerBorder, photoY - innerBorder, photoW + 2*innerBorder, photoH + 2*innerBorder);
 
-      // Vẽ ảnh
       drawCover(ctx, img, photoX, photoY, photoW, photoH);
     }
   }
@@ -923,7 +914,7 @@ async function mergeStrip(images){
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
-      ctx.fillStyle = instaxTextColor; // Dùng màu đã điều chỉnh theo Background/Frame
+      ctx.fillStyle = instaxTextColor; 
       
       const defaultFont = 'Varela Round'; 
       const fontSize = layout === 'vertical' ? '32px' : '64px'; 
@@ -952,7 +943,7 @@ async function mergeStrip(images){
       ctx.restore();
   }
 
-  // 4. Vẽ border ngoài cùng (Màu đen/xám mỏng)
+  // 4. Vẽ border ngoài cùng 
   ctx.strokeStyle = '#444444'; 
   ctx.lineWidth = 4;
   ctx.strokeRect(2, 2, W-4, H-4);
@@ -961,10 +952,9 @@ async function mergeStrip(images){
   ctx.save();
   ctx.font = '600 16px Nunito, system-ui, sans-serif';
   
-  // Màu ngày tháng: trắng nếu nền là Black Instax (mặc định) hoặc đen nếu nền là custom/sáng
   ctx.fillStyle = (backgroundId === 'default' && frameStyle === 'instax_square_black' 
-                   ? 'rgba(255,255,255,0.7)' // White for dark Instax frame
-                   : 'rgba(60,70,90,0.7)'); // Dark gray for all custom or light Instax frame
+                   ? 'rgba(255,255,255,0.7)' 
+                   : 'rgba(60,70,90,0.7)'); 
   
   ctx.textAlign = 'left';
   ctx.fillText(getFormattedNow(), 16, H - 18); 
@@ -990,42 +980,72 @@ function loadImage(dataUrl){
   });
 }
 
+// HÀM CHÍNH ĐÃ CẬP NHẬT (Rely on clientWidth)
 function showFinal(dataUrl){
   finalPreview.innerHTML = ''; 
   finalImageDataUrl = dataUrl; 
   finalActionsEl.style.display = 'flex'; 
 
   const layout = layoutSelect.value;
-  // Tỷ lệ khung hình: Dọc (2050/600) hoặc Lưới (1125/1200)
   const aspectRatio = layout === 'vertical' ? (2050 / 600) : (1125 / 1200);
 
-  // CẬP NHẬT LOGIC: Tính toán chiều rộng để đảm bảo responsive trên mobile
-  let finalWidth;
-  let unit = 'px';
-  
-  if (window.innerWidth <= 500) {
-      // Đối với mobile (vd: iPhone 13), tính toán width dựa trên 90% viewport 
-      // để khớp với CSS max-width: 90vw và ngăn tràn layout.
-      finalWidth = window.innerWidth * 0.90; 
-      unit = 'px';
-  } else if (window.innerWidth <= 900) {
-      finalWidth = 140; // Tablet
-      unit = 'px';
-  } else {
-      finalWidth = 220; // Desktop
-      unit = 'px';
-  }
-  
-  const finalHeight = finalWidth * aspectRatio;
-  
-  finalPreview.style.width = finalWidth + unit;
-  finalPreview.style.height = finalHeight + 'px';
+  // 1. Reset width/height styles để CSS (90vw) xác định chiều rộng
+  finalPreview.style.width = 'auto';
+  finalPreview.style.height = 'auto';
 
   const img = document.createElement('img');
   img.src = dataUrl;
   finalPreview.appendChild(img);
+
+  // 2. Đọc chiều rộng thực tế (đã được CSS giới hạn 90vw trên mobile)
+  let finalWidth = finalPreview.clientWidth;
+  
+  // Xử lý trường hợp hiếm gặp clientWidth = 0
+  if (finalWidth === 0 && window.innerWidth <= 500) {
+      // Nếu không đọc được width, ước tính 90% view-port
+      finalWidth = window.innerWidth * 0.90;
+  }
+  
+  // 3. Tính toán chiều cao dựa trên tỷ lệ
+  const finalHeight = finalWidth * aspectRatio;
+  
+  // 4. Áp dụng lại width/height chính xác bằng PX để chứa ảnh
+  finalPreview.style.width = finalWidth + 'px';
+  finalPreview.style.height = finalHeight + 'px';
 }
 
+
+function resetAll(){
+  captures = []; 
+  previewGrid.innerHTML = ''; 
+  finalPreview.innerHTML = '<div class="small">Chưa có ảnh</div>';
+  finalImageDataUrl = null; 
+  finalActionsEl.style.display = 'none'; 
+
+  // Reset width/height để CSS kiểm soát
+  finalPreview.style.width = 'auto';
+  finalPreview.style.height = 'auto';
+  
+  // CRITICAL: Buộc element có width theo CSS trước khi đọc clientWidth
+  let finalWidth;
+  if (window.innerWidth <= 500) {
+      finalPreview.style.width = '90vw';
+  } else if (window.innerWidth <= 900) {
+      finalPreview.style.width = '140px';
+  } else {
+      finalPreview.style.width = '220px';
+  }
+  
+  // Đọc chiều rộng đã được set (được đảm bảo bằng CSS/style set ở trên)
+  finalWidth = finalPreview.clientWidth;
+  
+  // Tính toán chiều cao cho placeholder vertical (2050/600)
+  const finalHeight = finalWidth * (2050 / 600); 
+
+  // Áp dụng lại width/height chính xác bằng PX
+  finalPreview.style.width = finalWidth + 'px';
+  finalPreview.style.height = finalHeight + 'px';
+}
 
 function triggerDownload(dataUrl, filename){
   const a = document.createElement('a');
@@ -1036,42 +1056,15 @@ function triggerDownload(dataUrl, filename){
   a.remove();
 }
 
-function resetAll(){
-  captures = []; 
-  previewGrid.innerHTML = ''; 
-  
-  finalPreview.innerHTML = '<div class="small">Chưa có ảnh</div>';
-  
-  finalImageDataUrl = null; 
-  finalActionsEl.style.display = 'none'; 
-
-  // CẬP NHẬT LOGIC: Reset size dựa trên màn hình (responsive)
-  let finalWidth;
-  let unit = 'px';
-  
-  if (window.innerWidth <= 500) {
-      finalWidth = window.innerWidth * 0.90; // Responsive width
-      unit = 'px';
-  } else if (window.innerWidth <= 900) { 
-      finalWidth = 140; // Tablet
-  } else {
-      finalWidth = 220; // Desktop
-  }
-  
-  // Luôn dùng tỷ lệ vertical mặc định (2050/600) cho placeholder
-  finalPreview.style.width = finalWidth + unit;
-  finalPreview.style.height = (finalWidth * (2050 / 600)) + 'px'; 
-}
-
 window.addEventListener('load', async () => {
   try { await startCamera(); } catch(e){}
 });
 
 window.addEventListener('resize', () => {
     resizeOverlay();
-    // Cập nhật kích thước final preview nếu đang có ảnh
+    // Cập nhật kích thước final preview
     if (finalImageDataUrl) showFinal(finalImageDataUrl);
-    else resetAll(); // Cập nhật kích thước placeholder
+    else resetAll(); 
 });
 </script>
   
