@@ -142,19 +142,27 @@
         align-items: center; 
         margin-top: 10px;
         width: 100%; 
-        overflow-x: hidden; /* FIX: Ngăn tràn ngang */
+        overflow-x: hidden; 
+    }
+
+    /* Thêm: Đảm bảo khối preview nằm giữa và lấp đầy chiều rộng */
+    .final-wrap > div:first-child {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center; 
     }
     
-    /* FIX CỨNG: Bắt buộc final-preview phải chiếm 90% chiều rộng màn hình */
+    /* FIX: Sử dụng % thay vì VW để tránh tràn ngang do padding/margin */
     .final-preview {
-        width: 90vw; 
-        max-width: 90vw; 
-        flex-shrink: 0; /* FIX: Bảo vệ khỏi bị co lại ngoài ý muốn */
+        width: 90%; /* 90% of the parent (which is 100% of final-wrap) */
+        max-width: 90%; 
+        flex-shrink: 0; 
     }
     
     .right { 
         padding: 4px; 
-        overflow-x: hidden; /* FIX: Ngăn tràn ngang ở cột phải */
+        overflow-x: hidden; 
     }
     .right { padding: 4px; }
     #finalActions { padding-top: 0 !important; }
@@ -999,7 +1007,7 @@ function loadImage(dataUrl){
   });
 }
 
-// HÀM CHÍNH ĐÃ ĐƯỢC DỌN DẸP SẠCH SẼ
+// HÀM CHÍNH ĐÃ ĐƯỢP DỌN DẸP SẠCH SẼ
 function showFinal(dataUrl){
   finalPreview.innerHTML = ''; 
   finalImageDataUrl = dataUrl; 
