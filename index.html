@@ -116,15 +116,19 @@
       flex-direction: column;
   }
   .review-inner { padding:8px 14px; display:flex; flex-direction:column; }
+  
+  /* Thiết lập riêng cho khối settings trên Review để không có padding trên dưới*/
+  #reviewSettings { padding-top: 0; padding-bottom: 0; }
+  
   .preview-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:8px; }
   
+  /* Đã cập nhật: Bỏ aspect-ratio cứng, sẽ được set bằng JS dựa trên tỷ lệ film Instax */
   .instax-thumb-frame {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 100%; 
-    aspect-ratio: 0.7 / 1; 
     padding: 6px 6px 20px 6px; 
     background: #FFFFFF;
     border-radius: 12px;
@@ -146,15 +150,17 @@
 
   .final-wrap{ margin-top:12px; display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; }
   
+  /* Khung Final Preview sẽ nhận aspect-ratio động từ JS */
+  /* FIX: Tăng max-width để ảnh hiển thị đẹp hơn và không bị co quá nhỏ */
   .final-preview{ 
-    max-width:220px; 
+    max-width:300px; 
     border-radius:8px; overflow:hidden; background:#f9f9fa; 
     display:flex; align-items:center; justify-content:center; 
     box-shadow:0 8px 30px rgba(30,40,60,0.06); 
     position: relative; 
     width: auto; 
     height: auto; 
-    aspect-ratio: 600 / 2050; 
+    /* Đã bỏ aspect-ratio mặc định */
   }
   .final-preview img{ 
     width:100%; 
@@ -195,7 +201,8 @@
     
     .theme-line, .option-row { padding: 0 10px; }
 
-    .final-preview{ max-width: 140px; } 
+    /* FIX: Điều chỉnh max-width trên tablet/màn hình nhỏ để ảnh ghép không bị co quá nhiều */
+    .final-preview{ max-width: 220px; } 
     .final-wrap{ justify-content: center; } 
   }
 
@@ -224,24 +231,7 @@
         box-sizing: border-box;
     }
     
-    /* === SỬA ĐỔI CUỘN MOBILE === */
-    .final-preview { 
-      max-width: 100%; 
-      width: 100%; 
-      height: 400px; /* Chiều cao cố định cho khung xem trước trên mobile */
-      max-height: 400px; 
-      flex-shrink: 0; 
-      
-      overflow-y: auto; /* Cho phép cuộn dọc */
-      aspect-ratio: auto; /* Bỏ aspect-ratio để chiều cao cố định hoạt động */
-    }
-    
-    .final-preview img{ 
-      width: 100%; 
-      height: auto; /* Đảm bảo hình ảnh giữ tỉ lệ, không bị ép chiều cao */
-      object-fit: cover; 
-    }
-    /* === KẾT THÚC SỬA ĐỔI === */
+    .final-preview { max-width: 100%; width: 100%; height: auto; flex-shrink: 0; }
     
     .review-inner { padding: 4px; overflow-x: hidden; }
     #finalActions { padding-top: 0 !important; }
@@ -258,7 +248,7 @@
               📸 Photobooth Instax Studio
           </h1>
           <p style="color: var(--muted); font-size: 1.1em; max-width: 500px; margin: 0 auto 30px;">
-              Sẵn sàng tạo ảnh strip 4 pose phong cách Instax với các tùy chọn khung ảnh và nền độc đáo.
+              Sẵn sàng tạo ảnh strip 4 pose phong cách Instax với các tùy chọn tỷ lệ film và nền độc đáo.
           </p>
           
           <div style="display: inline-block; text-align: left; background: var(--bg); padding: 18px 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px;">
@@ -266,7 +256,7 @@
               <ul style="list-style: none; padding: 0; margin: 10px 0 0; font-size: 0.95em;">
                   <li style="margin-bottom: 5px;">✅ Bấm **Bắt Đầu** và cấp quyền Camera.</li>
                   <li style="margin-bottom: 5px;">✅ Đếm ngược **3 giây** giữa mỗi lần chụp (tổng 4 pose).</li>
-                  <li>✅ Tùy chỉnh Khung, Nền và Chữ viết ở thanh bên phải.</li>
+                  <li>✅ Tùy chỉnh **Tỷ lệ Instax** trước khi chụp, **Nền/Layout** sau khi chụp xong.</li>
               </ul>
           </div>
 
@@ -306,52 +296,22 @@
 
 
     <div id="settingsSidebar">
-      <div style="font-weight:700; color: #3b2b47; margin-bottom: 10px;">TÙY CHỌN ẢNH STRIP</div>
+      <div style="font-weight:700; color: #3b2b47; margin-bottom: 10px;">TÙY CHỌN TỶ LỆ INSTAX</div>
       
       <div class="option-row" style="width:100%; margin-top:0px;">
-          <label class="small">Khung Ảnh Instax:</label>
+          <label class="small">Tỷ lệ Ảnh Instax:</label>
           <select id="frameSelect" style="flex:1;">
-            <option value="instax_mini">1. Instax Mini Classic (Trắng)</option>
-            <option value="instax_square_black">2. Instax Square (Đen)</option>
-            <option value="instax_wide_pastel">3. Instax Wide (Pastel Mint)</option>
+            <option value="mini">Instax Mini (Ảnh 0.74:1)</option>
+            <option value="square">Instax Square (Ảnh 1:1)</option>
+            <option value="wide">Instax Wide (Ảnh 1.60:1)</option>
           </select>
       </div>
       
-      <div class="option-row" style="width:100%; margin-top:10px;">
-          <label class="small">Background Instax:</label>
-          <select id="backgroundSelect" style="flex:1;">
-            <option value="default">Mặc định (Theo Khung)</option>
-            <option value="pastel_ombre_pink_blue">1. Ombre Hồng - Xanh Pastel</option>
-            <option value="minimal_white_texture">2. Texture Trắng Tối Giản</option>
-            <option value="light_pink_stripes">3. Sọc Hồng Nhạt Dịu Mát</option>
-            <option value="watercolor_blush">4. Màu Nước Hồng Phớt</option>
-            <option value="cream_daisy_pattern">5. Họa tiết Hoa Cúc Kem</option>
-            <option value="golden_dots">6. Chấm Bi Vàng Kim Dịu</option>
-            <option value="soft_tartan_lavender">7. Kẻ Sọc Lavender Nhạt</option>
-            <option value="cloud_pattern">8. Họa Tiết Mây Bồng Bềnh</option>
-            <option value="subtle_rose_pattern">9. Họa Tiết Hoa Hồng Mờ</option>
-            <option value="peach_gradient">10. Gradient Cam Đào Nhẹ</option>
-          </select>
-      </div>
-
       <div class="option-row" style="width:100%; justify-content:space-between; flex-wrap:nowrap; margin-top:12px;">
         <label class="small">Timer (giữa mỗi pose):</label>
         <input id="intervalSec" type="number" value="2" min="1" style="width:70px"/>
       </div>
       
-      <div class="option-row" style="width:100%; justify-content:flex-start; flex-wrap:nowrap; margin-top:5px;">
-        <label class="small" style="white-space:nowrap; margin-left:10px;">Text Strip:</label>
-        <input id="customStripText" type="text" value="INSTAX MOMENT" style="flex:1;" maxlength="30" placeholder="VD: INSTAX MOMENT"/>
-      </div>
-      
-      <div class="option-row" style="width:100%; margin-top:10px;">
-        <label class="small">Layout In Ảnh:</label>
-        <select id="layoutSelect" style="flex:1;">
-          <option value="vertical">1. Dọc (Strip) - 600×2050</option>
-          <option value="grid">2. Lưới (2x2) - 1200×1125</option>
-        </select>
-      </div>
-
       <div class="theme-line" style="width:100%; margin-top:10px;">
         <div class="theme-tag">Photobooth - Made by Dat Tran</div>
         <div class="small">Photobooth Studio • 4 pose</div>
@@ -364,20 +324,57 @@
         <span style="font-size: 1.1em; line-height: 1;">←</span> Quay lại trang Chụp Ảnh
     </button>
     
+    <div id="reviewSettings" class="review-inner">
+      <div style="font-weight:700; color: #3b2b47; margin-bottom: 10px;">TÙY CHỌN ẢNH GHÉP (MERGE)</div>
+
+      <div class="option-row" style="width:100%; margin-top:0px;">
+          <label class="small">Background Instax:</label>
+          <select id="backgroundSelect" style="flex:1;">
+            <option value="default">Mặc định (Theo Tỷ lệ Instax)</option>
+            <option value="pastel_ombre_pink_blue">1. Ombre Hồng - Xanh Pastel</option>
+            <option value="minimal_white_texture">2. Texture Trắng Tối Giản</option>
+            <option value="light_pink_stripes">3. Sọc Hồng Nhạt Dịu Mát</option>
+            <option value="watercolor_blush">4. Màu Nước Hồng Phớt</option>
+            <option value="cream_daisy_pattern">5. Họa tiết Hoa Cúc Kem</option>
+            <option value="golden_dots">6. Chấm Bi Vàng Kim Dịu</option>
+            <option value="soft_tartan_lavender">7. Kẻ Sọc Lavender Nhạt</option>
+            <option value="cloud_pattern">8. Họa Tiết Mây Bồng Bềnh</option>
+            <option value="subtle_rose_pattern">9. Họa Tiết Hoa Hồng Mờ</option>
+            <option value="peach_gradient">10. Gradient Cam Đào Nhẹ</option>
+            <option value="stripes_bw">11. Sọc Đen Trắng</option> 
+            <option value="stripes_red_white">12. Sọc Đỏ Trắng</option> 
+            <option value="fuji_classic_clean">13. Fuji Classic Clean (Footer Xanh)</option> </select>
+      </div>
+      
+      <div class="option-row" style="width:100%; justify-content:flex-start; flex-wrap:nowrap; margin-top:10px;">
+        <label class="small" style="white-space:nowrap; margin-left:10px;">Text Strip:</label>
+        <input id="customStripText" type="text" value="INSTAX MOMENT" style="flex:1;" maxlength="30" placeholder="VD: INSTAX MOMENT"/>
+      </div>
+      
+      <div class="option-row" style="width:100%; margin-top:10px; margin-bottom: 10px;">
+        <label class="small">Layout In Ảnh:</label>
+        <select id="layoutSelect" style="flex:1;">
+          <option value="vertical">1. Dọc (Strip) - Dynamic Size</option>
+          <option value="grid">2. Lưới (2x2) - Dynamic Size</option>
+        </select>
+      </div>
+
+    </div>
+    
     <div class="review-inner">
       <div style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
         <div>
           <strong>Preview (4 pose)</strong>
           <div class="small">Click vào khung ảnh để download từng tấm</div>
         </div>
-        <div class="small" id="stripSizeText">Strip size: 600×2050</div> 
+        <div class="small" id="stripSizeText">Strip size: Dynamic Size</div> 
       </div>
 
       <div class="preview-grid" id="previewGrid" style="margin-top:8px;"></div>
       
       <div class="final-wrap">
         <div>
-          <div style="font-weight:700">Final Preview</div>
+          <div style="font-weight:700">Final Review (Ảnh đã ghép - Merge)</div>
           <div class="final-preview" id="finalPreview">
             <div class="small">Chưa có ảnh</div>
           </div>
@@ -406,6 +403,7 @@ const countdownEl = document.getElementById('countdown');
 const frameSelect = document.getElementById('frameSelect'); 
 const layoutSelect = document.getElementById('layoutSelect'); 
 const backgroundSelect = document.getElementById('backgroundSelect'); 
+const customStripText = document.getElementById('customStripText');
 const stripSizeText = document.getElementById('stripSizeText'); 
 const finalActionsEl = document.getElementById('finalActions'); 
 
@@ -422,13 +420,68 @@ let currentFacingMode = 'user';
 let finalImageDataUrl = null; 
 
 // CONSTANTS
-const PHOTO_STRIP_H = 450;
-const VERT_TEXT_H = 250; 
+const INNER_BORDER = 3; 
+
+// NEW BASE CONSTANTS for dynamic sizing
+const BASE_FRAME_H = 450; // Chiều cao chuẩn cho một tấm film Instax
+const VERT_MARGIN_X = 30; // Lề X cho strip dọc
+const VERT_TEXT_H = 250; // Chiều cao khu vực chữ strip dọc
+const GRID_MARGIN = 40; // Lề cho lưới (X, Y, khoảng cách giữa 2 ảnh)
+const GRID_TEXT_RATIO = 0.25; // Tỷ lệ chiều cao khu vực chữ cho lưới (so với 2*BASE_FRAME_H)
+const IMAGE_AREA_TOP_MARGIN = 30; // Margin từ đỉnh tấm film đến ảnh (giả định)
+const IMAGE_AREA_FOOTER_H = 60; // Chiều cao tối thiểu của chân trắng Instax
+
 
 // devicePixelRatio helper
 function getDPR(){ return window.devicePixelRatio || 1; }
 
-/* --------------- UI SWITCHING LOGIC (ĐÃ CẬP NHẬT) --------------- */
+/* -------------------- TỶ LỆ FILM INSTAX (ĐÃ CẬP NHẬT CHÍNH XÁ) -------------------- */
+
+// Hàm lấy tỷ lệ (W/H) của khu vực ảnh bên trong film (dùng cho live preview & drawing)
+function getInstaxPhotoRatio(frameStyle) {
+    // Photo Area Ratios (W/H)
+    // Mini: 46x62mm -> 0.7419...
+    // Square: 62x62mm -> 1.0
+    // Wide: 99x62mm -> 1.5967...
+    switch(frameStyle) {
+        case 'mini': return 46 / 62; // 0.7419
+        case 'square': return 1.0;
+        case 'wide': return 99 / 62; // 1.5967
+        default: return 46 / 62;
+    }
+}
+
+// Hàm lấy tỷ lệ (W/H) của toàn bộ film Instax (ảnh + chân trắng)
+function getInstaxFilmRatio(frameStyle) {
+    // Film Area Ratios (W/H)
+    // Mini: 54x86mm -> 0.6279...
+    // Square: 72x86mm -> 0.8372...
+    // Wide: 108x86mm -> 1.2558...
+    switch(frameStyle) {
+        case 'square': return 72 / 86; // 0.8372
+        case 'wide': return 108 / 86; // 1.2558
+        case 'mini': 
+        default: return 54 / 86; // 0.6279
+    }
+}
+
+// Cập nhật tỷ lệ cho tất cả thumbnails trên màn hình review
+// Dùng tỷ lệ FILM (ảnh + border) để REVIEW giống sản phẩm thật
+function updateThumbnailAspectRatios() {
+    const frameStyle = frameSelect.value;
+    const numericRatio = getInstaxFilmRatio(frameStyle); 
+
+    const thumbs = document.querySelectorAll('.instax-thumb-frame');
+    thumbs.forEach(thumb => {
+        // Sử dụng numericRatio / 1 cho CSS aspectRatio
+        thumb.style.aspectRatio = `${numericRatio} / 1`; 
+    });
+}
+
+/* ----------------- END TỶ LỆ FILM INSTAX LOGIC ------------------ */
+
+
+/* --------------- UI SWITCHING LOGIC (GIỮ NGUYÊN) --------------- */
 
 function showWelcomeScreen() {
     captureScreen.style.display = 'none';
@@ -442,6 +495,10 @@ function showReviewScreen() {
     welcomeScreen.style.display = 'none';
     captureScreen.style.display = 'none';
     reviewScreen.style.display = 'flex'; 
+    
+    // NEW: Đảm bảo tỷ lệ thumbnails chính xác khi chuyển màn hình
+    updateThumbnailAspectRatios(); 
+
     window.scrollTo({ top: 0, behavior: 'smooth' }); 
 }
 
@@ -532,90 +589,28 @@ function resizeOverlay(){
   overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
+// Hàm vẽ nội dung overlay (khung và ngày giờ)
+function drawOverlayContent(ctx, w, h, frameStyle) {
+    ctx.clearRect(0, 0, w, h);
+    drawFrameBorder(ctx, w, h, frameStyle); // Vẽ khung guideline
+    drawDateTime(ctx, w, h); // Vẽ ngày giờ
+}
+
 function drawFrameLoop(){
   requestAnimationFrame(drawFrameLoop);
   
   if (video.videoWidth > 0 && (overlay.width === 0 || overlay.width !== Math.round(video.videoWidth * getDPR()))) {
       resizeOverlay(); 
   }
-
-  const dpr = getDPR();
-  const w = overlay.width / dpr; 
-  const h = overlay.height / dpr; 
-  const selectedFrame = frameSelect.value;
-
-  overlayCtx.clearRect(0,0,w,h);
-
-  // Thêm hướng dẫn crop ảnh
-  drawCropGuide(overlayCtx, w, h); 
   
-  // Vẽ khung Instax lên trên hướng dẫn
-  drawFrameBorder(overlayCtx, w, h, selectedFrame);
-
-  overlayCtx.save();
-  overlayCtx.font = '600 14px Nunito, system-ui, sans-serif'; 
-  let textColor = 'rgba(60,70,90,0.7)';
-  if (selectedFrame === 'instax_square_black') {
-      textColor = 'rgba(255,255,255,0.9)';
+  if (stream) {
+    const dpr = getDPR();
+    const w = overlay.width / dpr; 
+    const h = overlay.height / dpr; 
+    const selectedFrame = frameSelect.value;
+  
+    drawOverlayContent(overlayCtx, w, h, selectedFrame);
   }
-  overlayCtx.fillStyle = textColor;
-  overlayCtx.textAlign = 'left';
-  overlayCtx.fillText(getFormattedNow(), 14, h - 18);
-  overlayCtx.restore();
-}
-
-// Hàm vẽ vùng Crop Guide (tỉ lệ 540/390 ≈ 1.385:1)
-function drawCropGuide(ctx, w, h) {
-  // Tỉ lệ khung hình mục tiêu cho khu vực ảnh (Ngang/Dọc)
-  const TARGET_RATIO = 540 / 390; 
-
-  let guideW, guideH;
-  
-  // Sử dụng 90% chiều rộng/chiều cao tối đa của viewport
-  let maxW = w * 0.9;
-  let maxH = h * 0.9;
-  
-  // Tính toán kích thước guide để khớp với tỉ lệ mục tiêu và nằm gọn trong viewport
-  guideW = maxW; 
-  guideH = guideW / TARGET_RATIO;
-  
-  if (guideH > maxH) {
-      guideH = maxH;
-      guideW = guideH * TARGET_RATIO; 
-  }
-
-  const guideX = (w - guideW) / 2;
-  const guideY = (h - guideH) / 2;
-
-  // Vẽ vùng làm mờ bên ngoài khu vực ảnh sẽ được giữ lại
-  ctx.save();
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  
-  // Vùng trên
-  ctx.fillRect(0, 0, w, guideY);
-  // Vùng dưới
-  ctx.fillRect(0, guideY + guideH, w, h - (guideY + guideH));
-  // Vùng trái (chỉ tính phần nằm giữa guideY và guideY+guideH)
-  ctx.fillRect(0, guideY, guideX, guideH);
-  // Vùng phải
-  ctx.fillRect(guideX + guideW, guideY, w - (guideX + guideW), guideH);
-
-  // Vẽ viền trắng xung quanh khu vực ảnh cần lấy nét
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-  ctx.lineWidth = 4;
-  ctx.strokeRect(guideX, guideY, guideW, guideH);
-  
-  // Vẽ đường chia bố cục (rule of thirds/center)
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(guideX + guideW/2, guideY);
-  ctx.lineTo(guideX + guideW/2, guideY + guideH);
-  ctx.moveTo(guideX, guideY + guideH/2);
-  ctx.lineTo(guideX + guideW, guideY + guideH/2);
-  ctx.stroke();
-  
-  ctx.restore();
 }
 
 function roundRect(ctx, x, y, w, h, r){
@@ -632,48 +627,37 @@ function roundRect(ctx, x, y, w, h, r){
   ctx.closePath();
 }
 
+// Đã cập nhật: Bỏ khung nét đứt (Guideline) theo yêu cầu người dùng, chỉ giữ lại khung ngoài camera.
 function drawFrameBorder(ctx, w, h, frameStyle){
-  const pad = 12; 
-  let borderThickness = 4; 
-  const cornerRadius = 18;
-  
-  let outerColor = 'rgba(255, 255, 255, 0.9)'; 
-  let innerColor = 'rgba(0, 0, 0, 0.4)'; 
+    const pad = 12;
+    const cornerRadius = 18;
+    let outerColor = 'rgba(255, 255, 255, 0.4)';
+    
+    ctx.save();
+    
+    // 1. Vẽ khung ngoài (cố định)
+    const x_outer = pad;
+    const y_outer = pad;
+    const w_outer = w - 2 * pad;
+    const h_outer = h - 2 * pad;
+    roundRect(ctx, x_outer, y_outer, w_outer, h_outer, cornerRadius);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = outerColor;
+    ctx.stroke();
 
-  if (frameStyle === 'instax_square_black') {
-      outerColor = 'rgba(51, 51, 51, 0.9)'; 
-      innerColor = 'rgba(255, 255, 255, 0.6)'; 
-  } else if (frameStyle === 'instax_wide_pastel') {
-      outerColor = 'rgba(179, 229, 252, 0.9)'; 
-      innerColor = 'rgba(0, 0, 0, 0.4)';
-  }
-  
-  ctx.save();
-  ctx.beginPath();
-  roundRect(ctx, pad, pad, w-2*pad, h-2*pad, cornerRadius);
-  ctx.clip();
-  
-  let halfBorder = borderThickness / 2;
-  let x = pad + halfBorder;
-  let y = pad + halfBorder;
-  let width = w - 2 * pad - borderThickness;
-  let height = h - 2 * pad - borderThickness;
+    // Khung nét đứt (guideline Instax) đã được loại bỏ.
+    
+    ctx.setLineDash([]); 
+    ctx.restore();
+}
 
-  roundRect(ctx, x, y, width, height, cornerRadius);
-  ctx.lineWidth = borderThickness;
-  ctx.strokeStyle = outerColor; 
-  ctx.stroke();
-  ctx.restore();
-  
+function drawDateTime(ctx, w, h) {
   ctx.save();
-  const innerPad = pad + borderThickness + 2; 
-  const innerBorder = 1;
-  
-  ctx.beginPath();
-  roundRect(ctx, innerPad, innerPad, w-2*innerPad, h-2*innerPad, cornerRadius-4); 
-  ctx.lineWidth = innerBorder;
-  ctx.strokeStyle = innerColor; 
-  ctx.stroke();
+  ctx.font = '600 14px Nunito, system-ui, sans-serif'; 
+  let textColor = 'rgba(255,255,255,0.9)';
+  ctx.fillStyle = textColor;
+  ctx.textAlign = 'left';
+  ctx.fillText(getFormattedNow(), 14, h - 18);
   ctx.restore();
 }
 
@@ -697,8 +681,6 @@ document.getElementById('startPhotoboothBtn').addEventListener('click', async ()
 // Handler cho nút Start Photobooth sau khi camera đã bật
 document.getElementById('startBtn').addEventListener('click', async () => {
   if (!stream) {
-    // Trường hợp này không xảy ra nếu người dùng đã bấm startPhotoboothBtn
-    // Nhưng nếu người dùng tắt camera thì bấm nút này sẽ bật lại
     await startCamera();
     await new Promise(r=>setTimeout(r,300));
   }
@@ -708,24 +690,33 @@ document.getElementById('startBtn').addEventListener('click', async () => {
 document.getElementById('redoBtn').addEventListener('click', resetAll);
 document.getElementById('stopCamBtn').addEventListener('click', () => { stopCamera(); resetAll(); });
 document.getElementById('switchCamBtn').addEventListener('click', switchCamera); 
-frameSelect.addEventListener('change', drawFrameLoop); 
-
 document.getElementById('refreshBtn').addEventListener('click', () => {
     window.location.reload(); 
 });
 
-// Listener for background change
+// NEW: Listener cho frameSelect (Tỷ lệ Instax) - Cập nhật overlay và review realtime
+frameSelect.addEventListener('change', () => {
+    // drawFrameLoop() sẽ tự gọi lại và cập nhật overlay vì nó là requestAnimationFrame
+    if (captures.length > 0) {
+        // Cập nhật tỷ lệ thumbnail và final review ngay lập tức
+        updateThumbnailAspectRatios(); 
+        mergeAndShowFinal(); 
+    }
+}); 
+
+// Listener for background change - Cập nhật final review realtime
 backgroundSelect.addEventListener('change', () => {
     if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal(); 
 });
 
+// Listener for custom text input - Cập nhật final review realtime
+customStripText.addEventListener('input', () => {
+    if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal();
+});
+
+// Listener for layout change - Cập nhật final review realtime
 layoutSelect.addEventListener('change', () => {
-    const layout = layoutSelect.value;
-    if (layout === 'vertical') {
-        stripSizeText.textContent = 'Strip size: 600×2050';
-    } else {
-        stripSizeText.textContent = 'Grid size: 1200×1125';
-    }
+    // Không cần cập nhật stripSizeText ở đây nữa, vì mergeStrip sẽ làm việc đó
     if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal(); 
     else resetAll(); 
 });
@@ -777,14 +768,19 @@ async function startPhotobooth(){
 
 async function mergeAndShowFinal(){
   if (captures.length < 1) return;
-  const merged = await mergeStrip(captures);
-  showFinal(merged);
+  // Cập nhật: Hàm mergeStrip giờ trả về object { dataUrl, W, H }
+  const result = await mergeStrip(captures);
+  showFinal(result);
 }
 
 function addThumbnail(imgDataUrl){
   const frameDiv = document.createElement('div');
   frameDiv.className = 'instax-thumb-frame';
   frameDiv.onclick = ()=> triggerDownload(imgDataUrl, `capture_${dateForFilename()}.png`); 
+
+  // NEW: Thiết lập tỷ lệ film Instax cho thumbnail ngay khi tạo (Sử dụng tỷ lệ chính xác)
+  const numericRatio = getInstaxFilmRatio(frameSelect.value); 
+  frameDiv.style.aspectRatio = `${numericRatio} / 1`; 
 
   const img = document.createElement('img');
   img.src = imgDataUrl;
@@ -840,62 +836,34 @@ function flashEffect(){
   setTimeout(()=> el.remove(), 90);
 }
 
-// CẬP NHẬT: Thực hiện crop ảnh từ luồng video gốc theo đúng tỉ lệ 1.385:1
 function takeSnapshot(){
-  const vw = video.videoWidth || 1280; // Chiều rộng gốc của camera
-  const vh = video.videoHeight || 720; // Chiều cao gốc của camera
-  
-  // Tỉ lệ khung hình mục tiêu cho khu vực ảnh (540/390 ≈ 1.385:1)
-  const TARGET_RATIO = 540 / 390; 
-  
-  // Kích thước đầu ra cho ảnh đã chụp (Độ phân giải cao)
-  const FINAL_PHOTO_W = 1080; 
-  const FINAL_PHOTO_H = Math.round(FINAL_PHOTO_W / TARGET_RATIO); 
-
+  const w = video.videoWidth || 1280;
+  const h = video.videoHeight || 720;
   const tmp = document.createElement('canvas');
-  tmp.width = FINAL_PHOTO_W; 
-  tmp.height = FINAL_PHOTO_H;
+  tmp.width = w; tmp.height = h;
   const c = tmp.getContext('2d');
 
-  // Tính toán vùng cần cắt (crop) từ luồng video gốc (vw x vh)
-  const nativeRatio = vw / vh; 
-  let cropW, cropH, cropX, cropY;
-
-  if (nativeRatio > TARGET_RATIO) {
-    // Video rộng hơn mục tiêu -> Cắt trái/phải
-    cropH = vh; 
-    cropW = vh * TARGET_RATIO;
-    cropX = (vw - cropW) / 2;
-    cropY = 0;
-  } else {
-    // Video cao hơn mục tiêu -> Cắt trên/dưới
-    cropW = vw;
-    cropH = vw / TARGET_RATIO;
-    cropX = 0;
-    cropY = (vh - cropH) / 2;
-  }
-  
   c.save();
-  // Áp dụng lật ngang cho camera trước ('user')
   if (currentFacingMode === 'user') {
-    c.translate(FINAL_PHOTO_W, 0);
-    c.scale(-1, 1);
+    c.scale(-1,1);
+    c.drawImage(video, -w, 0, w, h);
+  } else {
+    c.drawImage(video, 0, 0, w, h);
   }
-  
-  // Vẽ vùng video đã cắt (Source) lên toàn bộ canvas (Destination)
-  c.drawImage(
-    video, 
-    cropX, cropY, cropW, cropH, // Vùng nguồn (video đã crop)
-    0, 0, FINAL_PHOTO_W, FINAL_PHOTO_H // Vùng đích (canvas đầu ra)
-  );
-  
   c.restore();
+  
+  try {
+    // Chỉ vẽ Date/Time lên ảnh chụp, không vẽ khung guideline
+    drawDateTime(c.getContext('2d'), w, h);
+
+  } catch(e){ console.warn('overlay draw failed', e); }
 
   return tmp.toDataURL('image/png');
 }
 
-function drawComplexBackground(ctx, W, H, backgroundId){
+function drawComplexBackground(ctx, W, H, backgroundId, layout, frameH, GRID_MARGIN){
     
+    // Default background (White)
     ctx.fillStyle = '#FFFFFF'; 
     ctx.fillRect(0, 0, W, H);
 
@@ -1060,6 +1028,52 @@ function drawComplexBackground(ctx, W, H, backgroundId){
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
     }
+    
+    // Vị trí sọc (footer) sẽ nằm ở khu vực TEXT STRIP
+    const textStripYStart = layout === 'vertical' 
+        ? 4 * frameH 
+        : 2 * frameH + 2 * GRID_MARGIN;
+    const textStripH = H - textStripYStart; 
+    const stripeHeight = textStripH / 8; // Chia khu vực text thành 8 dải sọc
+
+    if (backgroundId === 'stripes_bw' || backgroundId === 'stripes_red_white') {
+        
+        const colorA = backgroundId === 'stripes_bw' ? '#000000' : '#FF4444'; 
+        const colorB = '#FFFFFF';
+
+        // Đảm bảo phần trên (khu vực ảnh) vẫn là màu trắng/màu nền mặc định (nếu backgroundSelect không phải 'default')
+        if (backgroundId !== 'default') {
+             ctx.fillStyle = '#FFFFFF'; 
+             ctx.fillRect(0, 0, W, textStripYStart);
+        }
+        
+        for (let i = 0; i < 8; i++) {
+            // Vẽ dải sọc xen kẽ
+            ctx.fillStyle = i % 2 === 0 ? colorA : colorB;
+            ctx.fillRect(0, textStripYStart + i * stripeHeight, W, stripeHeight);
+        }
+    } 
+    
+    // Logic mới cho Fuji Classic Clean Style
+    if (backgroundId === 'fuji_classic_clean') {
+        // 1. Đảm bảo toàn bộ nền là màu trắng (hoặc rất nhạt)
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, W, H);
+        
+        // 2. Vẽ dải màu ở khu vực Footer/Text Strip (Màu xanh Fuji nhẹ nhàng)
+        const fujiFooterColor = '#B3D0FF'; // Màu xanh nhạt (Light Fuji Blue)
+        
+        ctx.fillStyle = fujiFooterColor;
+        ctx.fillRect(0, textStripYStart, W, textStripH);
+    }
+}
+
+// Hàm lấy màu nền film Instax mặc định
+function getFilmColor(frameStyle, backgroundId) {
+    if (backgroundId !== 'default') return '#FFFFFF'; 
+    if (frameStyle === 'square') return '#333333';
+    if (frameStyle === 'wide') return '#B3E5FC';
+    return '#FFFFFF';
 }
 
 async function mergeStrip(images){
@@ -1068,85 +1082,205 @@ async function mergeStrip(images){
   const backgroundId = backgroundSelect.value; 
   let W, H;
 
+  // 1. Tính toán Kích thước một tấm film (Film W x Film H)
+  let frameW;
+  const frameH = BASE_FRAME_H; 
+  
+  // Lấy TỶ LỆ FILM CHÍNH XÁ (W/H) dưới dạng số
+  const numericFilmRatio = getInstaxFilmRatio(frameStyle); 
+  
+  // Tính toán frameW dựa trên tỷ lệ chính xác
+  frameW = Math.round(frameH * numericFilmRatio);
+  
+  // 2. Tính toán Kích thước Canvas Tổng (W, H)
   if (layout === 'vertical') {
-    W = 600; 
-    H = 4 * PHOTO_STRIP_H + VERT_TEXT_H; 
-  } else { 
-    W = 1200; 
-    const gridH = 2 * PHOTO_STRIP_H; 
-    const textH = Math.round(gridH / 4); 
-    H = gridH + textH; 
+    // W = frameW + 2 * VERT_MARGIN_X
+    W = frameW + 2 * VERT_MARGIN_X; 
+    // H = 4 * frameH + VERT_TEXT_H
+    H = 4 * frameH + VERT_TEXT_H; 
+    
+    stripSizeText.textContent = `Strip size: ${W}×${H} (Dynamic)`;
+    
+  } else { // layout === 'grid'
+    const gridH = 2 * frameH;
+    const gridTextH = Math.round(gridH * GRID_TEXT_RATIO); 
+    
+    // W = 2 * frameW + 3 * GRID_MARGIN
+    W = 2 * frameW + 3 * GRID_MARGIN; 
+    // H = 2 * frameH + gridTextH + 2 * GRID_MARGIN (Top/Bottom Margin)
+    H = gridH + gridTextH + 2 * GRID_MARGIN; 
+    
+    stripSizeText.textContent = `Grid size: ${W}×${H} (Dynamic)`;
   }
   
+  // Khởi tạo Canvas
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
   const ctx = c.getContext('2d');
   
-  let backgroundColor = '#FFFFFF'; 
+  // Cài đặt màu chữ và viền phụ thuộc vào Instax style
   let instaxTextColor = '#FF69B4'; 
   let innerBorderColor = '#444444'; 
 
-  if (frameStyle === 'instax_square_black' && backgroundId === 'default') {
-      backgroundColor = '#333333'; 
-      instaxTextColor = '#FFFFFF'; 
-      innerBorderColor = '#FFFFFF'; 
-  } else if (frameStyle === 'instax_wide_pastel' && backgroundId === 'default') {
-      backgroundColor = '#B3E5FC'; 
-      instaxTextColor = '#333333'; 
-      innerBorderColor = '#333333';
-  }
-
+  // VẼ BACKGROUND CHUNG
   if (backgroundId !== 'default') {
-      drawComplexBackground(ctx, W, H, backgroundId);
+      drawComplexBackground(ctx, W, H, backgroundId, layout, frameH, GRID_MARGIN); 
       instaxTextColor = '#4A4A4A'; 
       innerBorderColor = '#4A4A4A';
+      
+      // Đặc biệt cho sọc, chữ phải là màu trắng/tối để nổi bật trên sọc
+      if (backgroundId === 'stripes_bw' || backgroundId === 'stripes_red_white') {
+          instaxTextColor = backgroundId === 'stripes_bw' ? '#FFFFFF' : '#FFFFFF'; // Chữ trắng trên sọc
+      }
+      
+      // Đặc biệt cho Fuji Clean
+      if (backgroundId === 'fuji_classic_clean') {
+          // Footer màu xanh nhạt, chữ cần màu đậm hơn (Black)
+          instaxTextColor = '#333333'; 
+          innerBorderColor = '#333333';
+      }
+      
   } else {
-      ctx.fillStyle = backgroundColor;
+      ctx.fillStyle = getFilmColor(frameStyle, backgroundId);
       ctx.fillRect(0,0,W,H);
+      
+      if (frameStyle === 'square') { 
+          instaxTextColor = '#FFFFFF'; 
+          innerBorderColor = '#FFFFFF'; 
+      } else if (frameStyle === 'wide') { 
+          instaxTextColor = '#333333'; 
+          innerBorderColor = '#333333';
+      }
   }
 
-
-  const photoMargin = layout === 'vertical' ? 30 : 40; 
-  const innerBorder = 3; 
+  // 3. LOGIC XỬ LÝ TỶ LỆ KHUNG ẢNH INSTAX (Image Area)
+  const targetRatio = getInstaxPhotoRatio(frameStyle); // SỬ DỤNG TỶ LỆ PHOTO CHÍNH XÁ
+  
+  const innerBorder = INNER_BORDER; 
+  const imageMarginYTop = IMAGE_AREA_TOP_MARGIN; // Khoảng cách từ đỉnh film đến ảnh (30px)
+  const imageH_max = frameH - imageMarginYTop - IMAGE_AREA_FOOTER_H; // Chiều cao tối đa của khu vực ảnh
 
   if (layout === 'vertical') {
-    const photoW = W - 2 * photoMargin; 
-    const photoH = PHOTO_STRIP_H - 2 * photoMargin; 
     
+    const frameXStart = (W - frameW) / 2; // Vị trí X bắt đầu của tấm film (căn giữa)
+
     for (let i=0;i<images.length;i++){
       const img = await loadImage(images[i]);
-      const photoY = i * PHOTO_STRIP_H;
+      const frameY = i * frameH;
       
+      // Tính toán kích thước ảnh (Image Area) cần vẽ (crop/center)
+      let imageW_calc, imageH_calc;
+      
+      // Kích thước tối đa của ảnh bên trong film (giả định có 3px padding bên trong film)
+      const MAX_PHOTO_W = frameW - 2 * 3; 
+      const MAX_PHOTO_H = imageH_max; 
+      
+      if (targetRatio <= 1.0) { // Portrait or Square
+          // Ưu tiên chiều rộng, nhưng đảm bảo chiều cao không vượt quá MAX_PHOTO_H
+          imageW_calc = Math.min(MAX_PHOTO_W, Math.round(MAX_PHOTO_H * targetRatio)); 
+          imageH_calc = Math.round(imageW_calc / targetRatio); 
+          if (imageH_calc > MAX_PHOTO_H) { // Vẫn có thể xảy ra lỗi làm tròn
+            imageH_calc = MAX_PHOTO_H;
+            imageW_calc = Math.round(imageH_calc * targetRatio);
+          }
+      } else { // Landscape (Wide)
+          // Ưu tiên chiều cao, nhưng đảm bảo chiều rộng không vượt quá MAX_PHOTO_W
+          imageH_calc = Math.min(MAX_PHOTO_H, Math.round(MAX_PHOTO_W / targetRatio)); 
+          imageW_calc = Math.round(imageH_calc * targetRatio); 
+          if (imageW_calc > MAX_PHOTO_W) {
+            imageW_calc = MAX_PHOTO_W;
+            imageH_calc = Math.round(imageW_calc / targetRatio);
+          }
+      }
+
+      // Vị trí cuối cùng cho ảnh (căn giữa trong khu vực ảnh)
+      const finalImageX = frameXStart + (frameW - imageW_calc) / 2;
+      const finalImageY = frameY + imageMarginYTop + (imageH_max - imageH_calc) / 2;
+
+
+      // 1. Draw Film Background (frameW x frameH)
+      // Nếu backgroundId là 'default', vẽ màu film (trắng/đen/xanh)
+      if (backgroundId === 'default') {
+          ctx.fillStyle = getFilmColor(frameStyle, backgroundId);
+          ctx.fillRect(frameXStart, frameY, frameW, frameH); 
+      } else {
+          // Nếu background là phức tạp, vẽ khu vực film là MÀU TRẮNG
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(frameXStart, frameY, frameW, frameH); 
+      }
+      
+      // 2. Draw Inner Border (Xung quanh khu vực ảnh)
       ctx.fillStyle = innerBorderColor;
-      ctx.fillRect(photoMargin - innerBorder, photoY + photoMargin - innerBorder, photoW + 2*innerBorder, photoH + 2*innerBorder);
+      ctx.fillRect(finalImageX - innerBorder, finalImageY - innerBorder, imageW_calc + 2*innerBorder, imageH_calc + 2*innerBorder);
       
-      drawCover(ctx, img, photoMargin, photoY + photoMargin, photoW, photoH); 
+      // 3. Draw Photo (Contain)
+      drawPhoto(ctx, img, finalImageX, finalImageY, imageW_calc, imageH_calc); 
     }
 
-  } else { 
-    const photoW = W / 2 - 2 * photoMargin; 
-    const photoH = PHOTO_STRIP_H - 2 * photoMargin; 
+  } else { // layout === 'grid'
+
+    const pos = GRID_MARGIN; // Margin cho lưới
+    const frameGap = GRID_MARGIN;
+    
+    // Vị trí bắt đầu của 4 frame trong canvas lưới
     const positions = [
-      { x: 0, y: 0 }, { x: W / 2, y: 0 }, 
-      { x: 0, y: PHOTO_STRIP_H }, { x: W / 2, y: PHOTO_STRIP_H }
+      { x: pos, y: pos }, 
+      { x: pos + frameW + frameGap, y: pos }, 
+      { x: pos, y: pos + frameH + frameGap }, 
+      { x: pos + frameW + frameGap, y: pos + frameH + frameGap }
     ];
 
     for (let i=0;i<images.length;i++){
       const img = await loadImage(images[i]);
-      const pos = positions[i];
-      const photoX = pos.x + photoMargin;
-      const photoY = pos.y + photoMargin;
+      const frameXStart = positions[i].x;
+      const frameY = positions[i].y;
       
-      ctx.fillStyle = innerBorderColor;
-      ctx.fillRect(photoX - innerBorder, photoY - innerBorder, photoW + 2*innerBorder, photoH + 2*innerBorder);
+      // Image Area Calculation is the same
+      const MAX_PHOTO_W = frameW - 2 * 3; 
+      const MAX_PHOTO_H = imageH_max; 
+      
+      let imageW_calc, imageH_calc;
+      if (targetRatio <= 1.0) { 
+          imageW_calc = Math.min(MAX_PHOTO_W, Math.round(MAX_PHOTO_H * targetRatio)); 
+          imageH_calc = Math.round(imageW_calc / targetRatio); 
+          if (imageH_calc > MAX_PHOTO_H) { 
+            imageH_calc = MAX_PHOTO_H;
+            imageW_calc = Math.round(imageH_calc * targetRatio);
+          }
+      } else { 
+          imageH_calc = Math.min(MAX_PHOTO_H, Math.round(MAX_PHOTO_W / targetRatio)); 
+          imageW_calc = Math.round(imageH_calc * targetRatio); 
+          if (imageW_calc > MAX_PHOTO_W) {
+            imageW_calc = MAX_PHOTO_W;
+            imageH_calc = Math.round(imageW_calc / targetRatio);
+          }
+      }
 
-      drawCover(ctx, img, photoX, photoY, photoW, photoH);
+      const finalImageX = frameXStart + (frameW - imageW_calc) / 2;
+      const finalImageY = frameY + imageMarginYTop + (imageH_max - imageH_calc) / 2;
+
+      // 1. Draw Film Background (frameW x frameH)
+      if (backgroundId === 'default') {
+          ctx.fillStyle = getFilmColor(frameStyle, backgroundId);
+          ctx.fillRect(frameXStart, frameY, frameW, frameH); 
+      } else {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(frameXStart, frameY, frameW, frameH); 
+      }
+      
+      // 2. Draw Inner Border (Around the image area)
+      ctx.fillStyle = innerBorderColor;
+      ctx.fillRect(finalImageX - innerBorder, finalImageY - innerBorder, imageW_calc + 2*innerBorder, imageH_calc + 2*innerBorder);
+      
+      // 3. Draw Photo (Contain)
+      drawPhoto(ctx, img, finalImageX, finalImageY, imageW_calc, imageH_calc);
     }
   }
 
-  const textStripYStart = layout === 'vertical' ? 4 * PHOTO_STRIP_H : 2 * PHOTO_STRIP_H;
+  // 4. Text Strip Logic (Vẽ chữ)
+  const textStripYStart = layout === 'vertical' ? 4 * frameH : 2 * frameH + 2 * GRID_MARGIN;
   const textStripH = H - textStripYStart; 
-  const customText = document.getElementById('customStripText').value.toUpperCase();
+  const customText = customStripText.value.toUpperCase(); 
 
   if (customText) {
       ctx.save();
@@ -1182,30 +1316,56 @@ async function mergeStrip(images){
       ctx.restore();
   }
 
+  // 5. Vẽ Viền Ngoại Cùng
   ctx.strokeStyle = '#444444'; 
   ctx.lineWidth = 4;
   ctx.strokeRect(2, 2, W-4, H-4);
 
+  // 6. Vẽ Ngày Giờ ở dưới cùng
   ctx.save();
   ctx.font = '600 16px Nunito, system-ui, sans-serif';
   
-  ctx.fillStyle = (backgroundId === 'default' && frameStyle === 'instax_square_black' 
+  ctx.fillStyle = (backgroundId === 'default' && frameStyle === 'square' 
                    ? 'rgba(255,255,255,0.7)' 
                    : 'rgba(60,70,90,0.7)'); 
+                   
+  // Đặc biệt cho Fuji Clean
+  if (backgroundId === 'fuji_classic_clean') {
+      ctx.fillStyle = '#FFFFFF'; 
+  }
   
   ctx.textAlign = 'left';
   ctx.fillText(getFormattedNow(), 16, H - 18); 
   ctx.restore();
 
-  return c.toDataURL('image/png');
+  // Cập nhật: Trả về dataUrl và kích thước
+  return { 
+    dataUrl: c.toDataURL('image/png'), 
+    W: W, 
+    H: H 
+  };
 }
 
-function drawCover(ctx, img, x, y, w, h){
+// Cập nhật: Thay đổi logic từ drawCover (crop) sang drawPhoto (contain)
+function drawPhoto(ctx, img, x, y, w, h){
+  // w, h là kích thước target của photo bên trong khung Instax
   const iw = img.width, ih = img.height;
-  const r = Math.max(w/iw, h/ih);
+  
+  // Tính ratio để CONTAIN (vừa khít, không bị mất/lệch ra ngoài)
+  const r = Math.min(w/iw, h/ih); 
+  
   const nw = iw * r, nh = ih * r;
-  const cx = (nw - w)/2, cy = 0; 
-  ctx.drawImage(img, -cx + x, -cy + y, nw, nh);
+  
+  // Tính toán offset để center (căn giữa)
+  const centeredX = x + (w - nw) / 2; // Vị trí X đã căn giữa trong khu vực Instax
+  const centeredY = y + (h - nh) / 2; // Vị trí Y đã căn giữa trong khu vực Instax
+  
+  // Draw the image at the centered position
+  // Sử dụng 9-argument version: (Source Image, Source X, Source Y, Source W, Source H, Dest X, Dest Y, Dest W, Dest H)
+  ctx.drawImage(img, 
+                0, 0, iw, ih, 
+                centeredX, centeredY, nw, nh
+  );
 }
 
 function loadImage(dataUrl){
@@ -1217,18 +1377,17 @@ function loadImage(dataUrl){
   });
 }
 
-function showFinal(dataUrl){
+// Cập nhật: showFinal nhận object { dataUrl, W, H }
+function showFinal(result){
   finalPreview.innerHTML = ''; 
-  finalImageDataUrl = dataUrl; 
+  finalImageDataUrl = result.dataUrl; 
   finalActionsEl.style.display = 'flex'; 
 
-  const layout = layoutSelect.value;
-  const aspectRatioString = layout === 'vertical' ? '600 / 2050' : '1200 / 1125'; 
-
-  finalPreview.style.aspectRatio = aspectRatioString;
+  // Áp dụng tỷ lệ động đã tính toán
+  finalPreview.style.aspectRatio = `${result.W} / ${result.H}`;
 
   const img = document.createElement('img');
-  img.src = dataUrl;
+  img.src = result.dataUrl;
   finalPreview.appendChild(img);
   
   finalPreview.style.width = 'auto'; 
@@ -1243,7 +1402,7 @@ function resetAll(){
   finalImageDataUrl = null; 
   finalActionsEl.style.display = 'none'; 
 
-  finalPreview.style.aspectRatio = '600 / 2050'; 
+  // Đã bỏ aspect-ratio mặc định khỏi resetAll
   
   finalPreview.style.width = 'auto';
   finalPreview.style.height = 'auto';
@@ -1266,7 +1425,8 @@ window.addEventListener('load', async () => {
 
 window.addEventListener('resize', () => {
     resizeOverlay();
-    if (finalImageDataUrl && reviewScreen.style.display !== 'none') showFinal(finalImageDataUrl);
+    // Đảm bảo Final Preview hiển thị đúng tỷ lệ khi resize
+    if (finalImageDataUrl && reviewScreen.style.display !== 'none') mergeAndShowFinal();
 });
 </script>
   
