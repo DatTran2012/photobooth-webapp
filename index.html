@@ -79,8 +79,8 @@
   .final-wrap{ margin-top:12px; display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; }
   /* Container for the final preview */
   .final-preview{ 
-    width:220px; 
-    height:752px; 
+    width:220px; /* Base width for desktop */
+    height:752px; /* Base height for desktop (calc based on 220px/vertical ratio) */
     border-radius:8px; overflow:hidden; background:#f9f9fa; 
     display:flex; align-items:center; justify-content:center; 
     box-shadow:0 8px 30px rgba(30,40,60,0.06); 
@@ -101,8 +101,9 @@
   @media (max-width:900px){
     .container{ grid-template-columns:1fr; width:92%; }
     .camera-wrap{ width:100%; height:420px; }
-    .final-preview{ width:140px; height:479px; } /* Kích thước preview nhỏ hơn */
-    .final-wrap{ justify-content: center; } /* Căn giữa khu vực preview cuối */
+    /* Giữ nguyên kích thước nhỏ cho desktop/tablet */
+    .final-preview{ width:140px; height:479px; } 
+    .final-wrap{ justify-content: center; } 
   }
 
   /* Tối ưu cho Mobile Phones (dưới 500px - ví dụ iPhone) */
@@ -111,7 +112,7 @@
     .container{ padding: 10px; width: 100%; }
     
     .camera-wrap{ 
-        height: 380px; /* Chiều cao camera giảm thêm */
+        height: 380px; 
     }
     
     .controls{ justify-content: center; gap: 4px; }
@@ -119,9 +120,9 @@
         font-size: 13px; 
         padding: 8px 10px; 
         flex-grow: 1; 
-        min-width: 45%; /* Buộc các nút xếp thành hàng đôi */
+        min-width: 45%; 
     }
-    .btn#startBtn { min-width: 60%; } /* Nút Start rộng hơn */
+    .btn#startBtn { min-width: 60%; } 
     
     /* Các tùy chọn xếp dọc */
     .option-row{ flex-direction: column; align-items: stretch; margin-top: 8px; }
@@ -133,21 +134,21 @@
         gap: 12px;
         align-items: center; 
         margin-top: 10px;
-        width: 100%; /* FIX 1: Đảm bảo flex container chiếm toàn bộ chiều rộng */
+        width: 100%; 
     }
 
-    /* FIX 2: Giới hạn tối đa cho khối preview (title + final-preview) */
+    /* Giới hạn tối đa cho khối preview (title + final-preview) */
     .final-wrap > div:first-child {
         max-width: 100%;
     }
     
-    /* FIX 3: Giới hạn cứng cho ảnh preview để nó co lại trên màn hình nhỏ, ngăn tràn layout */
+    /* Fix: Giới hạn cứng bằng CSS để dự phòng */
     .final-preview {
-        max-width: 90vw; /* Tối đa 90% chiều rộng viewport */
+        /* Bỏ fixed width/height ở đây, thay vào đó dùng logic tính toán trong JS */
+        max-width: 90vw; 
         box-sizing: border-box; 
     }
     
-    /* Điều chỉnh lại padding cho khu vực bên phải */
     .right { padding: 4px; }
     #finalActions { padding-top: 0 !important; }
   }
@@ -217,7 +218,7 @@
     </div>
 
     <div class="theme-line" style="width:100%; margin-top:10px;">
-      <div class="theme-tag">Photobooth by Dat Tran</div>
+      <div class="theme-tag">Instax Style Selection • Tình Yêu</div>
       <div class="small">Photobooth Studio • 4 pose</div>
     </div>
   </div>
@@ -246,7 +247,7 @@
       </div>
     </div>
 
-    <footer>Made by me - J4Fun</footer>
+    <footer>Made for you — Instax Classic • Timezone: Asia/Ho_Chi_Minh</footer>
   </div>
 </div>
 
@@ -994,27 +995,31 @@ function showFinal(dataUrl){
   finalImageDataUrl = dataUrl; 
   finalActionsEl.style.display = 'flex'; 
 
-  // Dynamically determine base width for preview based on screen size (Responsive)
-  let baseW = 220; // Default for desktop
-  if (window.innerWidth <= 900) {
-      baseW = 140; // For tablet/smaller desktop
-  }
-  if (window.innerWidth <= 500) {
-      // Giữ 200px để có chất lượng hiển thị tốt nhất, nhưng CSS sẽ giới hạn nó (max-width: 90vw)
-      baseW = 200; 
-  }
-  
   const layout = layoutSelect.value;
-  let previewH;
+  // Tỷ lệ khung hình: Dọc (2050/600) hoặc Lưới (1125/1200)
+  const aspectRatio = layout === 'vertical' ? (2050 / 600) : (1125 / 1200);
+
+  // CẬP NHẬT LOGIC: Tính toán chiều rộng để đảm bảo responsive trên mobile
+  let finalWidth;
+  let unit = 'px';
   
-  if (layout === 'vertical') {
-    previewH = (baseW * (2050 / 600)); 
-  } else { 
-    previewH = (baseW * (1125 / 1200)); 
+  if (window.innerWidth <= 500) {
+      // Đối với mobile (vd: iPhone 13), tính toán width dựa trên 90% viewport 
+      // để khớp với CSS max-width: 90vw và ngăn tràn layout.
+      finalWidth = window.innerWidth * 0.90; 
+      unit = 'px';
+  } else if (window.innerWidth <= 900) {
+      finalWidth = 140; // Tablet
+      unit = 'px';
+  } else {
+      finalWidth = 220; // Desktop
+      unit = 'px';
   }
   
-  finalPreview.style.width = baseW + 'px';
-  finalPreview.style.height = previewH + 'px';
+  const finalHeight = finalWidth * aspectRatio;
+  
+  finalPreview.style.width = finalWidth + unit;
+  finalPreview.style.height = finalHeight + 'px';
 
   const img = document.createElement('img');
   img.src = dataUrl;
@@ -1040,13 +1045,22 @@ function resetAll(){
   finalImageDataUrl = null; 
   finalActionsEl.style.display = 'none'; 
 
-  // Reset size based on screen width (Responsive)
-  let baseW = 220;
-  if (window.innerWidth <= 900) { baseW = 140; }
-  if (window.innerWidth <= 500) { baseW = 200; } // Cập nhật baseW
+  // CẬP NHẬT LOGIC: Reset size dựa trên màn hình (responsive)
+  let finalWidth;
+  let unit = 'px';
   
-  finalPreview.style.width = baseW + 'px';
-  finalPreview.style.height = (baseW * (2050 / 600)) + 'px'; 
+  if (window.innerWidth <= 500) {
+      finalWidth = window.innerWidth * 0.90; // Responsive width
+      unit = 'px';
+  } else if (window.innerWidth <= 900) { 
+      finalWidth = 140; // Tablet
+  } else {
+      finalWidth = 220; // Desktop
+  }
+  
+  // Luôn dùng tỷ lệ vertical mặc định (2050/600) cho placeholder
+  finalPreview.style.width = finalWidth + unit;
+  finalPreview.style.height = (finalWidth * (2050 / 600)) + 'px'; 
 }
 
 window.addEventListener('load', async () => {
