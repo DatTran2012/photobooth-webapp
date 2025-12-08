@@ -145,7 +145,7 @@
         overflow-x: hidden; 
     }
 
-    /* Thêm: Đảm bảo khối preview nằm giữa và lấp đầy chiều rộng */
+    /* Đảm bảo khối preview nằm giữa và lấp đầy chiều rộng */
     .final-wrap > div:first-child {
         width: 100%;
         display: flex;
@@ -153,12 +153,18 @@
         align-items: center; 
     }
     
-    /* FIX: Sử dụng % thay vì VW để tránh tràn ngang do padding/margin */
+    /* --- FIX FIT TO VIEWPORT (HORIZONTAL & VERTICAL) --- */
     .final-preview {
-        width: 90%; /* 90% of the parent (which is 100% of final-wrap) */
+        /* Thiết lập giới hạn tối đa cả ngang và dọc, để browser tự scale theo aspect-ratio */
         max-width: 90%; 
+        max-height: 75vh; /* GIỚI HẠN CHIỀU DỌC - FIX OVERFLOW DỌC */
+        
+        width: auto; /* Để browser tính toán theo max-width/max-height */
+        height: auto;
+        
         flex-shrink: 0; 
     }
+    /* ------------------------------------------------ */
     
     .right { 
         padding: 4px; 
@@ -1007,7 +1013,7 @@ function loadImage(dataUrl){
   });
 }
 
-// HÀM CHÍNH ĐÃ ĐƯỢP DỌN DẸP SẠCH SẼ
+// HÀM CHÍNH ĐÃ ĐƯỢC DỌN DẸP SẠCH SẼ
 function showFinal(dataUrl){
   finalPreview.innerHTML = ''; 
   finalImageDataUrl = dataUrl; 
