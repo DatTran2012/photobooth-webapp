@@ -145,21 +145,23 @@
         overflow-x: hidden; 
     }
 
-    /* Đảm bảo khối preview nằm giữa và lấp đầy chiều rộng */
+    /* FIX 1: Thêm padding và width: 100% cho khối cha của ảnh để tạo khoảng trống và ngăn tràn */
     .final-wrap > div:first-child {
         width: 100%;
         display: flex;
         flex-direction: column;
         align-items: center; 
+        padding: 0 10px; /* TẠO LỀ MOBILE 10PX HAI BÊN */
+        box-sizing: border-box;
     }
     
-    /* --- FIX FIT TO VIEWPORT (HORIZONTAL & VERTICAL) --- */
+    /* FIX 2: Bắt buộc ảnh preview lấp đầy khối cha của nó (đã có lề) */
     .final-preview {
         /* Thiết lập giới hạn tối đa cả ngang và dọc, để browser tự scale theo aspect-ratio */
-        max-width: 90%; 
+        max-width: 100%; /* SỬA TỪ 90% */
         /* max-height: 75vh;  <-- ĐÃ BỎ GIỚI HẠN CHIỀU CAO ĐỂ CHO PHÉP CUỘN HẾT ẢNH STRIP */
         
-        width: auto; /* Để browser tính toán theo max-width/max-height */
+        width: 100%; /* SỬA: Bắt buộc lấp đầy chiều ngang của khối cha */
         height: auto;
         
         flex-shrink: 0; 
