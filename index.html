@@ -133,6 +133,18 @@
         gap: 12px;
         align-items: center; 
         margin-top: 10px;
+        width: 100%; /* FIX 1: Đảm bảo flex container chiếm toàn bộ chiều rộng */
+    }
+
+    /* FIX 2: Giới hạn tối đa cho khối preview (title + final-preview) */
+    .final-wrap > div:first-child {
+        max-width: 100%;
+    }
+    
+    /* FIX 3: Giới hạn cứng cho ảnh preview để nó co lại trên màn hình nhỏ, ngăn tràn layout */
+    .final-preview {
+        max-width: 90vw; /* Tối đa 90% chiều rộng viewport */
+        box-sizing: border-box; 
     }
     
     /* Điều chỉnh lại padding cho khu vực bên phải */
@@ -205,7 +217,7 @@
     </div>
 
     <div class="theme-line" style="width:100%; margin-top:10px;">
-      <div class="theme-tag">Photobooth made by Đạt Trần</div>
+      <div class="theme-tag">Photobooth by Dat Tran</div>
       <div class="small">Photobooth Studio • 4 pose</div>
     </div>
   </div>
@@ -234,7 +246,7 @@
       </div>
     </div>
 
-    <footer>Made for you — Instax Classic • Timezone: Asia/Ho_Chi_Minh</footer>
+    <footer>Made by me - J4Fun</footer>
   </div>
 </div>
 
@@ -518,8 +530,18 @@ async function startPhotobooth(){
     if (i < 4) await sleep(interval*1000);
   }
 
+  // CẬP NHẬT: Hiện chữ "DONE!" và cuộn trang
+  countdownEl.textContent = 'DONE!';
+  countdownEl.style.display = 'flex';
+  await sleep(1000); // Hiện 1 giây
+  countdownEl.style.display = 'none';
+
   // Tự động ghép ảnh sau khi chụp pose cuối cùng
   await mergeAndShowFinal();
+  
+  // Scroll tới khu vực final preview
+  // Cuộn đến phần tử cha gần nhất có khả năng hiển thị rõ nhất (final-wrap hoặc finalPreview)
+  document.getElementById('finalPreview').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 async function mergeAndShowFinal(){
@@ -978,7 +1000,8 @@ function showFinal(dataUrl){
       baseW = 140; // For tablet/smaller desktop
   }
   if (window.innerWidth <= 500) {
-      baseW = 160; // For mobile phones (tăng lên 160px để dễ nhìn hơn trên mobile)
+      // Giữ 200px để có chất lượng hiển thị tốt nhất, nhưng CSS sẽ giới hạn nó (max-width: 90vw)
+      baseW = 200; 
   }
   
   const layout = layoutSelect.value;
@@ -1020,7 +1043,7 @@ function resetAll(){
   // Reset size based on screen width (Responsive)
   let baseW = 220;
   if (window.innerWidth <= 900) { baseW = 140; }
-  if (window.innerWidth <= 500) { baseW = 160; }
+  if (window.innerWidth <= 500) { baseW = 200; } // Cập nhật baseW
   
   finalPreview.style.width = baseW + 'px';
   finalPreview.style.height = (baseW * (2050 / 600)) + 'px'; 
