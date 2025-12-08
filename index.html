@@ -224,7 +224,7 @@
         box-sizing: border-box;
     }
     
-    /* === SỬA ĐỔI ĐÃ ÁP DỤNG === */
+    /* === SỬA ĐỔI CUỘN MOBILE === */
     .final-preview { 
       max-width: 100%; 
       width: 100%; 
@@ -546,6 +546,10 @@ function drawFrameLoop(){
 
   overlayCtx.clearRect(0,0,w,h);
 
+  // Thêm hướng dẫn crop ảnh
+  drawCropGuide(overlayCtx, w, h); 
+  
+  // Vẽ khung Instax lên trên hướng dẫn
   drawFrameBorder(overlayCtx, w, h, selectedFrame);
 
   overlayCtx.save();
@@ -558,6 +562,60 @@ function drawFrameLoop(){
   overlayCtx.textAlign = 'left';
   overlayCtx.fillText(getFormattedNow(), 14, h - 18);
   overlayCtx.restore();
+}
+
+// Hàm vẽ vùng Crop Guide (tỉ lệ 540/390 ≈ 1.385:1)
+function drawCropGuide(ctx, w, h) {
+  // Tỉ lệ khung hình mục tiêu cho khu vực ảnh (Ngang/Dọc)
+  const TARGET_RATIO = 540 / 390; 
+
+  let guideW, guideH;
+  
+  // Sử dụng 90% chiều rộng/chiều cao tối đa của viewport
+  let maxW = w * 0.9;
+  let maxH = h * 0.9;
+  
+  // Tính toán kích thước guide để khớp với tỉ lệ mục tiêu và nằm gọn trong viewport
+  guideW = maxW; 
+  guideH = guideW / TARGET_RATIO;
+  
+  if (guideH > maxH) {
+      guideH = maxH;
+      guideW = guideH * TARGET_RATIO; 
+  }
+
+  const guideX = (w - guideW) / 2;
+  const guideY = (h - guideH) / 2;
+
+  // Vẽ vùng làm mờ bên ngoài khu vực ảnh sẽ được giữ lại
+  ctx.save();
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  
+  // Vùng trên
+  ctx.fillRect(0, 0, w, guideY);
+  // Vùng dưới
+  ctx.fillRect(0, guideY + guideH, w, h - (guideY + guideH));
+  // Vùng trái (chỉ tính phần nằm giữa guideY và guideY+guideH)
+  ctx.fillRect(0, guideY, guideX, guideH);
+  // Vùng phải
+  ctx.fillRect(guideX + guideW, guideY, w - (guideX + guideW), guideH);
+
+  // Vẽ viền trắng xung quanh khu vực ảnh cần lấy nét
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(guideX, guideY, guideW, guideH);
+  
+  // Vẽ đường chia bố cục (rule of thirds/center)
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(guideX + guideW/2, guideY);
+  ctx.lineTo(guideX + guideW/2, guideY + guideH);
+  ctx.moveTo(guideX, guideY + guideH/2);
+  ctx.lineTo(guideX + guideW, guideY + guideH/2);
+  ctx.stroke();
+  
+  ctx.restore();
 }
 
 function roundRect(ctx, x, y, w, h, r){
@@ -782,26 +840,56 @@ function flashEffect(){
   setTimeout(()=> el.remove(), 90);
 }
 
+// CẬP NHẬT: Thực hiện crop ảnh từ luồng video gốc theo đúng tỉ lệ 1.385:1
 function takeSnapshot(){
-  const w = video.videoWidth || 1280;
-  const h = video.videoHeight || 720;
+  const vw = video.videoWidth || 1280; // Chiều rộng gốc của camera
+  const vh = video.videoHeight || 720; // Chiều cao gốc của camera
+  
+  // Tỉ lệ khung hình mục tiêu cho khu vực ảnh (540/390 ≈ 1.385:1)
+  const TARGET_RATIO = 540 / 390; 
+  
+  // Kích thước đầu ra cho ảnh đã chụp (Độ phân giải cao)
+  const FINAL_PHOTO_W = 1080; 
+  const FINAL_PHOTO_H = Math.round(FINAL_PHOTO_W / TARGET_RATIO); 
+
   const tmp = document.createElement('canvas');
-  tmp.width = w; tmp.height = h;
+  tmp.width = FINAL_PHOTO_W; 
+  tmp.height = FINAL_PHOTO_H;
   const c = tmp.getContext('2d');
 
-  c.save();
-  if (currentFacingMode === 'user') {
-    c.scale(-1,1);
-    c.drawImage(video, -w, 0, w, h);
-  } else {
-    c.drawImage(video, 0, 0, w, h);
-  }
-  c.restore();
-  
-  try {
-    c.drawImage(overlay, 0, 0, w, h);
+  // Tính toán vùng cần cắt (crop) từ luồng video gốc (vw x vh)
+  const nativeRatio = vw / vh; 
+  let cropW, cropH, cropX, cropY;
 
-  } catch(e){ console.warn('overlay draw failed', e); }
+  if (nativeRatio > TARGET_RATIO) {
+    // Video rộng hơn mục tiêu -> Cắt trái/phải
+    cropH = vh; 
+    cropW = vh * TARGET_RATIO;
+    cropX = (vw - cropW) / 2;
+    cropY = 0;
+  } else {
+    // Video cao hơn mục tiêu -> Cắt trên/dưới
+    cropW = vw;
+    cropH = vw / TARGET_RATIO;
+    cropX = 0;
+    cropY = (vh - cropH) / 2;
+  }
+  
+  c.save();
+  // Áp dụng lật ngang cho camera trước ('user')
+  if (currentFacingMode === 'user') {
+    c.translate(FINAL_PHOTO_W, 0);
+    c.scale(-1, 1);
+  }
+  
+  // Vẽ vùng video đã cắt (Source) lên toàn bộ canvas (Destination)
+  c.drawImage(
+    video, 
+    cropX, cropY, cropW, cropH, // Vùng nguồn (video đã crop)
+    0, 0, FINAL_PHOTO_W, FINAL_PHOTO_H // Vùng đích (canvas đầu ra)
+  );
+  
+  c.restore();
 
   return tmp.toDataURL('image/png');
 }
@@ -1137,14 +1225,7 @@ function showFinal(dataUrl){
   const layout = layoutSelect.value;
   const aspectRatioString = layout === 'vertical' ? '600 / 2050' : '1200 / 1125'; 
 
-  // Loại bỏ việc đặt aspect-ratio cho .final-preview trong JS, 
-  // chỉ dựa vào CSS để kiểm soát cuộn trên mobile.
-  if (window.innerWidth > 500) { 
-      finalPreview.style.aspectRatio = aspectRatioString;
-  } else {
-      finalPreview.style.aspectRatio = 'auto'; // Cho phép CSS media query kiểm soát height/scroll
-  }
-
+  finalPreview.style.aspectRatio = aspectRatioString;
 
   const img = document.createElement('img');
   img.src = dataUrl;
