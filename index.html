@@ -343,19 +343,13 @@
             <button class="btn" id="startBtn">
                 <span style="font-size: 1.2em; line-height: 1;">📸</span> Start Photobooth
             </button>
-            <button class="btn secondary" id="redoBtn">
-                <span style="font-size: 1.1em; line-height: 1;">🗑️</span> Reset Ảnh Chụp
-            </button> 
             <button class="btn secondary" id="stopCamBtn">
                 <span style="font-size: 1.1em; line-height: 1;">🛑</span> Tắt Camera
             </button> 
             <button class="btn secondary" id="switchCamBtn">
                 <span style="font-size: 1.1em; line-height: 1;">🔄</span> Đổi Camera
             </button> 
-            <button class="btn secondary" id="refreshBtn">
-                <span style="font-size: 1.1em; line-height: 1;">⚡</span> Refresh Trang
-            </button> 
-        </div>
+            </div>
     </div>
 
 
@@ -532,7 +526,7 @@ const finalActionsEl = document.getElementById('finalActions');
 
 // NEW VARIABLES FOR OVERLAY/STICKER
 const overlaySelect = document.getElementById('overlaySelect'); 
-const beautyLevel = document.getElementById('beautyLevel'); // NEW: Cấp độ làm mịn da
+const beautyLevel = document.getElementById('beautyLevel');
 // END NEW VARIABLES
 
 // NEW UI ELEMENTS FOR SCREEN SWITCHING
@@ -543,15 +537,13 @@ const backToCaptureBtn = document.getElementById('backToCaptureBtn');
 
 // NEW: Capture Controls & Settings elements to disable during the sequence
 const startBtn = document.getElementById('startBtn');
-const redoBtn = document.getElementById('redoBtn');
 const stopCamBtn = document.getElementById('stopCamBtn');
 const switchCamBtn = document.getElementById('switchCamBtn');
-const refreshBtn = document.getElementById('refreshBtn');
 const intervalSec = document.getElementById('intervalSec');
 const startPhotoboothBtn = document.getElementById('startPhotoboothBtn'); // Nút Bắt Đầu ở màn hình Welcome
 
 const controlsToDisable = [
-    startBtn, redoBtn, stopCamBtn, switchCamBtn, refreshBtn, 
+    startBtn, stopCamBtn, switchCamBtn,
     intervalSec, startPhotoboothBtn, beautyLevel
 ];
 
@@ -561,27 +553,27 @@ let stream = null;
 let currentFacingMode = 'user'; 
 let finalImageDataUrl = null; 
 
-// CONSTANTS
+// CONSTANTS (Sửa lỗi ReferenceError bằng cách định nghĩa các hằng số này ở phạm vi toàn cục)
 const INNER_BORDER = 5; 
 const VERT_GAP = 40; 
 const BASE_FRAME_H = 450; 
-const VERT_MARGIN_X = 30; 
-const VERT_MARGIN_Y = 40; 
-const VERT_TEXT_H = 250; 
-const GRID_OUTER_PADDING = 40; 
-const GRID_GAP = 30; 
-const GRID_TEXT_H = 250; 
+// Merge Dimensions (Cập nhật giá trị lớn hơn cho margin/padding)
+const VERT_MARGIN_X = 150; // Margin ngang cho strip 
+const VERT_MARGIN_Y = 150; // Margin dọc trên/dưới 
+const GRID_OUTER_PADDING = 150; // Padding xung quanh cho grid 
+const GRID_GAP = 100; // Khoảng cách giữa 2 ảnh trong grid 
 const FINAL_PHOTO_BORDER_WIDTH = 4; 
 const FINAL_PHOTO_BORDER_COLOR = '#333333'; 
+const instaxRatio = 1.25; // Tỉ lệ chiều cao khung instax (ảnh + chân trắng) so với chiều ngang ảnh.
+// END CONSTANTS
 
 // devicePixelRatio helper
 function getDPR(){ return window.devicePixelRatio || 1; }
 
 /* -------------------- TỶ LỆ ẢNH CHỤP (CỐ ĐỊNH 1:1) -------------------- */
-
 // Hàm lấy tỷ lệ (W/H) của khu vực ảnh bên trong film (dùng cho live preview & drawing)
 function getInstaxPhotoRatio(frameStyle) {
-    return 1.0; 
+    return 1.0;
 }
 
 // Hàm lấy tỷ lệ (W/H) của toàn bộ film Instax (ảnh + chân trắng)
@@ -591,93 +583,104 @@ function getInstaxFilmRatio(frameStyle) {
 
 // Cập nhật tỷ lệ cho tất cả thumbnails trên màn hình review
 function updateThumbnailAspectRatios() {
-    const numericRatio = getInstaxFilmRatio('square'); 
-
+    const numericRatio = getInstaxFilmRatio('square');
     const thumbs = document.querySelectorAll('.instax-thumb-frame');
     thumbs.forEach(thumb => {
-        thumb.style.aspectRatio = `${numericRatio} / 1`; 
+        thumb.style.aspectRatio = `${numericRatio} / 1`;
     });
 }
-
 /* ----------------- END TỶ LỆ ẢNH CHỤP LOGIC ------------------ */
 
-
 /* --------------- UI SWITCHING LOGIC (GIỮ NGUYÊN) --------------- */
+function setControlsDisabled(disabled) {
+    controlsToDisable.forEach(el => {
+        if (el) el.disabled = disabled;
+    });
+}
 
 function showWelcomeScreen() {
     captureScreen.style.display = 'none';
     reviewScreen.style.display = 'none';
     welcomeScreen.style.display = 'flex';
-    resetAll(); 
-    stopCamera(); 
-}
-
-function showReviewScreen() {
-    welcomeScreen.style.display = 'none';
-    captureScreen.style.display = 'none';
-    reviewScreen.style.display = 'flex'; 
-    
-    updateThumbnailAspectRatios(); 
-
-    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+    resetAll();
+    stopCamera();
+    // Enable controls (since we are back at welcome)
+    setControlsDisabled(false);
 }
 
 function showCaptureScreen() {
     welcomeScreen.style.display = 'none';
     reviewScreen.style.display = 'none';
-    captureScreen.style.display = 'grid'; 
+    captureScreen.style.display = 'grid'; // Dùng grid
+    // Enable controls (ready to start)
+    setControlsDisabled(false);
 }
 
-/* --------------- END UI SWITCHING LOGIC --------------- */
-
-// start camera
-async function startCamera(){
-  try {
-    console.log(`Yêu cầu camera: ${currentFacingMode === 'user' ? 'Trước' : 'Sau'}...`);
-    stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { 
-        width: { ideal: 1280 }, 
-        height: { ideal: 720 }, 
-        facingMode: currentFacingMode 
-      }, 
-      audio:false 
-    });
-    video.srcObject = stream;
-    
-    await new Promise(resolve => {
-        if (video.readyState >= 2) { 
-            resolve();
-        } else {
-            video.addEventListener('loadedmetadata', resolve, { once: true });
-        }
-    });
-
-    await video.play();
-    resizeOverlay(); 
-    drawFrameLoop();
-    console.log(`Camera ${currentFacingMode === 'user' ? 'Trước' : 'Sau'} đã bật`);
-
-    video.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'none';
-
-  } catch(e) {
-    console.error('startCamera error', e);
-    const name = e && e.name ? e.name : 'UnknownError';
-    const msg = e && e.message ? e.message : String(e);
-    alert('Không thể truy cập camera: ' + name + ' — ' + msg + '\n\nKiểm tra: (1) chạy trên localhost/https (2) trình duyệt cho phép quyền camera (3) không bị app khác chiếm dụng).');
-  }
+function showReviewScreen() {
+    welcomeScreen.style.display = 'none';
+    captureScreen.style.display = 'none';
+    reviewScreen.style.display = 'flex';
+    updateThumbnailAspectRatios();
+    // Disable controls when reviewing
+    setControlsDisabled(true);
 }
 
-function stopCamera(){
-  try{
+function resetAll() {
+    captures = [];
+    previewGrid.innerHTML = '';
+    finalPreview.innerHTML = '<div class="small">Chưa có ảnh</div>';
+    finalImageDataUrl = null;
+    finalActionsEl.style.display = 'none';
+    startBtn.textContent = '📸 Start Photobooth';
+    startBtn.disabled = false;
+    // Đảm bảo không bị disabled khi reset
+    setControlsDisabled(false); 
+}
+
+/* -------------------- CAMERA LOGIC -------------------- */
+async function startCamera(camConstraints = {}) {
     if (stream) {
-      stream.getTracks().forEach(t=>t.stop());
-      stream = null;
-      console.log('Camera đã tắt');
+        stopCamera();
     }
-  } catch(e){}
+    const constraints = {
+        video: {
+            width: { ideal: 1080 },
+            height: { ideal: 1080 },
+            facingMode: currentFacingMode,
+            ...camConstraints.video,
+        },
+        audio: false
+    };
+
+    try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        
+        // Đợi video load metadata để lấy kích thước thực
+        await new Promise(resolve => {
+            video.onloadedmetadata = () => {
+                resizeOverlay(); // Cập nhật kích thước canvas sau khi video load
+                resolve();
+            };
+        });
+
+        video.play();
+
+    } catch (err) {
+        alert('Không thể truy cập Camera. Vui lòng kiểm tra quyền và thử lại. Lỗi: ' + err.name);
+        console.error('Lỗi truy cập camera:', err);
+    }
+}
+
+function stopCamera() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
 }
 
 async function switchCamera() {
+    // Chỉ cho phép chuyển đổi trước khi chụp
     if (captures.length > 0) {
         alert('Bạn chỉ có thể chuyển đổi camera trước khi bắt đầu chụp. Hãy bấm "Reset Ảnh Chụp" nếu muốn đổi.');
         return;
@@ -690,175 +693,158 @@ async function switchCamera() {
 }
 
 function resizeOverlay(){
-  const dpr = getDPR();
-  const vcw = video.clientWidth;
-  const vch = video.clientHeight;
-  const vw = video.videoWidth;
-  const vh = video.videoHeight;
-  
-  if (vw === 0 || vh === 0 || vcw === 0 || vch === 0) return;
+    const dpr = getDPR();
+    const vcw = video.clientWidth;
+    const vch = video.clientHeight;
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
 
-  const aspect = vw / vh;
-  const wrapAspect = vcw / vch;
+    if (vw === 0 || vh === 0 || vcw === 0 || vch === 0) return;
 
-  let newW, newH, xOffset, yOffset;
+    const aspect = vw / vh;
+    const wrapAspect = vcw / vch;
 
-  // Căn giữa video trong wrap area (object-fit: cover)
-  if (aspect > wrapAspect) {
-    // Chiều cao là giới hạn
-    newH = vch;
-    newW = vch * aspect;
-    xOffset = (vcw - newW) / 2;
-    yOffset = 0;
-  } else {
-    // Chiều rộng là giới hạn
-    newW = vcw;
-    newH = vcw / aspect;
-    xOffset = 0;
-    yOffset = (vch - newH) / 2;
-  }
-  
-  // Cập nhật kích thước canvas (theo kích thước hiển thị thực tế của video)
-  overlay.width = vcw * dpr;
-  overlay.height = vch * dpr;
-  overlay.style.width = vcw + 'px';
-  overlay.style.height = vch + 'px';
+    let newW, newH, xOffset, yOffset;
 
-  // Cập nhật transformation để vẽ
-  overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  overlayCtx.clearRect(0, 0, vcw, vch);
-
-  // Thiết lập biến transform cho drawing (dùng để vẽ khung ảnh và ngày giờ)
-  // Biến này sẽ được dùng trong drawInstaxGuide
-  overlayCtx.globalTransform = {
-    scaleX: newW / vw,
-    scaleY: newH / vh,
-    offsetX: xOffset,
-    offsetY: yOffset,
-    dpr: dpr,
-    vcw: vcw,
-    vch: vch
-  };
-}
-
-function drawFrameLoop(){
-    if (stream) {
-        drawInstaxGuide(overlayCtx, video.clientWidth, video.clientHeight);
-        requestAnimationFrame(drawFrameLoop);
+    // Căn giữa video trong wrap area (object-fit: cover)
+    if (aspect > wrapAspect) { 
+        // Chiều cao là giới hạn
+        newH = vch;
+        newW = vch * aspect;
+        xOffset = (vcw - newW) / 2;
+        yOffset = 0;
+    } else { 
+        // Chiều rộng là giới hạn
+        newW = vcw;
+        newH = vcw / aspect;
+        xOffset = 0;
+        yOffset = (vch - newH) / 2;
     }
+
+    // Cập nhật kích thước canvas (theo kích thước hiển thị thực tế của video)
+    overlay.width = vcw * dpr;
+    overlay.height = vch * dpr;
+    
+    // Cập nhật tọa độ và kích thước của video trong overlay
+    overlay.style.width = `${vcw}px`;
+    overlay.style.height = `${vch}px`;
+
+    // Vẽ Live Preview Instax (Tỷ lệ 1:1, căn giữa video feed)
+    const targetRatio = getInstaxPhotoRatio('square');
+    const photoSize = Math.min(newW, newH) * 0.9; // Ảnh chiếm 90% chiều nhỏ nhất
+    const finalPhotoWidth = photoSize;
+    const finalPhotoHeight = photoSize / targetRatio; 
+
+    // Tính toán tọa độ vẽ
+    const drawX = xOffset + (newW - finalPhotoWidth) / 2;
+    const drawY = yOffset + (newH - finalPhotoHeight) / 2;
+
+    // Tính toán tỷ lệ scale và tọa độ để vẽ (Transformation Matrix)
+    const scaleX = finalPhotoWidth / vw;
+    const scaleY = finalPhotoHeight / vh;
+    const translateX = drawX;
+    const translateY = drawY;
+
+    // Lưu trữ thông tin Transform cho việc vẽ Live Preview
+    video.transform = {
+        scaleX: scaleX,
+        scaleY: scaleY,
+        translateX: translateX,
+        translateY: translateY,
+        drawX: drawX,
+        drawY: drawY,
+        drawW: finalPhotoWidth,
+        drawH: finalPhotoHeight,
+        canvasW: vcw,
+        canvasH: vch
+    };
+
+    drawLiveInstaxPreview();
 }
 
-function roundRect(ctx, x, y, w, h, r) {
-    if (w < 2 * r) r = w / 2;
-    if (h < 2 * r) r = h / 2;
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-}
+// Hàm vẽ khung 1:1 Live Preview
+function drawLiveInstaxPreview() {
+    if (!video.transform) return;
 
-function drawInstaxGuide(ctx, w, h){
-    if (!ctx.globalTransform) return;
-    ctx.save();
+    const { canvasW, canvasH, drawW, drawH, drawX, drawY } = video.transform;
+    const dpr = getDPR();
     
-    const t = ctx.globalTransform;
-    const cw = w;
-    const ch = h; 
-    
-    const targetRatio = getInstaxPhotoRatio('square'); 
-    
-    let photoW = t.scaleY * video.videoHeight * targetRatio;
-    let photoH = t.scaleY * video.videoHeight;
-    
-    if (photoW > t.scaleX * video.videoWidth) {
-        photoW = t.scaleX * video.videoWidth;
-        photoH = photoW / targetRatio;
-    }
-    
-    const x_outer = (cw - photoW) / 2;
-    const y_outer = (ch - photoH) / 2;
-    
-    const padding = 10;
-    const innerColor = 'rgba(255, 255, 255, 0.9)'; 
+    // Xóa overlay cũ
+    overlayCtx.clearRect(0, 0, canvasW * dpr, canvasH * dpr);
+    overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // Reset transform để vẽ ở độ phân giải 1x
 
-    ctx.save();
-    ctx.beginPath();
-    roundRect(ctx, x_outer - padding, y_outer - padding, photoW + 2 * padding, photoH + 2 * padding, 10);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; 
-    ctx.fill();
-    
-    ctx.strokeStyle = innerColor;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([8, 8]);
-    ctx.strokeRect(x_outer, y_outer, photoW, photoH);
-    ctx.setLineDash([]);
-    
-    ctx.font = '16px Nunito, sans-serif';
-    ctx.fillStyle = innerColor;
-    ctx.textAlign = 'center';
-    ctx.fillText('1:1 SQUARE', cw / 2, y_outer - padding - 8); 
-    
-    ctx.font = '14px Nunito, sans-serif';
-    ctx.fillStyle = innerColor;
-    ctx.textAlign = 'left';
-    ctx.fillText(currentFacingMode === 'user' ? 'CAM TRƯỚC (SELFIE)' : 'CAM SAU (ENV)', 15, 30);
-    
-    ctx.restore();
-    
-    ctx.photoArea = { x: x_outer, y: y_outer, w: photoW, h: photoH };
-}
+    // Vị trí ảnh 1:1 sau khi crop/căn giữa
+    const photoX = drawX;
+    const photoY = drawY;
+    const photoW = drawW;
+    const photoH = drawH;
 
-function getFormattedNow(){
-    try {
-        const now = new Date();
-        const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: timeZone };
-        const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timeZone };
-        const datePart = now.toLocaleDateString('en-GB', dateOptions).replace(/\//g, '/');
-        const timePart = now.toLocaleTimeString('en-GB', timeOptions);
-        return `${datePart} ${timePart}`;
-    } catch (e) {
-        return '';
-    }
+    const innerBorder = 5;
+
+    // Helper: roundRect (sử dụng cho khung Instax)
+    const roundRect = (ctx, x, y, w, h, r) => {
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+    };
+
+    // Tạm thời chỉ vẽ khung 1:1 cho người dùng thấy vùng crop
+    overlayCtx.save();
+    overlayCtx.beginPath();
+    roundRect(overlayCtx, photoX - innerBorder, photoY - innerBorder, photoW + 2 * innerBorder, photoH + 2 * innerBorder, 10);
+    overlayCtx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Màu nền tối
+    overlayCtx.fill();
+    
+    overlayCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; // Viền trắng
+    overlayCtx.lineWidth = 2;
+    overlayCtx.setLineDash([8, 8]);
+    overlayCtx.strokeRect(photoX, photoY, photoW, photoH);
+    overlayCtx.setLineDash([]);
+    
+    overlayCtx.font = '18px Nunito, sans-serif';
+    overlayCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    overlayCtx.textAlign = 'center';
+    overlayCtx.fillText('1:1 SQUARE CROP', canvasW / 2, photoY - 10);
+    overlayCtx.restore();
 }
 
 // ** NEW: Helper function to apply beauty filter **
-// Helper function to apply beauty filter (changes pixel data)
-function applyBeautyFilter(ctx, x, y, w, h, intensity) {
-    if (intensity <= 0) return; // Không làm gì nếu cường độ là 0
+// Áp dụng bộ lọc làm mịn/sáng da đơn giản bằng cách thay đổi pixel
+function applyBeautyFilter(ctx, x, y, w, h, level) {
+    if (level === 0) return; // Không áp dụng
     
-    // Ánh xạ cường độ (1-6) sang các hệ số
-    // Intensity 1 -> 0.02 (Very Light) | 6 -> 0.12 (Very Strong)
-    const smoothFactor = intensity * 0.02; 
-    
-    // Rosy Boost Factor: max 1.10 + 10 (cường độ 1), min 1.05 + 5 (cường độ 6)
-    const rosyBoostFactor = 1.05 + (6 - intensity) * 0.01; 
-    const rosyAdditive = 5 + (6 - intensity) * 1; 
-    // Độ sáng tổng thể tăng nhẹ theo cường độ
-    const brightnessBoost = 1.01 + intensity * 0.005; 
+    const smoothFactor = level * 0.05; // 0.05 đến 0.3
+    const brightnessBoost = 1.0 + level * 0.01; // 1.01 đến 1.06
+    const rosyBoostFactor = 1.0 + level * 0.01;
+    const rosyAdditive = level * 2;
 
     try {
         const imageData = ctx.getImageData(x, y, w, h);
         const data = imageData.data;
+
         for (let i = 0; i < data.length; i += 4) {
             let r = data[i];
             let g = data[i + 1];
             let b = data[i + 2];
 
             // 1. Rosy Lips/Cheeks boost (Nếu ảnh có thiên hướng ấm)
-            if (r > g * 1.05 && r > b * 1.05) { 
-                r = Math.min(255, r * rosyBoostFactor + rosyAdditive); 
+            if (r > g * 1.05 && r > b * 1.05) {
+                r = Math.min(255, r * rosyBoostFactor + rosyAdditive);
             }
-            
+
             // 2. Simple 'Smoothing' (Làm mịn/Glowing): Dịch chuyển nhẹ màu về giá trị trung bình
             const avg = (r + g + b) / 3;
             // Dịch chuyển smoothFactor % giá trị màu về màu xám trung bình để giảm độ tương phản gắt
             r = r + (avg - r) * smoothFactor;
             g = g + (avg - g) * smoothFactor;
             b = b + (avg - b) * smoothFactor;
-            
+
             // 3. Apply slight overall brightness/warmth
             r = Math.min(255, r * brightnessBoost);
             g = Math.min(255, g * brightnessBoost);
@@ -868,13 +854,13 @@ function applyBeautyFilter(ctx, x, y, w, h, intensity) {
             data[i + 1] = g;
             data[i + 2] = b;
         }
+
         ctx.putImageData(imageData, x, y);
-    } catch(e) { 
+    } catch(e) {
         console.warn('Could not apply applyBeautyFilter:', e);
     }
 }
 // ** END NEW: Helper function to apply beauty filter **
-
 
 // Chụp ảnh
 function captureFrame(video, overlay) {
@@ -882,40 +868,52 @@ function captureFrame(video, overlay) {
     const vh = video.videoHeight;
     const canvas = document.createElement('canvas');
     
-    const cropSize = vh; 
-    const cropX = (vw - cropSize) / 2; 
-    
-    canvas.width = cropSize; 
-    canvas.height = cropSize; 
+    // Cố định kích thước ảnh chụp đầu ra là 1080x1080 (Square)
+    const cropSize = 1080; 
+    canvas.width = cropSize;
+    canvas.height = cropSize;
     const ctx = canvas.getContext('2d');
     
-    // Xử lý transform để lật ảnh (nếu là camera trước)
+    // Tính toán vùng crop 1:1 ở giữa video gốc
+    const videoRatio = vw / vh;
+    let sx, sy, sWidth, sHeight;
+    
+    if (videoRatio > 1) { // Landscape (Chiều rộng > Chiều cao)
+        sHeight = vh;
+        sWidth = vh;
+        sx = (vw - vh) / 2;
+        sy = 0;
+    } else { // Portrait hoặc Square (Chiều cao >= Chiều rộng)
+        sWidth = vw;
+        sHeight = vw;
+        sx = 0;
+        sy = (vh - vw) / 2;
+    }
+
+    // Vẽ ảnh đã crop (và lật ngang nếu là camera trước)
     ctx.save();
     if (currentFacingMode === 'user') {
+        ctx.translate(cropSize, 0);
         ctx.scale(-1, 1);
-        ctx.drawImage(video, 
-                      cropX, 0, cropSize, cropSize, 
-                      -cropSize, 0, cropSize, cropSize);
-    } else {
-        ctx.drawImage(video, 
-                      cropX, 0, cropSize, cropSize, 
-                      0, 0, cropSize, cropSize);
     }
+    // Crop và Scale ảnh từ video feed sang canvas 1080x1080
+    ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, cropSize, cropSize);
     ctx.restore();
     
-    // ** NEW: Áp dụng LÀM MỊN DA (Beauty Filter) trước tiên **
-    const smoothingLevel = parseInt(beautyLevel.value, 10);
-    if (smoothingLevel > 0) {
-        // Tạo một canvas tạm để áp dụng smoothing filter pixel-based
+    // ** NEW SMOOTHING: Áp dụng beauty filter **
+    const beautyLevelValue = parseInt(beautyLevel.value);
+    if (beautyLevelValue > 0) {
+        // Áp dụng Beauty filter lên canvas chính
+        // Cần phải copy ảnh đã lật sang 1 canvas tạm để áp dụng pixel-based filter
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = canvas.width;
         tempCanvas.height = canvas.height;
         const tempCtx = tempCanvas.getContext('2d');
-        tempCtx.drawImage(canvas, 0, 0); // Copy ảnh đã chụp (còn gốc) sang temp canvas
+        tempCtx.drawImage(canvas, 0, 0); // Copy ảnh đã chụp sang temp canvas
         
-        applyBeautyFilter(tempCtx, 0, 0, tempCanvas.width, tempCanvas.height, smoothingLevel);
+        applyBeautyFilter(tempCtx, 0, 0, tempCanvas.width, tempCanvas.height, beautyLevelValue);
         
-        // Vẽ ngược lại ảnh đã làm mịn lên canvas chính
+        // Vẽ ngược lại lên canvas chính
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(tempCanvas, 0, 0);
     }
@@ -938,9 +936,10 @@ function captureFrame(video, overlay) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(tempCanvas, 0, 0);
     }
-    
+
     return canvas.toDataURL('image/png');
 }
+
 
 // [REPLACEMENT] Bổ sung âm thanh Beep/Shutter đáng tin cậy bằng Web Audio API
 function playTone(frequency = 440, duration = 100, volume = 0.5) {
@@ -959,175 +958,156 @@ function playTone(frequency = 440, duration = 100, volume = 0.5) {
         // Fade out for clean stop
         gainNode.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + (duration / 1000));
         
-        oscillator.start();
+        oscillator.start(context.currentTime);
         oscillator.stop(context.currentTime + (duration / 1000));
-    } catch(e) { 
-        /* ignore - sometimes mobile browsers block audio context without user interaction */
+    } catch (e) {
+        console.warn('Web Audio API not supported or failed to play sound.', e);
     }
 }
 
-function playBeepSound() {
-    // Tần số tiêu chuẩn (Standard beep)
-    playTone(440, 150, 0.4); 
-}
+function playBeepSound() { playTone(880, 150, 0.4); } // Cao hơn cho Beep
+function playShutterSound() { playTone(440, 200, 0.7); } // Thấp hơn cho Shutter
 
-function playShutterSound() {
-    // Tần số cao hơn và ngắn hơn (Higher pitch for shutter)
-    playTone(880, 50, 0.3); 
-}
-// END REPLACEMENT
 
-// Countdown and Capture Sequence
-let captureIndex = 0;
-const MAX_CAPTURES = 4;
-let isCapturing = false;
+/* -------------------- PHOTOBOOTH SEQUENCE LOGIC -------------------- */
+const doCapture = async (index) => {
+    // 1. Chuẩn bị UI (ẩn countdown)
+    countdownEl.style.display = 'none';
+    setControlsDisabled(true); // Disable controls trong lúc chụp
 
-function disableControls() {
-    controlsToDisable.forEach(el => el.disabled = true);
-}
-function enableControls() {
-    controlsToDisable.forEach(el => el.disabled = false);
-}
+    // 2. Chụp
+    const imageDataUrl = captureFrame(video, overlay);
+    captures.push(imageDataUrl);
 
-function flashEffect(){
-    const flash = document.createElement('div');
-    flash.style.cssText = 'position:absolute; inset:0; background:white; opacity:0; pointer-events:none; transition:opacity 0.1s linear;';
-    document.getElementById('cameraWrap').appendChild(flash);
-    setTimeout(()=>{
-        flash.style.opacity = '1';
-        setTimeout(() => {
-            flash.style.opacity = '0';
-            setTimeout(() => flash.remove(), 200);
-        }, 100);
-    }, 10);
-}
-
-function startPhotobooth(){
-    if (isCapturing || stream === null) return;
+    // 3. Thêm vào Preview Grid
+    const thumbDiv = document.createElement('div');
+    thumbDiv.className = 'instax-thumb-frame';
+    thumbDiv.innerHTML = `<img src="${imageDataUrl}" alt="Photo ${index + 1}" />`;
+    // Thêm event listener cho từng ảnh riêng lẻ
+    thumbDiv.addEventListener('click', () => {
+        triggerDownload(imageDataUrl, `photobooth_pose_${index + 1}_${dateForFilename()}.png`);
+    });
+    previewGrid.appendChild(thumbDiv);
     
-    resetAll();
-    captureIndex = 0;
-    isCapturing = true;
-    disableControls();
+    // 4. Update UI
+    startBtn.textContent = `Pose ${index + 1}/4 Captured.`;
+    playShutterSound();
     
-    // Khoảng thời gian nghỉ sau khi chụp xong mỗi pose (Pose 1, 2, 3)
-    const userInterval = parseInt(intervalSec.value, 10);
-    // Đảm bảo thời gian nghỉ nằm trong khoảng [1, 10]
-    const intervalDelaySec = Math.min(10, Math.max(1, userInterval)); 
-    
-    // Đếm ngược cố định trước mỗi pose
-    const fixedCountdownSec = 3; 
+    // 5. Logic tiếp theo (Rest hoặc Finish)
+    if (captures.length < 4) {
+        const interval = parseInt(intervalSec.value) || 2;
+        await startRestPeriod(captures.length, interval); // Bắt đầu thời gian nghỉ
+    } else {
+        // Đã hoàn thành 4 pose
+        startBtn.textContent = '✅ All 4 Poses Done!';
+        mergeAndShowFinal();
+        setControlsDisabled(true); // Giữ disable
+        setTimeout(showReviewScreen, 1000);
+    }
+}
 
-    // NEW: Hàm đếm ngược thời gian nghỉ và gọi doCapture cho pose tiếp theo
-    const startRestPeriod = (nextIndex, seconds) => {
-        countdownEl.style.display = 'flex';
-        // Giảm cỡ chữ để chứa thông báo đa dòng
-        countdownEl.style.fontSize = '40px'; 
-        let count = seconds;
-        
-        // Hiện thông báo ban đầu
-        countdownEl.innerHTML = `CHUẨN BỊ POSE ${nextIndex + 1} (Nghỉ ${count}s)` + 
-                                `<div style="font-size: 72px; font-weight: 800; margin-top: 10px;">${count}</div>`;
-        playBeepSound(); 
+// Đếm ngược 3 giây trước khi chụp
+const startCountdown = (index) => {
+    countdownEl.style.display = 'flex';
+    countdownEl.style.fontSize = '92px'; // Quay lại cỡ chữ lớn
+    let count = 3;
+    countdownEl.innerHTML = `<div>${count}</div>`;
+    playBeepSound();
 
+    const timer = setInterval(() => {
+        count--;
+        if (count > 0) {
+            countdownEl.innerHTML = `<div>${count}</div>`;
+            playBeepSound();
+        } else if (count === 0) {
+            countdownEl.innerHTML = `<div>SNAP!</div>`;
+            playTone(1300, 100, 0.9); // Tiếng SNAP cao hơn
+        } else {
+            clearInterval(timer);
+            doCapture(index);
+        }
+    }, 1000);
+}
+
+// Đếm ngược thời gian nghỉ và gọi doCapture cho pose tiếp theo
+const startRestPeriod = (nextIndex, seconds) => {
+    countdownEl.style.display = 'flex';
+    // Giảm cỡ chữ để chứa thông báo đa dòng
+    countdownEl.style.fontSize = '40px'; 
+    let count = seconds;
+
+    // Hiện thông báo ban đầu
+    countdownEl.innerHTML = `CHUẨN BỊ POSE ${nextIndex + 1} (Nghỉ ${count}s)` + 
+                            `<div style="font-size: 72px; font-weight: 800; margin-top: 10px;">${count}</div>`;
+    playBeepSound();
+
+    return new Promise(resolve => {
         const restTimer = setInterval(() => {
             count--;
-            
             if (count >= 0) {
                 // Cập nhật số giây còn lại
                 countdownEl.innerHTML = `CHUẨN BỊ POSE ${nextIndex + 1} (Nghỉ ${count}s)` + 
                                         `<div style="font-size: 72px; font-weight: 800; margin-top: 10px;">${count}</div>`;
-                playBeepSound(); 
+                if(count > 0) playBeepSound();
             }
             
             if (count < 0) {
                 clearInterval(restTimer);
-                // Khôi phục cỡ chữ và bắt đầu đếm ngược cố định
-                countdownEl.style.fontSize = '92px'; 
-                doCapture(nextIndex); 
+                startCountdown(nextIndex);
+                resolve();
             }
         }, 1000);
+    });
+}
+
+function startPhotobooth() {
+    if (captures.length > 0) {
+        alert('Vui lòng bấm "Reset Ảnh Chụp" để bắt đầu lại chuỗi 4 pose.');
+        return;
     }
-    // END NEW
+    if (!stream) {
+        alert('Camera chưa được bật. Vui lòng bấm "Bắt Đầu Chụp Ảnh" ở màn hình chào mừng.');
+        return;
+    }
     
-    const doCapture = (index) => {
-        if (index >= MAX_CAPTURES) {
-            // Đây là phần dọn dẹp cuối cùng nếu logic ở dưới không gọi
-            isCapturing = false;
-            enableControls();
-            showReviewScreen();
-            mergeAndShowFinal();
-            return;
-        }
-        
-        // BƯỚC 1: Đếm ngược 3 giây trước mỗi lần chụp
-        countdownEl.style.display = 'flex';
-        // Đảm bảo cỡ chữ là 92px cho 3, 2, 1
-        countdownEl.style.fontSize = '92px'; 
-        let count = fixedCountdownSec;
-        countdownEl.textContent = count;
-        
-        if (count > 0) {
-            playBeepSound(); 
-        }
-
-        const timer = setInterval(() => {
-            count--;
-            
-            if (count > 0) {
-                countdownEl.textContent = count;
-                playBeepSound(); 
-            } else if (count === 0) {
-                countdownEl.textContent = 'CHỤP!'; 
-                playBeepSound(); 
-            } else {
-                clearInterval(timer);
-                countdownEl.style.display = 'none';
-                
-                // BƯỚC 2: CHỤP VÀ HIỂN THỊ
-                const imgDataUrl = captureFrame(video, overlay);
-                captures.push(imgDataUrl);
-                addThumbnail(imgDataUrl, index + 1);
-                
-                flashEffect();
-                playShutterSound();
-                
-                // BƯỚC 3: NGHỈ KHOẢNG THỜI GIAN NGƯỜI DÙNG SET (chỉ nghỉ nếu chưa phải pose cuối)
-                if (index < MAX_CAPTURES - 1) {
-                    // MỚI: Gọi hàm đếm ngược thời gian nghỉ (intervalDelaySec đã là số giây)
-                    startRestPeriod(index + 1, intervalDelaySec);
-                } else {
-                    // Nếu là pose cuối cùng, không cần nghỉ, chuyển sang màn hình review
-                    isCapturing = false;
-                    enableControls();
-                    showReviewScreen();
-                    mergeAndShowFinal();
-                }
-            }
-        }, 1000);
-    };
-
-    // Bắt đầu chuỗi với Pose 1
-    doCapture(0);
+    // Bắt đầu chuỗi chụp ảnh
+    setControlsDisabled(true); // Disable all controls
+    startBtn.textContent = '📸 Sequence Running...';
+    startCountdown(0);
 }
 
-function backToWelcome() {
-    stopCamera(); 
-    showWelcomeScreen();
+/* -------------------- OVERLAY DRAWING (FILTERS) -------------------- */
+// Helper function to draw a scribble line (Dùng cho một số overlay)
+function scribble(x1, y1, x2, y2) {
+    overlayCtx.save();
+    overlayCtx.strokeStyle = 'white';
+    overlayCtx.lineWidth = 1;
+    overlayCtx.globalAlpha = 0.8;
+    // Bổ sung các đường nhỏ để tạo hiệu ứng "vẽ nguệch ngoạc"
+    for (let i = 0; i < 3; i++) {
+        overlayCtx.beginPath();
+        // Thêm độ lệch ngẫu nhiên nhỏ
+        const dx = Math.random() * 2 - 1;
+        const dy = Math.random() * 2 - 1;
+        overlayCtx.moveTo(x1 + dx, y1 + dy);
+        overlayCtx.lineTo(x2 + dx, y2 + dy);
+        overlayCtx.stroke();
+    }
+    overlayCtx.restore();
 }
 
-/* ---------------- OVERLAY/FILTER LOGIC (UNCHANGED) ---------------- */
-
-// Helper function for film grain (changes pixel data)
-function addGrain(alpha, x, y, w, h, ctx) {
+// Hàm áp dụng hiệu ứng hạt nhiễu (Film Grain)
+function addGrain(intensity, x, y, w, h, ctx) {
     try {
         const imageData = ctx.getImageData(x, y, w, h);
         const data = imageData.data;
+        const grainAmount = intensity * 255;
+        
         for (let i = 0; i < data.length; i += 4) {
-            const grain = (Math.random() - 0.5) * 50 * alpha; 
-            data[i] = Math.min(255, Math.max(0, data[i] + grain));
-            data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + grain));
-            data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + grain));
+            const grain = (Math.random() - 0.5) * grainAmount;
+            data[i] = Math.max(0, Math.min(255, data[i] + grain));      // Red
+            data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + grain));  // Green
+            data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + grain));  // Blue
         }
         ctx.putImageData(imageData, x, y);
     } catch(e) {
@@ -1135,19 +1115,21 @@ function addGrain(alpha, x, y, w, h, ctx) {
     }
 }
 
-// Helper function to apply sepia (changes pixel data)
+// Hàm áp dụng hiệu ứng Sepia (Nâu đỏ cổ điển)
 function applySepia(ctx, x, y, w, h) {
     try {
         const imageData = ctx.getImageData(x, y, w, h);
         const data = imageData.data;
+        
         for (let i = 0; i < data.length; i += 4) {
-            let r = data[i];
-            let g = data[i + 1];
-            let b = data[i + 2];
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
             
-            data[i] = Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189)); // R
-            data[i + 1] = Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168)); // G
-            data[i + 2] = Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131)); // B
+            // Công thức Sepia nhẹ
+            data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
+            data[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
+            data[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
         }
         ctx.putImageData(imageData, x, y);
     } catch(e) {
@@ -1155,55 +1137,22 @@ function applySepia(ctx, x, y, w, h) {
     }
 }
 
-function addScratches(intensity, color, ctx, x, y, w, h) {
-    // Add light scratches (lines)
+// Hàm áp dụng filter/overlay lên một khung ảnh 1:1 đã chụp
+function drawOverlayFrame_ORIGINAL(ctx, x, y, w, h, overlayId) {
     ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1 * intensity;
-    ctx.globalAlpha = 0.5 * intensity;
-    for (let i = 0; i < 10 * intensity; i++) {
-        const startX = x + Math.random() * w;
-        const startY = y + Math.random() * h;
-        const length = w * (0.1 + Math.random() * 0.3);
-        const angle = Math.random() * Math.PI * 2;
-        const endX = startX + length * Math.cos(angle);
-        const endY = startY + length * Math.sin(angle);
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-    }
-    ctx.restore();
-}
-
-// Draw Overlay on Photo Area
-function drawOverlayFrame_ORIGINAL(ctx, x, y, w, h, overlayId){
-    if (overlayId === 'none') return;
     
-    ctx.save();
-    // Set clip path to the photo area
-    ctx.beginPath();
-    ctx.rect(x, y, w, h);
-    ctx.clip();
-    
-    // ** LƯU Ý: Hiệu ứng làm mịn da đã được áp dụng trong captureFrame() **
-    
-    // Nếu là filter pixel-based khác (Sepia, Grain), áp dụng trước khi vẽ khung
+    // Áp dụng filter pixel-based khác (Sepia, Grain), áp dụng trước khi vẽ khung
     switch(overlayId) {
-        case 'film_grain_light':
-            addGrain(0.3, x, y, w, h, ctx);
-            break;
-        case 'film_grain_heavy':
-            addGrain(0.8, x, y, w, h, ctx);
-            break;
-        case 'vintage_sepia_light':
-            applySepia(ctx, x, y, w, h);
+        case 'film_grain_light': addGrain(0.3, x, y, w, h, ctx); break;
+        case 'film_grain_heavy': addGrain(0.8, x, y, w, h, ctx); break;
+        case 'vintage_sepia_light': 
+            applySepia(ctx, x, y, w, h); 
             // Subtle White overlay for fading
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; 
             ctx.fillRect(x, y, w, h);
             break;
     }
-    
+
     // Áp dụng Overlay/Filter còn lại (vẽ hình học/màu sắc)
     switch(overlayId){
         case 'heart_corners':
@@ -1211,71 +1160,117 @@ function drawOverlayFrame_ORIGINAL(ctx, x, y, w, h, overlayId){
             ctx.fillStyle = '#FF69B4'; // Hot Pink
             ctx.globalAlpha = 0.8;
             ctx.save();
+
             // Top-Left
             ctx.beginPath();
-            roundRect(ctx, x, y, size, size, 5); 
+            // Hàm roundRect cần được định nghĩa ở đây hoặc trong phạm vi truy cập
+            const roundRect = (ctx, x, y, w, h, r) => {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.arcTo(x + w, y, x + w, y + h, r);
+                ctx.arcTo(x + w, y + h, x, y + h, r);
+                ctx.arcTo(x, y + h, x, y, r);
+                ctx.arcTo(x, y, x + w, y, r);
+                ctx.closePath();
+            };
+            roundRect(ctx, x, y, size, size, 5);
             ctx.fill();
+
             // Top-Right (mirror X)
             ctx.translate(x + w, 0);
             ctx.scale(-1, 1);
             ctx.beginPath();
-            roundRect(ctx, 0, y, size, size, 5); 
+            roundRect(ctx, 0, y, size, size, 5);
             ctx.fill();
+            
             // Bottom-Left (mirror Y)
             ctx.translate(-(x + w), 0);
             ctx.translate(0, y + h);
             ctx.scale(1, -1);
             ctx.beginPath();
-            roundRect(ctx, x, 0, size, size, 5); 
+            roundRect(ctx, x, 0, size, size, 5);
             ctx.fill();
+            
             // Bottom-Right (mirror X, Y)
             ctx.translate(x + w, 0);
             ctx.scale(-1, 1);
             ctx.beginPath();
-            roundRect(ctx, 0, 0, size, size, 5); 
+            roundRect(ctx, 0, 0, size, size, 5);
             ctx.fill();
-            
+
             ctx.restore();
-            ctx.globalAlpha = 1;
+            ctx.restore(); // Restore save() from the start
             break;
+
         case 'film_damage':
-            // Simple film dust/scratches overlay
-            ctx.fillStyle = 'rgba(0,0,0,0.1)'; // Add dust/specks
-            for (let i = 0; i < 50; i++) {
-                ctx.fillRect(x + Math.random() * w, y + Math.random() * h, 1, 1);
-            }
-            // Add light scratches
-            addScratches(1, 'rgba(255,255,255,0.2)', ctx, x, y, w, h);
-            break;
-        // ---------------------------------
-        case 'faded_matte':
-            // Làm tối góc (Vignette)
-            const vignetteGrad = ctx.createRadialGradient(x + w/2, y + h/2, Math.min(w,h)/4, x + w/2, y + h/2, Math.min(w,h)/2);
-            vignetteGrad.addColorStop(0, 'rgba(0,0,0,0)');
-            vignetteGrad.addColorStop(1, 'rgba(0,0,0,0.4)');
-            ctx.fillStyle = vignetteGrad;
-            ctx.fillRect(x, y, w, h);
-            // Matte effect: Tăng độ sáng kênh tối
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.globalCompositeOperation = 'soft-light'; // Áp dụng sáng nhẹ
-            ctx.fillRect(x, y, w, h);
             ctx.globalCompositeOperation = 'source-over';
-            break;
-        case 'dust_scratches_medium':
-            // Bụi & Vết xước trung bình
-            ctx.fillStyle = 'rgba(0,0,0,0.15)'; // Dust/specks
-            for (let i = 0; i < 100; i++) {
-                ctx.fillRect(x + Math.random() * w, y + Math.random() * h, 1, 1);
+            ctx.globalAlpha = 0.8;
+            ctx.fillStyle = 'rgba(200, 200, 200, 0.1)'; // Bụi nhẹ
+            for(let i=0; i<30; i++) {
+                ctx.beginPath();
+                ctx.arc(x + Math.random() * w, y + Math.random() * h, Math.random() * 1.5, 0, 2 * Math.PI);
+                ctx.fill();
             }
-            addScratches(2, 'rgba(255,255,255,0.3)', ctx, x, y, w, h); // Scratches
+            // Vết xước
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; 
+            ctx.lineWidth = 0.5;
+            for(let i=0; i<5; i++) {
+                ctx.beginPath();
+                const startX = x + Math.random() * w;
+                const startY = y + Math.random() * h;
+                const len = Math.random() * 50 + 20;
+                const angle = Math.random() * Math.PI * 2;
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(startX + len * Math.cos(angle), startY + len * Math.sin(angle));
+                ctx.stroke();
+            }
             break;
         
-        // ---------------------------------
-        // ──────── ÁNH SÁNG ────────
-        // ---------------------------------
+        case 'faded_matte':
+            // Giảm độ bão hòa (Saturation) và Tăng độ sáng (Brightness) nhẹ
+            ctx.globalCompositeOperation = 'saturation';
+            ctx.globalAlpha = 0.8; // Giảm bão hòa 20%
+            ctx.fillStyle = 'white';
+            ctx.fillRect(x, y, w, h);
+            
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.globalAlpha = 0.05; // Tối nhẹ
+            ctx.fillStyle = 'black';
+            ctx.fillRect(x, y, w, h);
+            
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            break;
+            
+        case 'dust_scratches_medium':
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 0.9;
+            // Bụi
+            ctx.fillStyle = 'rgba(200, 200, 200, 0.15)'; 
+            for(let i=0; i<50; i++) {
+                ctx.beginPath();
+                ctx.arc(x + Math.random() * w, y + Math.random() * h, Math.random() * 2, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            // Vết xước
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; 
+            ctx.lineWidth = 1;
+            for(let i=0; i<8; i++) {
+                ctx.beginPath();
+                const startX = x + Math.random() * w;
+                const startY = y + Math.random() * h;
+                const len = Math.random() * 70 + 30;
+                const angle = Math.random() * Math.PI * 2;
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(startX + len * Math.cos(angle), startY + len * Math.sin(angle));
+                ctx.stroke();
+            }
+            break;
+            
         case 'golden_light_leak':
-            // Ánh sáng rò rỉ vàng ấm
-            ctx.globalCompositeOperation = 'screen'; 
+            ctx.globalCompositeOperation = 'screen';
             ctx.globalAlpha = 0.6;
             const goldenGrad = ctx.createRadialGradient(x + w*0.8, y + h*0.2, w*0.05, x + w*0.8, y + h*0.2, w*0.4);
             goldenGrad.addColorStop(0, '#FFD700'); // Gold
@@ -1283,9 +1278,10 @@ function drawOverlayFrame_ORIGINAL(ctx, x, y, w, h, overlayId){
             ctx.fillStyle = goldenGrad;
             ctx.fillRect(x, y, w, h);
             break;
+
         case 'sunset_light_leak':
             // Ánh sáng hoàng hôn (hồng cam)
-            ctx.globalCompositeOperation = 'screen'; 
+            ctx.globalCompositeOperation = 'screen';
             ctx.globalAlpha = 0.7;
             const sunsetGrad = ctx.createRadialGradient(x + w*0.1, y + h*0.9, w*0.05, x + w*0.1, y + h*0.9, w*0.5);
             sunsetGrad.addColorStop(0, '#FF4500'); // Orange Red
@@ -1293,145 +1289,114 @@ function drawOverlayFrame_ORIGINAL(ctx, x, y, w, h, overlayId){
             ctx.fillStyle = sunsetGrad;
             ctx.fillRect(x, y, w, h);
             break;
+
         case 'soft_bokeh':
-            // Vài vòng tròn mờ
-            ctx.globalCompositeOperation = 'overlay';
-            ctx.globalAlpha = 0.5;
-            const bokehColors = ['#FFC0CB', '#ADD8E6', '#90EE90'];
-            for(let i=0; i<5; i++) {
-                const cx = x + Math.random() * w;
-                const cy = y + Math.random() * h;
-                const r = Math.min(w,h) * (Math.random() * 0.1 + 0.05);
-                ctx.fillStyle = bokehColors[i % 3];
-                // Faking blur with transparent radial gradient
-                const bGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-                bGrad.addColorStop(0, ctx.fillStyle);
-                bGrad.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = bGrad;
+            // Hiệu ứng bokeh mờ
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.6;
+            ctx.fillStyle = '#FFFFFF'; // White for a dreamy look
+            for (let i = 0; i < 15; i++) {
+                const radius = Math.random() * w * 0.1 + w * 0.03;
                 ctx.beginPath();
-                ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+                ctx.arc(x + Math.random() * w, y + Math.random() * h, radius, 0, 2 * Math.PI);
                 ctx.fill();
             }
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
             break;
+
         case 'blue_vignette':
-            const blueGrad = ctx.createRadialGradient(x + w/2, y + h/2, Math.min(w,h)*0.3, x + w/2, y + h/2, Math.min(w,h)*0.5);
-            blueGrad.addColorStop(0, 'rgba(0,0,0,0)');
-            blueGrad.addColorStop(1, 'rgba(0,50,100,0.6)'); // Dark Blue
-            ctx.fillStyle = blueGrad;
+            // Tối góc màu xanh lạnh
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.globalAlpha = 0.8;
+            const vignetteGrad = ctx.createRadialGradient(x + w*0.5, y + h*0.5, w*0.1, x + w*0.5, y + h*0.5, w*0.7);
+            vignetteGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            vignetteGrad.addColorStop(0.8, 'rgba(0, 50, 100, 0.4)'); // Xanh tối
+            vignetteGrad.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+            ctx.fillStyle = vignetteGrad;
             ctx.fillRect(x, y, w, h);
             break;
+
         case 'rainbow_prism':
-            ctx.globalCompositeOperation = 'overlay';
-            ctx.globalAlpha = 0.4;
-            const prismGrad = ctx.createLinearGradient(x, y, x + w, y + h);
-            prismGrad.addColorStop(0, 'rgba(255,0,0,0.5)');
-            prismGrad.addColorStop(0.25, 'rgba(255,255,0,0.5)');
-            prismGrad.addColorStop(0.5, 'rgba(0,255,0,0.5)');
-            prismGrad.addColorStop(0.75, 'rgba(0,0,255,0.5)');
-            prismGrad.addColorStop(1, 'rgba(255,0,255,0.5)');
-            ctx.fillStyle = prismGrad;
-            ctx.fillRect(x, y, w, h);
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
-            break;
-        case 'film_burn_top':
-            // Cháy film (đỏ/cam ở trên cùng)
+            // Vệt lăng kính cầu vồng
             ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.7;
+            ctx.globalAlpha = 0.4;
+            const colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'];
+            for(let i = 0; i < colors.length; i++) {
+                ctx.fillStyle = colors[i];
+                ctx.beginPath();
+                ctx.arc(x + w * 0.8, y + h * 0.2, w * 0.05, i * Math.PI/10, (i + 1) * Math.PI/10);
+                ctx.arc(x + w * 0.8, y + h * 0.2, w * 0.3, (i + 1) * Math.PI/10, i * Math.PI/10, true);
+                ctx.fill();
+            }
+            break;
+
+        case 'film_burn_top':
+            // Cháy film đỏ ở phía trên
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.8;
             const burnGrad = ctx.createLinearGradient(x, y, x, y + h * 0.3);
             burnGrad.addColorStop(0, '#FF4500'); // Orange Red
-            burnGrad.addColorStop(0.5, '#FFD700'); // Gold
-            burnGrad.addColorStop(1, 'rgba(255,255,255,0)');
+            burnGrad.addColorStop(0.5, 'rgba(255, 105, 180, 0.2)'); // Pink fade
+            burnGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
             ctx.fillStyle = burnGrad;
             ctx.fillRect(x, y, w, h);
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
             break;
-        
-        // ---------------------------------
-        // ──────── KHUNG & HÌNH DẠNG ────────
-        // ---------------------------------
+
         case 'polaroid_border_thin':
-            // Khung đen mỏng bên trong
+            // Khung polaroid mỏng bên trong
             ctx.strokeStyle = '#FFFFFF';
-            ctx.lineWidth = w * 0.05; // 5% border
-            ctx.strokeRect(x, y, w, h);
+            ctx.lineWidth = w * 0.03; 
+            ctx.globalAlpha = 0.9;
+            ctx.strokeRect(x + ctx.lineWidth/2, y + ctx.lineWidth/2, w - ctx.lineWidth, h - ctx.lineWidth);
             break;
+
         case 'black_frame_thin':
-            // Khung đen mỏng bên trong
-            ctx.strokeStyle = '#333333';
-            ctx.lineWidth = 2; 
-            ctx.strokeRect(x, y, w, h);
+            // Viền đen mỏng bên trong
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = w * 0.02;
+            ctx.globalAlpha = 0.8;
+            ctx.strokeRect(x + ctx.lineWidth/2, y + ctx.lineWidth/2, w - ctx.lineWidth, h - ctx.lineWidth);
             break;
+            
         case 'white_cross_hatch':
-            // Họa tiết gạch chéo trắng (Texture)
-            ctx.globalAlpha = 0.3;
-            ctx.strokeStyle = '#FFFFFF';
+            // Gạch chéo trắng (texture)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.lineWidth = 1;
             const spacing = w / 20;
             for(let i = 0; i < w + h; i += spacing) {
-                // Chéo trái
+                // Diagonal 1 (\)
                 ctx.beginPath();
                 ctx.moveTo(x + i, y);
-                ctx.lineTo(x, y + i);
+                ctx.lineTo(x + i - h, y + h);
                 ctx.stroke();
-                // Chéo phải
+                // Diagonal 2 (/)
                 ctx.beginPath();
-                ctx.moveTo(x + w - i, y);
-                ctx.lineTo(x + w, y + i);
+                ctx.moveTo(x + i - w, y);
+                ctx.lineTo(x + i, y + h);
                 ctx.stroke();
             }
-            ctx.globalAlpha = 1;
             break;
+
         case 'heart_shaped_mask':
-            const maskSize = Math.min(w, h) * 0.8;
-            const maskCX = x + w/2;
-            const maskCY = y + h/2 - maskSize * 0.1; // Dịch lên một chút
-            
-            // Mask bằng cách vẽ hình chữ nhật trước
-            ctx.fillStyle = 'rgba(0,0,0,0.5)'; // Màu tối/mờ cho mask
-            ctx.fillRect(x, y, w, h);
+            // Mask hình trái tim (chỉ hiện ảnh bên trong hình trái tim)
+            ctx.globalCompositeOperation = 'destination-in';
+            const cx = x + w / 2;
+            const cy = y + h / 2;
+            const s = Math.min(w, h) * 0.4; // Kích thước trái tim
 
-            // Xóa hình trái tim khỏi mask (globalCompositeOperation = 'destination-out')
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.fillStyle = '#FFFFFF'; // Màu trắng sẽ bị xóa
-            const drawHeartMask = (cx, cy, s) => {
-                ctx.beginPath();
-                ctx.moveTo(cx, cy + s * 0.3);
-                ctx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
-                ctx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
-                ctx.fill();
-            };
-            drawHeartMask(maskCX, maskCY, maskSize);
-
-            // Vẽ viền trái tim
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.strokeStyle = '#FF69B4'; // Hot Pink
-            ctx.lineWidth = 6;
             ctx.beginPath();
-            ctx.moveTo(maskCX, maskCY + maskSize * 0.3);
-            ctx.bezierCurveTo(maskCX + maskSize * 0.5, maskCY - maskSize * 0.8, maskCX + maskSize * 1.0, maskCY - maskSize * 0.4, maskCX, maskCY + maskSize * 0.6);
-            ctx.bezierCurveTo(maskCX - maskSize * 1.0, maskCY - maskSize * 0.4, maskCX - maskSize * 0.5, maskCY - maskSize * 0.8, maskCX, maskCY + maskSize * 0.3);
-            ctx.stroke();
-            ctx.globalCompositeOperation = 'source-over';
+            ctx.moveTo(cx, cy + s * 0.3);
+            ctx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
+            ctx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
+            ctx.closePath();
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over'; // Trở về chế độ bình thường
             break;
+            
         case 'scribble_corners':
-            ctx.strokeStyle = '#333333'; // Màu vẽ nguệch ngoạc
+            const scribbleSize = Math.min(w, h) * 0.05;
+            ctx.strokeStyle = '#FFFFFF';
             ctx.lineWidth = 3;
-            const scribbleSize = Math.min(w, h) * 0.1;
-            const scribble = (startX, startY, endX, endY) => {
-                ctx.beginPath();
-                ctx.moveTo(startX, startY);
-                ctx.quadraticCurveTo(
-                    startX + (endX - startX) * Math.random(), 
-                    startY + (endY - startY) * Math.random(), 
-                    endX, 
-                    endY
-                );
-                ctx.stroke();
-            };
+            ctx.globalAlpha = 0.9;
             // Top-Left
             scribble(x, y, x + scribbleSize, y);
             scribble(x, y, x, y + scribbleSize);
@@ -1445,519 +1410,382 @@ function drawOverlayFrame_ORIGINAL(ctx, x, y, w, h, overlayId){
             scribble(x + w, y + h, x + w - scribbleSize, y + h);
             scribble(x + w, y + h, x + w, y + h - scribbleSize);
             break;
+            
         case 'tape_strip_top':
             ctx.fillStyle = 'rgba(255,255,255,0.7)'; // White/transparent tape
-            const tapeHeight = h * 0.08;
-            ctx.fillRect(x, y, w, tapeHeight);
-            // Vẽ viền xước (Tape Edge simulation)
-            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-            ctx.lineWidth = 1;
-            for(let i = 0; i < w; i += 5) {
-                ctx.beginPath();
-                ctx.moveTo(x + i, y + tapeHeight - (Math.random() * 5));
-                ctx.lineTo(x + i + 5, y + tapeHeight - (Math.random() * 5));
-                ctx.stroke();
-            }
+            const tapeHeight = h * 0.06;
+            const tapeY = y + h * 0.02;
+            ctx.fillRect(x, tapeY, w, tapeHeight);
+            
+            // Xé góc tape
+            ctx.beginPath();
+            ctx.moveTo(x, tapeY);
+            ctx.lineTo(x + w * 0.02, tapeY + tapeHeight * 0.5);
+            ctx.lineTo(x, tapeY + tapeHeight);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(x + w, tapeY);
+            ctx.lineTo(x + w * 0.98, tapeY + tapeHeight * 0.5);
+            ctx.lineTo(x + w, tapeY + tapeHeight);
+            ctx.fill();
             break;
-        
-        // ---------------------------------
-        // ──────── HIỆU ỨNG ĐẶC BIỆT ────────
-        // ---------------------------------
+
         case 'holographic_glitch':
-            // Glitch effect: Dịch chuyển kênh màu
-            const imageDataGlitch = ctx.getImageData(x, y, w, h);
-            const dataGlitch = imageDataGlitch.data;
-            const offset = 5; 
-            // Dịch chuyển kênh Đỏ (R)
-            for (let i = 0; i < dataGlitch.length; i += 4) {
-                if ((i / 4) % w < w - offset) {
-                    dataGlitch[i] = dataGlitch[i + 4 * offset];
+            // Lỗi Hologram (chuyển kênh màu và tạo sọc)
+            ctx.globalCompositeOperation = 'hard-light';
+            ctx.globalAlpha = 0.7;
+            // Dịch chuyển kênh Đỏ
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.fillStyle = 'red';
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(x, y + 2, w, h);
+            
+            // Dịch chuyển kênh Xanh dương
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.fillStyle = 'blue';
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(x, y - 2, w, h);
+            
+            // Sọc Glitch
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 0.2;
+            ctx.fillStyle = 'white';
+            for(let i=0; i<h; i+=h/30) {
+                if (Math.random() > 0.9) {
+                    ctx.fillRect(x, y + i, w, 2);
                 }
             }
-            // Dịch chuyển kênh Xanh Lam (B)
-            for (let i = dataGlitch.length - 4; i >= 0; i -= 4) {
-                if ((i / 4) % w >= offset) {
-                    dataGlitch[i + 2] = dataGlitch[i - 4 * offset + 2];
-                }
-            }
-            ctx.putImageData(imageDataGlitch, x, y);
-            // Thêm vệt nhiễu Holographic (màu sắc)
-            ctx.globalCompositeOperation = 'screen';
-            ctx.globalAlpha = 0.3;
-            ctx.fillStyle = '#00FFFF'; // Cyan
-            ctx.fillRect(x + 2, y + h * 0.3, w, 5);
-            ctx.fillStyle = '#FF00FF'; // Magenta
-            ctx.fillRect(x - 2, y + h * 0.6, w, 5);
             ctx.globalCompositeOperation = 'source-over';
             ctx.globalAlpha = 1;
             break;
+
         case 'half_tone_dots':
             // Chấm mực (Halftone)
-            ctx.globalCompositeOperation = 'multiply';
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            const dotGrid = w / 15;
-            for(let i=0; i<w; i+=dotGrid) {
-                for(let j=0; j<h; j+=dotGrid) {
-                    // Kích thước chấm dựa trên độ sáng (giả lập)
-                    const dotSize = Math.random() * (dotGrid / 2); 
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.9;
+            ctx.fillStyle = 'black';
+            const dotSize = w / 50;
+            for(let i=0; i<w; i+=dotSize*2) {
+                for(let j=0; j<h; j+=dotSize*2) {
                     ctx.beginPath();
-                    ctx.arc(x + i, y + j, dotSize, 0, 2 * Math.PI);
+                    ctx.arc(x + i, y + j, dotSize * Math.random(), 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
             ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
             break;
+            
         case 'glitter_sparkle':
-            // Lấp lánh (Giả)
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.6;
-            const sparkleColors = ['#FFFF00', '#FFC0CB', '#FFFFFF'];
-            for(let i=0; i<80; i++) {
-                const cx = x + Math.random() * w;
-                const cy = y + Math.random() * h;
+            // Lấp lánh (giả lập)
+            ctx.globalCompositeOperation = 'overlay';
+            ctx.globalAlpha = 0.8;
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 100; i++) {
                 const size = Math.random() * 2 + 1;
-                ctx.fillStyle = sparkleColors[i % 3];
-                ctx.fillRect(cx, cy, size, size);
+                ctx.beginPath();
+                ctx.rect(x + Math.random() * w, y + Math.random() * h, size, size);
+                ctx.fill();
             }
             ctx.globalCompositeOperation = 'source-over';
             ctx.globalAlpha = 1;
             break;
+
         default:
-            // Do nothing
+            // Không làm gì nếu overlay là 'none' hoặc không xác định
             break;
     }
     
     ctx.restore();
 }
 
-// Hàm tải ảnh
-function loadImg(dataUrl) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = dataUrl;
-    });
-}
 
-// NEW HELPER FUNCTIONS FOR BACKGROUNDS (Used in drawComplexBackground)
-function drawStripes(ctx, W, H, color1, color2) {
-    const stripeWidth = W / 10;
-    const numStripes = Math.ceil(W / stripeWidth);
-    for(let i=0; i<numStripes; i++) {
-        ctx.fillStyle = i % 2 === 0 ? color1 : color2;
-        ctx.fillRect(i * stripeWidth, 0, stripeWidth, H);
-    }
-}
-
-function drawDots(ctx, W, H, dotColor, dotSize, spacing, alpha) {
-    ctx.save();
-    ctx.globalAlpha = alpha || 1;
-    ctx.fillStyle = dotColor;
-    for(let x = 0; x < W + spacing; x += spacing) {
-        for(let y = 0; y < H + spacing; y += spacing) {
-            ctx.beginPath();
-            ctx.arc(x + Math.random() * (spacing/2), y + Math.random() * (spacing/2), dotSize, 0, 2 * Math.PI);
-            ctx.fill();
-        }
-    }
-    ctx.restore();
-}
-
-function drawCheckerboard(ctx, W, H, color1, color2, size) {
-    ctx.save();
-    const numBlocksX = Math.ceil(W / size);
-    const numBlocksY = Math.ceil(H / size);
-    for (let i = 0; i < numBlocksX; i++) {
-        for (let j = 0; j < numBlocksY; j++) {
-            const color = (i + j) % 2 === 0 ? color1 : color2;
-            ctx.fillStyle = color;
-            ctx.fillRect(i * size, j * size, size, size);
-        }
-    }
-    ctx.restore();
-}
-
-function drawWatercolorHeart(ctx, cx, cy, s, color) {
-    ctx.save();
-    // Faking soft edge with radial gradient
-    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, s * 0.7);
-    grad.addColorStop(0, color);
-    // Note: Assuming color is in rgba() or r,g,b format where '1)' is the alpha part for simple string manipulation
-    const finalColor = color.includes('rgba') ? color.replace(/, 0\.9\)/, ', 0)') : color; 
-    grad.addColorStop(1, finalColor);
-    ctx.fillStyle = grad;
-    ctx.globalAlpha = 0.5;
+/* ---------------- BACKGROUNDS & MERGE LOGIC ---------------- */
+// Lấy màu sắc hoặc pattern cho nền
+function getBackgroundConfig(backgroundId, isTextStrip = false) {
+    const defaultColor = isTextStrip ? '#FFFFFF' : '#FFFFFF'; // Text strip: White, Background: White
     
-    ctx.beginPath();
-    // Heart shape approximation
-    ctx.moveTo(cx, cy + s * 0.3);
-    ctx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
-    ctx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
-    ctx.fill();
-    ctx.restore();
-}
-// END NEW HELPER FUNCTIONS
+    switch(backgroundId) {
+        case 'tet_red_gold_silk': return { type: 'solid', color: isTextStrip ? '#900C3F' : '#900C3F', isDark: true }; // Dark Red
+        case 'tet_cherry_blossom': return { type: 'solid', color: isTextStrip ? '#FFD1DC' : '#FFD1DC', isDark: false }; // Soft Pink
+        case 'tet_banh_chung_green': return { type: 'solid', color: isTextStrip ? '#38761D' : '#38761D', isDark: true }; // Deep Green
+        case 'tet_firecracker_pattern': return { type: 'pattern_firecracker', color: '#B22222', isDark: true }; // Red
+        case 'tet_lucky_money': return { type: 'pattern_coin', color: '#FFD700', isDark: false }; // Gold
+        case 'tet_golden_dragon': return { type: 'solid', color: isTextStrip ? '#121212' : '#121212', isDark: true }; // Black/Dark
+        case 'tet_bamboo_stripes': return { type: 'pattern_stripes', color: '#006400', color2: '#90EE90', size: 20, isDark: true }; // Dark Green/Light Green Stripes
+        case 'tet_lantern_glow': return { type: 'solid', color: isTextStrip ? '#8B0000' : '#8B0000', isDark: true }; // Dark Red/Brown
+        case 'tet_calligraphy_paper': return { type: 'solid', color: isTextStrip ? '#B22222' : '#B22222', isDark: true }; // Fire Brick Red
+        case 'tet_minimal_auspice': return { type: 'solid', color: isTextStrip ? '#F0F0F0' : '#F0F0F0', isDark: false }; // Light Gray
+        
+        case 'xmas_red_white_stripes': return { type: 'pattern_stripes', color: '#FF4500', color2: '#FFFFFF', size: 30, isDark: false }; // Red/White Stripes
+        case 'xmas_pine_forest_green': return { type: 'solid', color: isTextStrip ? '#013220' : '#013220', isDark: true }; // Dark Green
+        case 'xmas_snowy_bokeh': return { type: 'solid', color: isTextStrip ? '#000000' : '#000000', isDark: true }; // Black
+        case 'xmas_gold_glitter': return { type: 'solid', color: isTextStrip ? '#696969' : '#696969', isDark: true }; // Dark Gray
+        case 'xmas_cozy_knit': return { type: 'pattern_knit', color: '#A0522D', color2: '#FFFACD', isDark: true }; // Brown/Cream
+        case 'xmas_gingerbread': return { type: 'solid', color: isTextStrip ? '#8B4513' : '#8B4513', isDark: true }; // Saddle Brown
+        case 'xmas_santa_suit': return { type: 'solid', color: isTextStrip ? '#B22222' : '#B22222', isDark: true }; // Fire Brick Red
+        case 'xmas_holly_berries': return { type: 'solid', color: isTextStrip ? '#38761D' : '#38761D', isDark: true }; // Dark Green
+        case 'xmas_minimal_white': return { type: 'solid', color: isTextStrip ? '#FFFFFF' : '#FFFFFF', isDark: false }; // White
+        case 'xmas_twinkle_lights': return { type: 'solid', color: isTextStrip ? '#1C1C1C' : '#1C1C1C', isDark: true }; // Very Dark Gray
 
-// ---------------- BACKGROUNDS & MERGE LOGIC ---------------- //
-// Hàm vẽ background phức tạp (áp dụng cho toàn bộ strip)
-function drawComplexBackground(ctx, W, H, backgroundId, layout, textStripYStart, textStripHeight){
-    ctx.save();
-    // 1. Đảm bảo toàn bộ canvas được fill màu trắng hoặc màu nền chính
-    ctx.fillStyle = '#FFFFFF';
+        case 'love_hot_pink_blur': return { type: 'solid', color: isTextStrip ? '#FF69B4' : '#FF69B4', isDark: false }; // Hot Pink
+        case 'love_watercolor_hearts': return { type: 'solid', color: isTextStrip ? '#F5F5DC' : '#F5F5DC', isDark: false }; // Beige
+        case 'love_rose_petals': return { type: 'solid', color: isTextStrip ? '#800000' : '#800000', isDark: true }; // Maroon
+        case 'love_scribble_lines': return { type: 'solid', color: isTextStrip ? '#FFFFFF' : '#FFFFFF', isDark: false }; // White
+        case 'love_velvet_magenta': return { type: 'solid', color: isTextStrip ? '#800080' : '#800080', isDark: true }; // Purple
+        case 'love_couple_galaxy': return { type: 'solid', color: isTextStrip ? '#191970' : '#191970', isDark: true }; // Midnight Blue
+        case 'love_checkerboard_pink': return { type: 'pattern_checker', color: '#FFC0CB', color2: '#FFFFFF', size: 50, isDark: false }; // Pink/White Checker
+        case 'love_soft_peach_glow': return { type: 'solid', color: isTextStrip ? '#FFDAB9' : '#FFDAB9', isDark: false }; // Peach
+        case 'love_minimal_line': return { type: 'solid', color: isTextStrip ? '#F5F5F5' : '#F5F5F5', isDark: false }; // Very Light Gray
+        case 'love_polaroid_tape': return { type: 'solid', color: isTextStrip ? '#E6E6FA' : '#E6E6FA', isDark: false }; // Light Lavender
+
+        case 'default':
+        default: return { type: 'solid', color: defaultColor, isDark: false };
+    }
+}
+
+// Hàm vẽ các pattern phức tạp
+function drawComplexBackground(ctx, W, H, backgroundId, layout, textStripYStart, textStripTotalHeight) {
+    const config = getBackgroundConfig(backgroundId);
+    ctx.fillStyle = config.color;
     ctx.fillRect(0, 0, W, H);
     
-    // 2. Vẽ Background theo ID
-    switch(backgroundId) {
-        // ------------------------------ TẾT NGUYÊN ĐÁN 2026 ------------------------------
-        case 'tet_red_gold_silk': {
-            ctx.fillStyle = '#B31B1B'; // Deep Red
-            ctx.fillRect(0, 0, W, H);
-            
-            // Thêm hiệu ứng lụa/gold (simple)
-            ctx.globalCompositeOperation = 'overlay';
-            ctx.globalAlpha = 0.3;
-            const grad = ctx.createLinearGradient(0, 0, W, H);
-            grad.addColorStop(0, '#FFD700'); // Gold
-            grad.addColorStop(1, '#FFFFFF'); // White
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, W, H);
-            
-            // Thêm ánh kim lấp lánh nhẹ (simple noise)
-            addGrain(0.08, 0, 0, W, H, ctx);
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
-            break;
+    // Helper: Checkerboard
+    const drawCheckerboard = (ctx, W, H, color1, color2, size) => {
+        for (let i = 0; i < W; i += size) {
+            for (let j = 0; j < H; j += size) {
+                ctx.fillStyle = ((i / size) % 2 === (j / size) % 2) ? color1 : color2;
+                ctx.fillRect(i, j, size, size);
+            }
         }
-        case 'tet_cherry_blossom': {
-            ctx.fillStyle = '#FFF0F5'; // Lavender Blush
-            ctx.fillRect(0, 0, W, H);
-            // Họa tiết hoa mai/đào
-            ctx.globalAlpha = 0.6;
-            ctx.fillStyle = 'rgba(255, 192, 203, 0.4)'; // Pink petal
-            const petalSize = W / 20;
-            for(let i=0; i<80; i++) {
+    };
+    
+    // Helper: Stripes
+    const drawStripes = (ctx, W, H, color1, color2, size) => {
+        for (let i = 0; i < W; i += size) {
+            ctx.fillStyle = (Math.floor(i / size) % 2 === 0) ? color1 : color2;
+            ctx.fillRect(i, 0, size, H);
+        }
+    };
+    
+    // Helper: Knit (Simple)
+    const drawKnit = (ctx, W, H, color1, color2) => {
+        ctx.fillStyle = color1;
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = color2;
+        ctx.lineWidth = W / 100;
+        ctx.globalAlpha = 0.8;
+        const spacing = W / 15;
+        for (let i = spacing; i < W; i += spacing) {
+            for (let j = spacing; j < H; j += spacing) {
                 ctx.beginPath();
-                ctx.arc(Math.random() * W, Math.random() * H, petalSize, 0, 2 * Math.PI);
-                ctx.fill();
+                ctx.moveTo(i, j - spacing * 0.3);
+                ctx.lineTo(i, j + spacing * 0.3);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(i - spacing * 0.3, j);
+                ctx.lineTo(i + spacing * 0.3, j);
+                ctx.stroke();
             }
-            ctx.globalAlpha = 1;
-            break;
         }
-        case 'tet_banh_chung_green': {
-            ctx.fillStyle = '#38761D'; // Dark Forest Green (Lá chuối)
-            ctx.fillRect(0, 0, W, H);
-            // Thêm texture nhẹ
-            addGrain(0.1, 0, 0, W, H, ctx);
-            break;
+        ctx.globalAlpha = 1;
+    };
+    
+    // Helper: Pattern (Simple Noise)
+    const addNoise = (ctx, W, H, color, alpha) => {
+        ctx.fillStyle = color;
+        ctx.globalAlpha = alpha;
+        for(let i=0; i<W*H*0.05; i++) { // 5% coverage
+            ctx.fillRect(Math.random() * W, Math.random() * H, 1, 1);
         }
-        case 'tet_firecracker_pattern': {
-            ctx.fillStyle = '#000080'; // Navy Blue
-            ctx.fillRect(0, 0, W, H);
-            // Họa tiết pháo bông (gold/red dots)
-            drawDots(ctx, W, H, '#FFD700', W/80, W/15, 0.7);
-            drawDots(ctx, W, H, '#FF0000', W/100, W/15, 0.7);
+        ctx.globalAlpha = 1;
+    }
+    
+    // Helper: Heart Shape
+    const drawHeartShape = (ctx, cx, cy, s, color) => {
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.5;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + s * 0.3);
+        ctx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
+        ctx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
+        ctx.fill();
+        ctx.restore();
+    }
+
+
+    switch(config.type) {
+        case 'pattern_checker': 
+            drawCheckerboard(ctx, W, H, config.color, config.color2, W / 10);
             break;
-        }
-        case 'tet_lucky_money': {
-            const grad = ctx.createLinearGradient(0, 0, W, H);
-            grad.addColorStop(0, '#C93C37'); // Deep Red
-            grad.addColorStop(1, '#FF7F50'); // Coral (Goldish tone)
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, W, H);
-            // Thêm texture tiền lì xì (simple noise)
-            addGrain(0.15, 0, 0, W, H, ctx);
+            
+        case 'pattern_stripes':
+            drawStripes(ctx, W, H, config.color, config.color2, config.size);
             break;
-        }
-        case 'tet_golden_dragon': {
-            const grad = ctx.createLinearGradient(0, 0, W, H);
-            grad.addColorStop(0, '#FFD700'); // Gold
-            grad.addColorStop(1, '#FFA500'); // Orange
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, W, H);
-            // Faking scale texture
-            ctx.globalAlpha = 0.2;
-            ctx.fillStyle = '#000000';
-            const size = W / 15;
-            for(let x = 0; x < W; x += size) {
-                for(let y = 0; y < H; y += size) {
-                    ctx.beginPath();
-                    ctx.arc(x, y, size/4, 0, 2 * Math.PI);
-                    ctx.fill();
-                }
-            }
-            ctx.globalAlpha = 1;
-            break;
-        }
-        case 'tet_bamboo_stripes': {
-            drawStripes(ctx, W, H, '#D4F0C0', '#6B8E23'); // Pale Green / Olive Green
-            break;
-        }
-        case 'tet_lantern_glow': {
-            const grad = ctx.createRadialGradient(W*0.5, H*0.5, W*0.1, W*0.5, H*0.5, W*0.5);
-            grad.addColorStop(0, '#FFD700'); // Gold (Center)
-            grad.addColorStop(1, '#8B0000'); // Dark Red (Edge)
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, W, H);
-            break;
-        }
-        case 'tet_calligraphy_paper': {
-            ctx.fillStyle = '#8B0000'; // Dark Red
-            ctx.fillRect(0, 0, W, H);
-            // Texture giấy
-            addGrain(0.1, 0, 0, W, H, ctx);
-            break;
-        }
-        case 'tet_minimal_auspice': {
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, W, H);
-            drawDots(ctx, W, H, 'rgba(255, 215, 0, 0.5)', W/100, W/10, 1);
-            drawDots(ctx, W, H, 'rgba(255, 0, 0, 0.5)', W/100, W/10, 1);
-            break;
-        }
         
-        // ------------------------------ GIÁNG SINH ------------------------------
-        case 'xmas_red_white_stripes': {
-            drawStripes(ctx, W, H, '#FF0000', '#FFFFFF'); // Red / White
+        case 'pattern_knit':
+            drawKnit(ctx, W, H, config.color, config.color2);
             break;
-        }
-        case 'xmas_pine_forest_green': {
-            ctx.fillStyle = '#013220'; // Deep Forest Green
+            
+        case 'pattern_firecracker': {
+            ctx.fillStyle = config.color; // Base color
             ctx.fillRect(0, 0, W, H);
-            break;
-        }
-        case 'xmas_snowy_bokeh': {
-            ctx.fillStyle = '#191970'; // Midnight Blue
-            ctx.fillRect(0, 0, W, H);
-            // Bokeh/Snow effect
-            ctx.globalAlpha = 0.6;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.strokeStyle = '#FFD700'; // Gold
+            ctx.lineWidth = W / 300;
+            ctx.globalAlpha = 0.5;
             for(let i=0; i<50; i++) {
                 ctx.beginPath();
-                ctx.arc(Math.random() * W, Math.random() * H, W/50, 0, 2 * Math.PI);
-                ctx.fill();
-            }
-            ctx.globalAlpha = 1;
-            break;
-        }
-        case 'xmas_gold_glitter': {
-            ctx.fillStyle = '#B8860B'; // DarkGoldenrod
-            ctx.fillRect(0, 0, W, H);
-            // Glitter (heavy grain/noise)
-            addGrain(0.8, 0, 0, W, H, ctx);
-            break;
-        }
-        case 'xmas_cozy_knit': {
-            ctx.fillStyle = '#FAF0E6'; // Linen (Base Color)
-            ctx.fillRect(0, 0, W, H);
-            // Faking knit lines (simple diagonal)
-            ctx.globalAlpha = 0.3;
-            ctx.strokeStyle = '#8B0000'; // Dark Red
-            ctx.lineWidth = W / 80;
-            for(let x = 0; x < W + H; x += W/15) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x - H, H);
+                const x = Math.random() * W;
+                const y = Math.random() * H;
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + Math.random() * 20 - 10, y + Math.random() * 20 - 10);
                 ctx.stroke();
             }
             ctx.globalAlpha = 1;
             break;
         }
-        case 'xmas_gingerbread': {
-            ctx.fillStyle = '#8B4513'; // Saddle Brown
+        
+        case 'pattern_coin': {
+            ctx.fillStyle = '#EBEBEB'; // Light background
             ctx.fillRect(0, 0, W, H);
-            // Icing texture (light)
-            addGrain(0.1, 0, 0, W, H, ctx);
-            break;
-        }
-        case 'xmas_santa_suit': {
-            ctx.fillStyle = '#B22222'; // Firebrick Red
-            ctx.fillRect(0, 0, W, H);
-            // Nút trắng (simple)
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(W/2 - W/20, H/2 - W/20, W/10, W/10);
-            break;
-        }
-        case 'xmas_holly_berries': {
-            ctx.fillStyle = '#F0FFF0'; // Honeydew
-            ctx.fillRect(0, 0, W, H);
-            drawDots(ctx, W, H, '#006400', W/50, W/10, 0.7); // Green Leaves (large dots)
-            drawDots(ctx, W, H, '#8B0000', W/100, W/10, 1); // Red Berries (small dots)
-            break;
-        }
-        case 'xmas_minimal_white': {
-            ctx.fillStyle = '#F5F5F5'; // White Smoke
-            ctx.fillRect(0, 0, W, H);
-            // Subtle snow effect (tiny white dots)
-            drawDots(ctx, W, H, 'rgba(255, 255, 255, 0.7)', 1, 10, 1);
-            break;
-        }
-        case 'xmas_twinkle_lights': {
-            ctx.fillStyle = '#1C1C1C'; // Dark Grey
-            ctx.fillRect(0, 0, W, H);
-            // Scattered colored lights
-            const lightColors = ['#FFD700', '#FF0000', '#00FF00', '#ADD8E6'];
+            ctx.fillStyle = '#FFD700'; // Gold coin
             ctx.globalAlpha = 0.8;
             for(let i=0; i<30; i++) {
-                ctx.fillStyle = lightColors[i % lightColors.length];
                 ctx.beginPath();
-                ctx.arc(Math.random() * W, Math.random() * H, W/80, 0, 2 * Math.PI);
+                ctx.arc(Math.random() * W, Math.random() * H, W / 20, 0, 2 * Math.PI);
                 ctx.fill();
             }
             ctx.globalAlpha = 1;
-            break;
-        }
-        
-        // ------------------------------ TÌNH YÊU ------------------------------
-        case 'love_hot_pink_blur': {
-            const grad = ctx.createRadialGradient(W*0.5, H*0.5, W*0.1, W*0.5, H*0.5, W*0.5);
-            grad.addColorStop(0, '#FF69B4'); // Hot Pink
-            grad.addColorStop(1, '#FFC0CB'); // Pink
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, W, H);
-            // Blur effect (simple noise/grain)
-            addGrain(0.2, 0, 0, W, H, ctx);
-            break;
-        }
-        case 'love_watercolor_hearts': {
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, W, H);
-            const heartSize = W / 10;
-            const heartColors = ['rgba(255, 105, 180, 0.9)', 'rgba(255, 0, 0, 0.9)'];
-            // Draw hearts (less transparent to ensure visible)
-            for(let i=0; i<10; i++) {
-                drawWatercolorHeart(ctx, Math.random() * W, Math.random() * H, heartSize, heartColors[i % 2]);
-            }
-            break;
-        }
-        case 'love_rose_petals': {
-            const grad = ctx.createLinearGradient(0, 0, W, H);
-            grad.addColorStop(0, '#800000'); // Maroon
-            grad.addColorStop(1, '#FFC0CB'); // Pink
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, W, H);
-            break;
-        }
-        case 'love_scribble_lines': {
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, W, H);
-            ctx.globalAlpha = 0.5;
-            ctx.strokeStyle = '#FF0000'; // Red
-            ctx.lineWidth = 1;
-            for(let i=0; i<20; i++) {
-                ctx.beginPath();
-                ctx.moveTo(Math.random() * W, Math.random() * H);
-                ctx.lineTo(Math.random() * W, Math.random() * H);
-                ctx.stroke();
-            }
-            ctx.globalAlpha = 1;
-            break;
-        }
-        case 'love_velvet_magenta': {
-            ctx.fillStyle = '#800080'; // Purple
-            ctx.fillRect(0, 0, W, H);
-            // Velvet texture (soft grain)
-            addGrain(0.2, 0, 0, W, H, ctx);
-            break;
-        }
-        case 'love_couple_galaxy': {
-            ctx.fillStyle = '#191970'; // Midnight Blue
-            ctx.fillRect(0, 0, W, H);
-            // Starry/Nebula effect
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.5;
-            const starColors = ['#FFC0CB', '#ADD8E6', '#FFFFFF'];
-            for(let i=0; i<50; i++) {
-                ctx.fillStyle = starColors[i % 3];
-                ctx.beginPath();
-                ctx.arc(Math.random() * W, Math.random() * H, Math.random() * 2, 0, 2 * Math.PI);
-                ctx.fill();
-            }
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
-            break;
-        }
-        case 'love_checkerboard_pink': {
-            drawCheckerboard(ctx, W, H, '#FFC0CB', '#FFFFFF', W / 10); // Pink / White
-            break;
-        }
-        case 'love_soft_peach_glow': {
-            const grad = ctx.createRadialGradient(W*0.5, H*0.5, W*0.1, W*0.5, H*0.5, W*0.4);
-            grad.addColorStop(0, '#FFDAB9'); // Peach Puff
-            grad.addColorStop(1, '#FAEBD7'); // Antique White
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, W, H);
-            break;
-        }
-        case 'love_minimal_line': {
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, W, H);
-            ctx.strokeStyle = '#FF69B4'; // Hot Pink
-            ctx.lineWidth = W / 50;
-            // Simple inner border
-            ctx.strokeRect(W/20, H/20, W * 0.9, H * 0.9);
-            break;
-        }
-        case 'love_polaroid_tape': {
-            ctx.fillStyle = '#F5F5DC'; // Beige (Cream)
-            ctx.fillRect(0, 0, W, H);
-            // Simple tape simulation (two strips)
-            ctx.fillStyle = 'rgba(200, 200, 200, 0.4)';
-            const tapeHeight = H * 0.05;
-            ctx.fillRect(W/4 - 10, H*0.1, W/2, tapeHeight);
-            ctx.fillRect(W/4 + 10, H*0.9 - tapeHeight, W/2, tapeHeight);
+            addNoise(ctx, W, H, 'black', 0.1); // Add some texture
             break;
         }
 
-        // --- Mặc định (Trắng Tối Giản) ---
-        case 'default':
+        case 'solid':
         default:
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, W, H);
+            // Xử lý các solid background có thêm hiệu ứng nếu cần
+            if (backgroundId === 'tet_golden_dragon') {
+                const grad = ctx.createLinearGradient(0, 0, W, H);
+                grad.addColorStop(0, '#FFD700'); // Gold
+                grad.addColorStop(1, '#B8860B'); // Darker Gold
+                ctx.fillStyle = grad;
+                ctx.globalAlpha = 0.1;
+                ctx.fillRect(0, 0, W, H);
+                ctx.globalAlpha = 1;
+            } else if (backgroundId === 'xmas_snowy_bokeh') {
+                // Thêm hiệu ứng bokeh trắng
+                ctx.globalCompositeOperation = 'screen';
+                ctx.globalAlpha = 0.7;
+                ctx.fillStyle = '#FFFFFF';
+                for (let i = 0; i < 50; i++) {
+                    const radius = Math.random() * W * 0.05 + W * 0.01;
+                    ctx.beginPath();
+                    ctx.arc(Math.random() * W, Math.random() * H, radius, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 1;
+            } else if (backgroundId === 'xmas_gold_glitter') {
+                addNoise(ctx, W, H, '#FFD700', 0.4);
+            } else if (backgroundId === 'love_watercolor_hearts') {
+                // Simple Heart Scatter
+                const heartColor = 'rgba(255, 105, 180, 0.5)';
+                for (let i = 0; i < 20; i++) {
+                    drawHeartShape(ctx, Math.random() * W, Math.random() * H, W / 15, heartColor);
+                }
+            } else if (backgroundId === 'love_couple_galaxy') {
+                ctx.fillStyle = '#191970'; // Midnight Blue
+                ctx.fillRect(0, 0, W, H);
+                // Starry/Nebula effect
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.globalAlpha = 0.5;
+                const starColors = ['#FFC0CB', '#ADD8E6', '#FFFFFF'];
+                for(let i=0; i<50; i++) {
+                    ctx.fillStyle = starColors[i % 3];
+                    ctx.beginPath();
+                    ctx.arc(Math.random() * W, Math.random() * H, Math.random() * 2, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 1;
+            } else if (backgroundId === 'love_scribble_lines') {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, W, H);
+                ctx.strokeStyle = '#FF69B4';
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 0.5;
+                for(let i=0; i<20; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(Math.random() * W, Math.random() * H);
+                    ctx.lineTo(Math.random() * W, Math.random() * H);
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+            }
             break;
     }
     
-    ctx.restore();
+    // Vẽ phần chân trắng/text strip nếu layout là Vertical
+    if (layout === 'vertical') {
+        const textStripConfig = getBackgroundConfig(backgroundId, true);
+        ctx.fillStyle = textStripConfig.color;
+        ctx.fillRect(0, textStripYStart, W, textStripTotalHeight);
+        
+        // Vẽ lại background pattern nếu có, chỉ trong vùng text strip
+        // Tùy chỉnh để không lặp lại pattern, chỉ dùng màu solid
+    } else {
+        // Layout Grid (2x2), vẽ chân trắng/text strip ở dưới cùng
+        const textStripConfig = getBackgroundConfig(backgroundId, true);
+        ctx.fillStyle = textStripConfig.color;
+        ctx.fillRect(0, textStripYStart, W, textStripTotalHeight);
+    }
 }
 
-// Merge Strip Logic
-async function mergeStrip(images) {
-    if (images.length !== 4) return;
+
+// Merge 4 ảnh thành 1 strip cuối cùng (Đã sửa lỗi ReferenceError)
+async function mergeAndShowFinal() {
+    if (captures.length !== 4) return;
     
-    const photoW = BASE_FRAME_H; 
-    const photoH = BASE_FRAME_H; 
-    const innerBorderColor = '#F0F0F0';
-    
-    const layout = layoutSelect.value;
     const backgroundId = backgroundSelect.value;
-    const overlayId = overlaySelect.value;
+    const layout = layoutSelect.value;
     const customText = customStripText.value.toUpperCase();
-
-    // Lấy các tham số kích thước dựa trên layout
-    const stripMarginX = VERT_MARGIN_X;
-    const vertTextH = VERT_TEXT_H;
-    const vertMarginY = VERT_MARGIN_Y;
-    const gridOuterPadding = GRID_OUTER_PADDING;
-    const gridGap = GRID_GAP;
-    const gridTextH = GRID_TEXT_H;
-
-    let W, H;
-    let textStripYStart, textStripTotalHeight;
-    const numPhotos = images.length;
+    const images = captures;
     
-    // 1. Tính toán kích thước canvas cuối cùng (W, H)
+    // Tỷ lệ ảnh 1:1, cố định W/H là 1080px
+    const photoW = 1080;
+    const photoH = 1080;
+    const numPhotos = 4;
+    
+    let W, H, textStripYStart, textStripTotalHeight;
+    const innerBorderColor = '#F0F0F0'; // Màu khung ảnh
+    
+    // Tính toán chiều cao cần thiết cho phần chân trắng Instax
+    const textStripHeight = photoW * instaxRatio - photoH; 
+
     if (layout === 'vertical') {
-        const numPrevGaps = numPhotos - 1;
-        W = photoW + stripMarginX * 2; 
-        H = numPhotos * photoH + numPrevGaps * VERT_GAP + vertTextH + vertMarginY * 2; 
-        textStripYStart = vertMarginY + numPhotos * photoH + numPrevGaps * VERT_GAP;
-        textStripTotalHeight = vertTextH + vertMarginY; 
+        // Vertical Strip
+        const numPrevGaps = 3; 
+        
+        // SỬ DỤNG HẰNG SỐ TOÀN CỤC: VERT_MARGIN_X, VERT_MARGIN_Y
+        W = photoW + VERT_MARGIN_X * 2;
+        H = numPhotos * photoH + numPrevGaps * VERT_GAP + textStripHeight + VERT_MARGIN_Y * 2;
+        
+        textStripYStart = VERT_MARGIN_Y + numPhotos * photoH + numPrevGaps * VERT_GAP;
+        textStripTotalHeight = textStripHeight + VERT_MARGIN_Y; 
+        
         stripSizeText.textContent = `${W} x ${H} pixels (Fixed 1:1 Photo)`;
-    } else { // Grid (2x2) - BORDERLESS
-        W = 2 * photoW + gridGap + 2 * gridOuterPadding; 
-        H = 2 * photoH + gridGap + 2 * gridOuterPadding + gridTextH; 
-        textStripYStart = 2 * photoH + gridGap + 2 * gridOuterPadding; 
-        textStripTotalHeight = gridTextH; 
+    } else {
+        // Grid (2x2) - BORDERLESS
+        
+        // SỬ DỤNG HẰNG SỐ TOÀN CỤC: GRID_OUTER_PADDING, GRID_GAP
+        W = 2 * photoW + GRID_GAP + 2 * GRID_OUTER_PADDING;
+        H = 2 * photoH + GRID_GAP + 2 * GRID_OUTER_PADDING + textStripHeight;
+        
+        textStripYStart = 2 * photoH + GRID_GAP + 2 * GRID_OUTER_PADDING;
+        textStripTotalHeight = textStripHeight;
+        
         stripSizeText.textContent = `${W} x ${H} pixels (Fixed 1:1 Photo)`;
     }
     
@@ -1968,132 +1796,107 @@ async function mergeStrip(images) {
     
     // 2. Vẽ Background
     drawComplexBackground(ctx, W, H, backgroundId, layout, textStripYStart, textStripTotalHeight);
-    
+
     // 3. Vẽ 4 ảnh
     const loadedImages = await Promise.all(images.map(loadImg));
     
     for (let i = 0; i < numPhotos; i++) {
         const img = loadedImages[i];
         let finalImageX, finalImageY;
-        
+
         if (layout === 'vertical') {
             const numPrevGaps = i;
-            finalImageX = stripMarginX;
-            finalImageY = vertMarginY + i * photoH + numPrevGaps * VERT_GAP; 
-        } else { // Grid (2x2)
+            finalImageX = VERT_MARGIN_X;
+            finalImageY = VERT_MARGIN_Y + i * photoH + numPrevGaps * VERT_GAP;
+        } else {
+            // Grid (2x2)
             const col = i % 2;
             const row = Math.floor(i / 2);
-            finalImageX = gridOuterPadding + col * (photoW + gridGap);
-            finalImageY = gridOuterPadding + row * (photoH + gridGap);
+            finalImageX = GRID_OUTER_PADDING + col * (photoW + GRID_GAP);
+            finalImageY = GRID_OUTER_PADDING + row * (photoH + GRID_GAP);
         }
-        
+
         // DRAW Photo (Border-less)
         ctx.fillStyle = innerBorderColor;
-        ctx.fillRect(finalImageX - INNER_BORDER, finalImageY - INNER_BORDER, photoW + 2*INNER_BORDER, photoH + 2*INNER_BORDER);
-        
-        // [CẬP NHẬT LOGIC] Vẽ viền 4px bao quanh ảnh (Tăng độ nổi bật)
-        ctx.strokeStyle = FINAL_PHOTO_BORDER_COLOR;
-        ctx.lineWidth = FINAL_PHOTO_BORDER_WIDTH;
-        ctx.strokeRect(finalImageX, finalImageY, photoW, photoH);
+        ctx.fillRect(finalImageX - INNER_BORDER, finalImageY - INNER_BORDER, photoW + 2 * INNER_BORDER, photoH + 2 * INNER_BORDER);
         
         ctx.drawImage(img, finalImageX, finalImageY, photoW, photoH);
+    }
+    
+    // 4. Vẽ Text Strip (Chỉ vẽ nếu có text)
+    if (customText) {
+        // Lấy config màu chữ từ background
+        const bgConfig = getBackgroundConfig(backgroundId, true);
         
-        // 3. Áp dụng Overlay/Filter cho từng ảnh
-        drawOverlayFrame_ORIGINAL(ctx, finalImageX, finalImageY, photoW, photoH, overlayId);
+        // Quyết định màu chữ
+        let textColor = bgConfig.isDark ? 'white' : 'black';
+        
+        // Vẽ Main Text (INSTAX MOMENT / Custom Text)
+        ctx.fillStyle = textColor;
+        ctx.textAlign = 'center';
+
+        let finalFontSize = layout === 'vertical' ? 50 : 60;
+        if (customText.length > 20) {
+            finalFontSize = layout === 'vertical' ? 30 : 40;
+        } else if (customText.length > 15) {
+            finalFontSize = layout === 'vertical' ? 40 : 50;
+        }
+        
+        let textY;
+        if (layout === 'vertical') {
+            // Text căn giữa trong khung chân trắng (1/2 chiều cao + 1/2 chiều cao text)
+            textY = textStripYStart + (textStripHeight + VERT_MARGIN_Y) / 2 + finalFontSize / 3;
+        } else {
+            // Text căn giữa trong khung chân trắng của Grid
+            textY = textStripYStart + textStripHeight / 2 + finalFontSize / 3;
+        }
+
+        ctx.font = `bold ${finalFontSize}px Nunito, sans-serif`;
+        ctx.fillText(customText, W / 2, textY);
+
+        // Vẽ Sub-text (Date/Time)
+        ctx.font = `italic ${layout === 'vertical' ? 18 : 22}px Varela Round, sans-serif`;
+        // Set màu chữ mờ
+        ctx.fillStyle = (['tet_red_gold_silk', 'tet_firecracker_pattern', 'tet_lucky_money', 'tet_lantern_glow', 'tet_calligraphy_paper', 'xmas_pine_forest_green', 'xmas_snowy_bokeh', 'xmas_gold_glitter', 'xmas_gingerbread', 'xmas_santa_suit', 'love_rose_petals', 'love_velvet_magenta', 'love_couple_galaxy'].includes(backgroundId) ? 'rgba(255,255,255,0.7)' : 'rgba(60,70,90,0.7)');
+        ctx.textAlign = 'center';
+        
+        const dateText = getFormattedNow();
+        
+        let dateY = textStripYStart + (layout === 'vertical' ? textStripHeight + VERT_MARGIN_Y - 30 : textStripHeight - 30);
+        
+        // Điều chỉnh vị trí Date/Time (Nếu có Custom Text thì đẩy xuống)
+        if (customText) {
+            dateY = textY + finalFontSize * 0.7;
+        }
+
+        ctx.fillText(dateText, W / 2, dateY);
     }
     
-    // 4. Vẽ Header/Footer Text Strip
-    // Điều chỉnh màu chữ cho các theme nền đậm
-    if (['tet_red_gold_silk', 'tet_firecracker_pattern', 'tet_lucky_money', 'tet_lantern_glow', 'tet_calligraphy_paper', 'xmas_pine_forest_green', 'xmas_snowy_bokeh', 'xmas_gold_glitter', 'xmas_gingerbread', 'xmas_santa_suit', 'love_rose_petals', 'love_velvet_magenta', 'love_couple_galaxy'].includes(backgroundId)) {
-        ctx.fillStyle = '#FFFFFF';
-    } else {
-        ctx.fillStyle = '#333333';
-    }
-
-    ctx.save();
-    ctx.textAlign = 'center';
-
-    // Vẽ text chính
-    ctx.font = `bold ${layout === 'vertical' ? 50 : 60}px Nunito, sans-serif`;
-    let textY = textStripYStart + (layout === 'vertical' ? vertTextH : gridTextH) / 2;
-    textY -= (layout === 'vertical' ? 20 : 30); 
+    // 5. Cập nhật Final Preview
+    const newFinalImg = document.createElement('img');
+    newFinalImg.src = canvas.toDataURL('image/png');
+    finalPreview.innerHTML = '';
+    finalPreview.appendChild(newFinalImg);
     
-    let finalFontSize = layout === 'vertical' ? 50 : 60;
-    if (customText.length > 20) {
-        finalFontSize = layout === 'vertical' ? 30 : 40;
-    } else if (customText.length > 15) {
-        finalFontSize = layout === 'vertical' ? 40 : 50;
-    }
-    ctx.font = `bold ${finalFontSize}px Nunito, sans-serif`;
-
-    ctx.fillText(customText, W / 2, textY);
-
-    // Vẽ Sub-text (Date/Time)
-    ctx.font = `italic ${layout === 'vertical' ? 18 : 22}px Varela Round, sans-serif`;
-    // Set màu chữ mờ
-    ctx.fillStyle = (['tet_red_gold_silk', 'tet_firecracker_pattern', 'tet_lucky_money', 'tet_lantern_glow', 'tet_calligraphy_paper', 'xmas_pine_forest_green', 'xmas_snowy_bokeh', 'xmas_gold_glitter', 'xmas_gingerbread', 'xmas_santa_suit', 'love_rose_petals', 'love_velvet_magenta', 'love_couple_galaxy'].includes(backgroundId)
-        ? 'rgba(255,255,255,0.7)' : 'rgba(60,70,90,0.7)');
-
-    ctx.textAlign = 'center';
-    const dateText = getFormattedNow();
-    let dateY = textStripYStart + (layout === 'vertical' ? vertTextH : gridTextH) / 2 + (layout === 'vertical' ? 15 : 20); 
+    // Cập nhật aspect-ratio cho khung preview
+    finalPreview.style.aspectRatio = `${W} / ${H}`;
     
-    ctx.fillText(dateText, W / 2, dateY);
-    
-    ctx.restore();
-    
-    return { dataUrl: canvas.toDataURL('image/png'), W: W, H: H };
+    // Lưu DataURL và hiển thị nút download
+    finalImageDataUrl = newFinalImg.src;
+    finalActionsEl.style.display = 'flex';
 }
 
-
-function mergeAndShowFinal() {
-    mergeStrip(captures).then(result => {
-        showFinal(result);
-    }).catch(e => {
-        console.error('Lỗi khi ghép ảnh:', e);
-        finalPreview.innerHTML = '<div class="small" style="color:red">Lỗi khi ghép ảnh. Xem console.</div>';
+// Helper: Tải ảnh từ DataURL
+function loadImg(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
     });
 }
 
-function addThumbnail(imgDataUrl, index){
-    const wrapper = document.createElement('div');
-    wrapper.className = 'instax-thumb-frame';
-    wrapper.dataset.index = index;
-    wrapper.style.aspectRatio = getInstaxFilmRatio('square') + ' / 1';
-    const img = document.createElement('img');
-    img.src = imgDataUrl;
-    img.alt = `Pose ${index}`;
-    wrapper.appendChild(img);
-    wrapper.onclick = () => {
-        triggerDownload(imgDataUrl, `photobooth_pose_${index}_${dateForFilename()}.png`);
-    };
-    previewGrid.appendChild(wrapper);
-}
-
-function showFinal(result){
-    finalPreview.innerHTML = '';
-    finalImageDataUrl = result.dataUrl;
-    finalActionsEl.style.display = 'flex';
-    // Áp dụng tỷ lệ động đã tính toán
-    finalPreview.style.aspectRatio = `${result.W} / ${result.H}`;
-    const img = document.createElement('img');
-    img.src = result.dataUrl;
-    finalPreview.appendChild(img);
-    finalPreview.style.width = 'auto';
-    finalPreview.style.height = 'auto';
-}
-
-function resetAll(){
-    captures = [];
-    previewGrid.innerHTML = '';
-    finalPreview.innerHTML = '<div class="small">Chưa có ảnh</div>';
-    finalImageDataUrl = null;
-    finalActionsEl.style.display = 'none';
-    finalPreview.style.width = 'auto';
-    finalPreview.style.height = 'auto';
-    enableControls();
-}
-
+// Helper: Tải file xuống
 function triggerDownload(dataUrl, filename) {
     const a = document.createElement('a');
     a.href = dataUrl;
@@ -2103,27 +1906,37 @@ function triggerDownload(dataUrl, filename) {
     document.body.removeChild(a);
 }
 
-function dateForFilename(){
-    const now = new Date();
-    const Y = now.getFullYear();
-    const M = String(now.getMonth() + 1).padStart(2, '0');
-    const D = String(now.getDate()).padStart(2, '0');
-    const h = String(now.getHours()).padStart(2, '0');
-    const m = String(now.getMinutes()).padStart(2, '0');
-    const s = String(now.getSeconds()).padStart(2, '0');
-    return `${Y}${M}${D}_${h}${m}${s}`;
+// Helper: Lấy thời gian hiện tại
+function getFormattedNow() {
+    return new Date().toLocaleString('en-US', {
+        timeZone: timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false 
+    }).replace(/,/, '').replace(/\//g, '.'); // Format 01.01.2025 10:30:00
 }
 
+function dateForFilename() {
+    const now = new Date();
+    return `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+}
 
-// Khởi tạo
+// ---------------- INITIALIZATION ----------------
 window.onload = () => {
+    // Tải camera và resize overlay khi trang load
+    // startCamera(); // Bỏ tự động start, chờ nút bấm
+
     document.getElementById('startPhotoboothBtn').addEventListener('click', () => {
         showCaptureScreen();
         startCamera();
     });
     
     document.getElementById('startBtn').addEventListener('click', startPhotobooth);
-    document.getElementById('redoBtn').addEventListener('click', resetAll);
+    // document.getElementById('redoBtn').addEventListener('click', resetAll); // Đã loại bỏ
     document.getElementById('downloadFinalBtn').addEventListener('click', () => {
         if (finalImageDataUrl) {
             triggerDownload(finalImageDataUrl, `photobooth_strip_${dateForFilename()}.png`);
@@ -2131,8 +1944,10 @@ window.onload = () => {
     });
     document.getElementById('stopCamBtn').addEventListener('click', stopCamera);
     document.getElementById('switchCamBtn').addEventListener('click', switchCamera);
-    document.getElementById('refreshBtn').addEventListener('click', () => window.location.reload());
-    document.getElementById('backToCaptureBtn').addEventListener('click', backToWelcome);
+    // document.getElementById('refreshBtn').addEventListener('click', () => window.location.reload()); // Đã loại bỏ
+    
+    // SỬA LỖI: Thay thế backToWelcome bằng hàm showCaptureScreen đã được định nghĩa
+    document.getElementById('backToCaptureBtn').addEventListener('click', showCaptureScreen);
 
     // Tự động merge lại khi thay đổi tùy chọn
     backgroundSelect.addEventListener('change', () => {
@@ -2160,3 +1975,5 @@ window.onload = () => {
     window.addEventListener('resize', resizeOverlay);
 };
 </script>
+</body>
+</html>
