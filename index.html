@@ -360,20 +360,42 @@
       <div class="option-row" style="width:100%; margin-top:10px;">
           <label class="small">Khung Overlay (cho mỗi ảnh):</label>
           <select id="overlaySelect" style="flex:1;">
-            <option value="none">Không có</option>
+            <option value="none">Không có (Clean)</option>
             <option value="heart_corners">1. Góc Trái Tim (Hồng)</option>
-            <option value="film_damage">2. Hiệu ứng Film Cũ (Trầy xước/Bụi)</option>
+            <option value="film_damage">2. Bụi & Vết Xước (Cổ điển)</option>
+            <option disabled>────── NHIỄU & CỔ ĐIỂN ──────</option>
+            <option value="film_grain_light">3. Hạt Nhiễu Film (Nhẹ)</option>
+            <option value="film_grain_heavy">4. Hạt Nhiễu Film (Nặng)</option>
+            <option value="vintage_sepia_light">5. Màu Nâu Đỏ (Sepia Nhẹ)</option>
+            <option value="faded_matte">6. Hiệu ứng Mờ Nhạt (Matte)</option>
+            <option value="dust_scratches_medium">7. Bụi & Vết Xước (Trung bình)</option>
+            
+            <option disabled>──────── ÁNH SÁNG ────────</option>
+            <option value="golden_light_leak">8. Rò Rỉ Ánh Sáng (Vàng)</option>
+            <option value="sunset_light_leak">9. Rò Rỉ Ánh Sáng (Hoàng Hôn)</option>
+            <option value="soft_bokeh">10. Hiệu ứng Bokeh (Mờ nhẹ)</option>
+            <option value="blue_vignette">11. Tối Góc (Xanh Lạnh)</option>
+            <option value="rainbow_prism">12. Vệt Lăng Kính (Cầu Vồng)</option>
+            <option value="film_burn_top">13. Cháy Film (Top)</option>
+            
+            <option disabled>──────── KHUNG & HÌNH DẠNG ────────</option>
+            <option value="polaroid_border_thin">14. Khung Trong (Polaroid Mỏng)</option>
+            <option value="black_frame_thin">15. Viền Đen Mỏng</option>
+            <option value="white_cross_hatch">16. Gạch Chéo Trắng (Texture)</option>
+            <option value="heart_shaped_mask">17. Mask Hình Trái Tim (Viền)</option>
+            <option value="scribble_corners">18. Vẽ Nguệch Ngoạc (Góc)</option>
+            <option value="tape_strip_top">19. Dải Băng Dính (Top)</option>
+            
+            <option disabled>──────── HIỆU ỨNG ĐẶC BIỆT ────────</option>
+            <option value="holographic_glitch">20. Lỗi Hologram (Glitch)</option>
+            <option value="half_tone_dots">21. Chấm Mực (Halftone)</option>
+            <option value="glitter_sparkle">22. Lấp Lánh (Giả)</option>
           </select>
-      </div>
+          </div>
       
       <div class="option-row" style="width:100%; justify-content:flex-start; flex-wrap:nowrap; margin-top:10px;">
         <label class="small" style="white-space:nowrap; margin-left:10px;">Text Strip:</label>
         <input id="customStripText" type="text" value="INSTAX MOMENT" style="flex:1;" maxlength="30" placeholder="VD: INSTAX MOMENT"/>
-      </div>
-      
-      <div class="option-row" style="width:100%; justify-content:flex-start; flex-wrap:nowrap; margin-top:10px;">
-        <label class="small" style="white-space:nowrap; margin-left:10px;">Sticker (Footer):</label>
-        <input id="customStripSticker" type="text" value="⭐" style="width:80px; text-align:center;" maxlength="2" placeholder="VD: ❤️"/>
       </div>
       
       <div class="option-row" style="width:100%; margin-top:10px; margin-bottom: 10px;">
@@ -434,7 +456,6 @@ const finalActionsEl = document.getElementById('finalActions');
 
 // NEW VARIABLES FOR OVERLAY/STICKER
 const overlaySelect = document.getElementById('overlaySelect'); 
-const customStripSticker = document.getElementById('customStripSticker');
 // END NEW VARIABLES
 
 // NEW UI ELEMENTS FOR SCREEN SWITCHING
@@ -466,16 +487,18 @@ let finalImageDataUrl = null;
 
 // CONSTANTS
 const INNER_BORDER = 3; 
+// CẬP NHẬT THEO YÊU CẦU: Tăng khoảng cách giữa các ảnh trong strip dọc
+const VERT_GAP = 40; 
 
 // NEW BASE CONSTANTS for dynamic sizing
 const BASE_FRAME_H = 450; // Chiều cao chuẩn cho một tấm ảnh
 const VERT_MARGIN_X = 30; // Lề X cho strip dọc
+// NEW CONSTANT: Lề trên/dưới cho khối ảnh trong strip dọc (Tương ứng với VERT_GAP)
+const VERT_MARGIN_Y = 40; 
 const VERT_TEXT_H = 250; // Chiều cao khu vực chữ strip dọc
-const GRID_MARGIN = 40; // Lề cho lưới (X, Y, khoảng cách giữa 2 ảnh)
-const GRID_TEXT_RATIO = 0.25; // Tỷ lệ chiều cao khu vực chữ cho lưới (so với 2*BASE_FRAME_H)
-const IMAGE_AREA_TOP_MARGIN = 30; // Margin từ đỉnh tấm film đến ảnh (giả định)
-const IMAGE_AREA_FOOTER_H = 60; // Chiều cao tối thiểu của chân trắng Instax
-
+const GRID_OUTER_PADDING = 40; // Lề ngoài cho lưới (sử dụng thay cho GRID_MARGIN)
+const GRID_GAP = 30; // Khoảng cách giữa các ảnh (ngang/dọc)
+const GRID_TEXT_H = 250; // Chiều cao khu vực chữ cho lưới
 
 // devicePixelRatio helper
 function getDPR(){ return window.devicePixelRatio || 1; }
@@ -658,6 +681,8 @@ function drawFrameLoop(){
 }
 
 function roundRect(ctx, x, y, w, h, r) {
+    // Bắt buộc w và h phải là dương trước khi gọi hàm này
+    // Lỗi IndexSizeError xảy ra nếu r trở thành âm
     if (w < 2 * r) r = w / 2;
     if (h < 2 * r) r = h / 2;
     ctx.beginPath();
@@ -685,6 +710,12 @@ function drawInstaxGuide(ctx, w, h){
     const y_outer = pad;
     const w_outer = w - 2 * pad;
     const h_outer = h - 2 * pad;
+    
+    // FIX: Bổ sung kiểm tra an toàn để ngăn lỗi IndexSizeError nếu camera wrap quá nhỏ
+    if (w_outer <= 0 || h_outer <= 0) {
+        ctx.restore();
+        return; 
+    }
     
     roundRect(ctx, x_outer, y_outer, w_outer, h_outer, cornerRadius);
     ctx.lineWidth = 4;
@@ -776,10 +807,7 @@ layoutSelect.addEventListener('change', () => {
 overlaySelect.addEventListener('change', () => {
     if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal();
 });
-// NEW: Listener cho customStripSticker
-customStripSticker.addEventListener('input', () => {
-    if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal();
-});
+
 
 document.getElementById('downloadFinalBtn').addEventListener('click', () => {
   if (finalImageDataUrl) {
@@ -1086,8 +1114,422 @@ function drawPhoto(ctx, img, x, y, w, h){
   ctx.drawImage(img, dx, dy, dw, dh);
 }
 
-// Draw Overlay on Photo Area (unchanged)
+// CẬP NHẬT LỚN: Draw Overlay on Photo Area
 function drawOverlayFrame(ctx, x, y, w, h, overlayId){
+    if (overlayId === 'none') return;
+    
+    ctx.save();
+    
+    // Set clip path to the photo area
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.clip(); 
+    
+    // --- Helper functions (inside for scope) ---
+    
+    // Helper function for Noise/Grain (changes pixel data)
+    function addGrain(alpha) {
+        // Cần dùng getImageData/putImageData để thay đổi pixel
+        try {
+            const imageData = ctx.getImageData(x, y, w, h);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                // Tạo nhiễu ngẫu nhiên (từ -25 đến +25 * alpha)
+                const grain = (Math.random() - 0.5) * 50 * alpha; 
+                data[i] = data[i] + grain;
+                data[i + 1] = data[i + 1] + grain;
+                data[i + 2] = data[i + 2] + grain;
+            }
+            ctx.putImageData(imageData, x, y);
+        } catch(e) {
+            console.warn('Could not apply addGrain, may be due to CORS on image source if not local:', e);
+        }
+    }
+    
+    // Helper function for Sepia color (changes pixel data)
+    function applySepia() {
+         try {
+            const imageData = ctx.getImageData(x, y, w, h);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                // Sepia conversion matrix
+                data[i] = Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189)); // R
+                data[i + 1] = Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168)); // G
+                data[i + 2] = Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131)); // B
+            }
+            ctx.putImageData(imageData, x, y);
+        } catch(e) {
+            console.warn('Could not apply applySepia, may be due to CORS on image source if not local:', e);
+        }
+    }
+    
+    // Helper for Scratches
+    function addScratches(density, color) {
+        ctx.strokeStyle = color; 
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i < 5 * density; i++) {
+            const sx = x + Math.random() * w;
+            const sy = y + Math.random() * h;
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(sx + Math.random() * 50 - 25, sy + Math.random() * 50 - 25);
+            ctx.stroke();
+        }
+    }
+
+    // --- End Helper functions ---
+    
+    switch(overlayId) {
+        // ---------------------------------
+        // --- HIỆU ỨNG CÓ SẴN (VÀ CƠ BẢN) ---
+        // ---------------------------------
+        case 'heart_corners':
+            const size = Math.min(w, h) / 10; // Kích thước trái tim
+            ctx.fillStyle = '#FF69B4'; // Hot Pink
+
+            const drawHeart = (cx, cy, s) => {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy + s * 0.3);
+                ctx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
+                ctx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
+                ctx.fill();
+            };
+
+            // 4 góc
+            drawHeart(x + size, y + size, size); // Top-Left
+            ctx.save();
+            ctx.scale(-1, 1);
+            drawHeart(-(x + w - size), y + size, size); // Top-Right (mirror X)
+            ctx.restore();
+            ctx.save();
+            ctx.scale(1, -1);
+            drawHeart(x + size, -(y + h - size), size); // Bottom-Left (mirror Y)
+            ctx.restore();
+            ctx.save();
+            ctx.scale(-1, -1);
+            drawHeart(-(x + w - size), -(y + h - size), size); // Bottom-Right (mirror X, Y)
+            ctx.restore();
+            break;
+
+        case 'film_damage':
+            // Simple film dust/scratches overlay
+            ctx.fillStyle = 'rgba(0,0,0,0.1)'; 
+            
+            // Add dust/specks
+            for (let i = 0; i < 50; i++) {
+                ctx.fillRect(x + Math.random() * w, y + Math.random() * h, 1, 1);
+            }
+            
+            // Add light scratches
+            addScratches(1, 'rgba(255,255,255,0.2)');
+            break;
+            
+        // ---------------------------------
+        // --- NHIỄU & CỔ ĐIỂN MỚI ---
+        // ---------------------------------
+        case 'film_grain_light':
+            addGrain(0.3);
+            break;
+        case 'film_grain_heavy':
+            addGrain(0.8);
+            break;
+        case 'vintage_sepia_light':
+            // Sepia
+            applySepia();
+            // Subtle White overlay for fading
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(x, y, w, h);
+            break;
+        case 'faded_matte':
+            // Subtle black/white grain simulation
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(x, y, w, h);
+            // Apply a slight fade to the edges (simulated vignette)
+            const fadeGrad = ctx.createRadialGradient(x + w/2, y + h/2, Math.min(w,h)*0.3, x + w/2, y + h/2, Math.min(w,h)*0.6);
+            fadeGrad.addColorStop(0, 'rgba(0,0,0,0)');
+            fadeGrad.addColorStop(1, 'rgba(0,0,0,0.2)');
+            ctx.fillStyle = fadeGrad;
+            ctx.fillRect(x, y, w, h);
+            break;
+        case 'dust_scratches_medium':
+            // Dust
+            ctx.fillStyle = 'rgba(0,0,0,0.15)'; 
+            for (let i = 0; i < 100; i++) {
+                ctx.fillRect(x + Math.random() * w, y + Math.random() * h, 1, 1);
+            }
+            // Scratches
+            addScratches(2, 'rgba(255,255,255,0.4)');
+            break;
+            
+        // ---------------------------------
+        // --- ÁNH SÁNG MỚI ---
+        // ---------------------------------
+        case 'golden_light_leak':
+            ctx.globalCompositeOperation = 'lighter';
+            const leakGrad = ctx.createRadialGradient(x, y, 0, x, y, w*1.2);
+            leakGrad.addColorStop(0, 'rgba(255, 223, 0, 0.5)'); // Bright Gold
+            leakGrad.addColorStop(0.3, 'rgba(255, 255, 255, 0.1)');
+            leakGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = leakGrad;
+            ctx.beginPath();
+            ctx.arc(x, y, w * 1.5, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            break;
+        case 'sunset_light_leak':
+            ctx.globalCompositeOperation = 'lighter';
+            const sunsetGrad = ctx.createLinearGradient(x, y + h, x + w, y);
+            sunsetGrad.addColorStop(0, 'rgba(255, 100, 0, 0.4)'); // Orange
+            sunsetGrad.addColorStop(0.5, 'rgba(255, 200, 0, 0.3)'); // Yellow
+            sunsetGrad.addColorStop(1, 'rgba(255, 0, 100, 0.2)'); // Pink
+            ctx.fillStyle = sunsetGrad;
+            ctx.fillRect(x, y, w, h);
+            ctx.globalCompositeOperation = 'source-over';
+            break;
+        case 'soft_bokeh':
+            // Simulation: draw a few blurred circles
+            ctx.globalCompositeOperation = 'overlay';
+            ctx.globalAlpha = 0.5;
+            const bokehColors = ['#FFC0CB', '#ADD8E6', '#90EE90'];
+            for(let i=0; i<5; i++) {
+                const cx = x + Math.random() * w;
+                const cy = y + Math.random() * h;
+                const r = Math.min(w,h) * (Math.random() * 0.1 + 0.05);
+                ctx.fillStyle = bokehColors[i % 3];
+                // Faking blur with transparent radial gradient
+                const bGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+                bGrad.addColorStop(0, ctx.fillStyle);
+                bGrad.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = bGrad;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            break;
+        case 'blue_vignette':
+            const blueGrad = ctx.createRadialGradient(x + w/2, y + h/2, Math.min(w,h)*0.3, x + w/2, y + h/2, Math.min(w,h)*0.6);
+            blueGrad.addColorStop(0, 'rgba(0,0,100,0)');
+            blueGrad.addColorStop(1, 'rgba(0,0,50,0.5)'); // Dark Blue
+            ctx.fillStyle = blueGrad;
+            ctx.fillRect(x, y, w, h);
+            break;
+        case 'rainbow_prism':
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.3;
+            const prismGrad = ctx.createLinearGradient(x, y, x + w, y + h);
+            prismGrad.addColorStop(0, 'red');
+            prismGrad.addColorStop(0.2, 'orange');
+            prismGrad.addColorStop(0.4, 'yellow');
+            prismGrad.addColorStop(0.6, 'green');
+            prismGrad.addColorStop(0.8, 'blue');
+            prismGrad.addColorStop(1, 'purple');
+            ctx.fillStyle = prismGrad;
+            ctx.fillRect(x, y, w, h);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            break;
+        case 'film_burn_top':
+            const burnGrad = ctx.createLinearGradient(x, y, x, y + h/2);
+            burnGrad.addColorStop(0, 'rgba(255, 0, 0, 0.6)');
+            burnGrad.addColorStop(0.3, 'rgba(255, 165, 0, 0.3)');
+            burnGrad.addColorStop(0.5, 'rgba(255, 255, 0, 0.1)');
+            burnGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = burnGrad;
+            ctx.fillRect(x, y, w, h);
+            break;
+            
+        // ---------------------------------
+        // --- KHUNG & HÌNH DẠNG MỚI ---
+        // ---------------------------------
+        case 'polaroid_border_thin':
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(x + ctx.lineWidth/2, y + ctx.lineWidth/2, w - ctx.lineWidth, h - ctx.lineWidth);
+            break;
+        case 'black_frame_thin':
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(x + ctx.lineWidth/2, y + ctx.lineWidth/2, w - ctx.lineWidth, h - ctx.lineWidth);
+            break;
+        case 'white_cross_hatch':
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            for(let i=0; i<w; i+=20) {
+                ctx.beginPath();
+                ctx.moveTo(x + i, y);
+                ctx.lineTo(x + i, y + h);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(x, y + i * (h/w));
+                ctx.lineTo(x + w, y + i * (h/w));
+                ctx.stroke();
+            }
+            break;
+        case 'heart_shaped_mask':
+            // Để tạo lỗ hổng, ta phải tắt clip path hiện tại, vẽ hình trái tim, sau đó bật lại clip path
+            ctx.restore(); // Phục hồi clip path (tức là không còn clip path nữa)
+            ctx.save(); // Lưu trạng thái
+            
+            // Kích thước và vị trí trái tim
+            const heartSize = Math.min(w,h) * 0.9;
+            const heartX = x + w/2;
+            const heartY = y + h/2;
+            
+            // 1. Sử dụng globalCompositeOperation = 'destination-out' để làm trong suốt khu vực vẽ
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = '#000000'; 
+            
+            // Vẽ hình trái tim
+            ctx.beginPath();
+            ctx.moveTo(heartX, heartY + heartSize * 0.3);
+            ctx.bezierCurveTo(heartX + heartSize * 0.5, heartY - heartSize * 0.8, heartX + heartSize * 1.0, heartY - heartSize * 0.4, heartX, heartY + heartSize * 0.6);
+            ctx.bezierCurveTo(heartX - heartSize * 1.0, heartY - heartSize * 0.4, heartX - heartSize * 0.5, heartY - heartSize * 0.8, heartX, heartY + heartSize * 0.3);
+            ctx.closePath();
+            ctx.fill(); // Fill trái tim (tạo lỗ hổng)
+            
+            ctx.globalCompositeOperation = 'source-over'; // Trở lại chế độ vẽ bình thường
+            
+            // 2. Vẽ viền trắng xung quanh lỗ hổng
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(heartX, heartY + heartSize * 0.3);
+            ctx.bezierCurveTo(heartX + heartSize * 0.5, heartY - heartSize * 0.8, heartX + heartSize * 1.0, heartY - heartSize * 0.4, heartX, heartY + heartSize * 0.6);
+            ctx.bezierCurveTo(heartX - heartSize * 1.0, heartY - heartSize * 0.4, heartX - heartSize * 0.5, heartY - heartSize * 0.8, heartX, heartY + heartSize * 0.3);
+            ctx.closePath();
+            ctx.stroke();
+            
+            // 3. Khôi phục clip path cho các lần gọi drawOverlayFrame tiếp theo (nếu có)
+            ctx.restore(); 
+            ctx.beginPath();
+            ctx.rect(x, y, w, h);
+            ctx.clip(); 
+            break;
+        case 'scribble_corners':
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 3;
+            
+            const scribble = (sx, sy, isX, isY) => {
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                const len = Math.min(w, h) * 0.15;
+                // Simple scribble simulation
+                ctx.lineTo(sx + (isX ? len : 0), sy + (isY ? len : 0));
+                ctx.lineTo(sx + (isX ? len*0.8 : 0), sy + (isY ? len*0.5 : 0));
+                ctx.lineTo(sx + (isX ? len*1.2 : 0), sy + (isY ? len*0.2 : 0));
+                ctx.stroke();
+            };
+            
+            // Top Left
+            scribble(x + 5, y + 5, true, true);
+            // Top Right
+            ctx.save(); ctx.scale(-1, 1); scribble(-(x + w - 5), y + 5, true, true); ctx.restore();
+            // Bottom Left
+            ctx.save(); ctx.scale(1, -1); scribble(x + 5, -(y + h - 5), true, true); ctx.restore();
+            // Bottom Right
+            ctx.save(); ctx.scale(-1, -1); scribble(-(x + w - 5), -(y + h - 5), true, true); ctx.restore();
+            break;
+        case 'tape_strip_top':
+            // White translucent tape strip at the top
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            const tapeH = h * 0.1;
+            ctx.fillRect(x - 5, y, w + 10, tapeH);
+            
+            // Faking torn edges with small rectangles
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            for(let i=0; i<w/10; i++) {
+                ctx.fillRect(x + i*10 - 5, y + tapeH - 2 + Math.random()*4, 10, 2);
+            }
+            break;
+            
+        // ---------------------------------
+        // --- HIỆU ỨNG ĐẶC BIỆT MỚI ---
+        // ---------------------------------
+        case 'holographic_glitch':
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.5;
+            // Draw some colored scan lines
+            for(let i=0; i<h; i+=10) {
+                const color = ['#FF00FF', '#00FFFF', '#FFFF00'][Math.floor(Math.random() * 3)];
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y + i, w, 2);
+            }
+            
+            // Shift small areas for glitch effect (requires pixel manipulation, may fail with CORS)
+            try {
+                const imageData = ctx.getImageData(x, y, w, h);
+                const data = imageData.data;
+                for(let i=0; i<5; i++) {
+                    const startY = Math.floor(Math.random() * h * 0.8);
+                    const blockH = Math.floor(Math.random() * 10) + 5;
+                    const shift = Math.floor(Math.random() * 20) - 10;
+                    
+                    if (shift !== 0) {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = w;
+                        tempCanvas.height = blockH;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        
+                        const blockData = ctx.getImageData(x, y + startY, w, blockH);
+                        tempCtx.putImageData(blockData, 0, 0);
+                        
+                        ctx.clearRect(x, y + startY, w, blockH);
+                        ctx.drawImage(tempCanvas, x + shift, y + startY);
+                    }
+                }
+            } catch(e) {
+                console.warn('Could not apply glitch shift due to CORS or other error:', e);
+            }
+            
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            break;
+        case 'half_tone_dots':
+            // Simple simulation of a halftone pattern
+            const dotSize = 8;
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            for(let i=0; i<w; i+=dotSize) {
+                for(let j=0; j<h; j+=dotSize) {
+                    const radius = dotSize * 0.4 * (Math.random() * 0.5 + 0.5); // Randomize dot size slightly
+                    ctx.beginPath();
+                    ctx.arc(x + i + dotSize/2, y + j + dotSize/2, radius, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            break;
+        case 'glitter_sparkle':
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = 0.8;
+            for(let i=0; i<200; i++) {
+                const color = ['#FFD700', '#FFFFFF', '#FFC0CB'][Math.floor(Math.random() * 3)];
+                const cx = x + Math.random() * w;
+                const cy = y + Math.random() * h;
+                const size = Math.random() * 2 + 1;
+                ctx.fillStyle = color;
+                ctx.fillRect(cx, cy, size, size);
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            break;
+            
+        default: 
+            // Do nothing
+            break;
+    }
+    
+    ctx.restore(); 
+}
+
+// Draw Overlay on Photo Area (unchanged)
+function drawOverlayFrame_ORIGINAL(ctx, x, y, w, h, overlayId){
     if (overlayId === 'none') return;
     
     ctx.save();
@@ -1149,22 +1591,14 @@ function drawOverlayFrame(ctx, x, y, w, h, overlayId){
     ctx.restore(); 
 }
 
-// Draw Complex Background (unchanged)
-function drawComplexBackground(ctx, W, H, backgroundId, layout, photoH, gridGap){
+// **ĐÃ SỬA LỖI MERGE (Lỗi 2):** Đổi tên tham số cho nhất quán.
+// Hàm này giờ nhận YStart và TextH đã tính toán sẵn.
+function drawComplexBackground(ctx, W, H, backgroundId, layout, textStripYStart, textStripHeight){
     ctx.save();
     
-    // Vùng khu vực chữ strip (tính lại vị trí)
-    let textStripYStart;
-    if (layout === 'vertical') {
-        textStripYStart = 4 * photoH; 
-    } else { 
-        // Lưới: 2*photoH + gridGap + 2*gridOuterPadding (từ mergeStrip)
-        // Vị trí text strip bắt đầu ngay dưới khu vực ảnh
-        const gridOuterPadding = (W - (2 * (W - 2 * 30) / 2 - 30))/2; // Lấy lại gridOuterPadding
-        const photoW = (W - 2*gridOuterPadding - gridGap) / 2;
-        textStripYStart = 2 * photoH + gridGap + 2 * gridOuterPadding; // Dùng 2*gridOuterPadding ở đây để khớp H
-    }
-    const textStripH = H - textStripYStart;
+    // Đảm bảo toàn bộ canvas được fill màu trắng hoặc màu nền chính
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, W, H);
     
     if (backgroundId === 'soft_rose_gradient') {
         const grad = ctx.createLinearGradient(0, 0, W, H);
@@ -1373,7 +1807,12 @@ function drawComplexBackground(ctx, W, H, backgroundId, layout, photoH, gridGap)
         // 2. Vẽ dải màu ở khu vực Footer/Text Strip (Màu xanh Fuji nhẹ nhàng)
         const fujiFooterColor = '#B3D0FF'; // Màu xanh nhạt (Light Fuji Blue)
         ctx.fillStyle = fujiFooterColor;
-        ctx.fillRect(0, textStripYStart, W, textStripH);
+        // Sử dụng textStripHeight đã được tính toán chính xác
+        ctx.fillRect(0, textStripYStart, W, textStripHeight); 
+    } else {
+        // Mặc định (default) - nền trắng
+        ctx.fillStyle = '#FFFFFF'; 
+        ctx.fillRect(0, 0, W, H);
     }
     
     ctx.restore();
@@ -1392,7 +1831,6 @@ async function mergeStrip(images){
     const frameStyle = 'square'; 
     const backgroundId = backgroundSelect.value;
     const overlayId = overlaySelect.value; 
-    const stickerText = customStripSticker.value; 
     
     let W, H; 
     
@@ -1404,33 +1842,47 @@ async function mergeStrip(images){
     const photoW = Math.round(photoH * targetRatio); // 450 (Cố định 1:1)
     
     // Cài đặt margins
-    // Note: VERT_MARGIN_X = 30; VERT_TEXT_H = 250; GRID_MARGIN = 40; 
-    const stripMarginX = 30; // Margin X cho strip dọc (sử dụng VERT_MARGIN_X)
-    const stripTextH = 250; // Chiều cao khu vực chữ (sử dụng VERT_TEXT_H)
+    const stripMarginX = VERT_MARGIN_X; // Margin X cho strip dọc (30)
+    // SỬA: Lấy VERT_MARGIN_Y đã được cập nhật
+    const vertMarginY = VERT_MARGIN_Y; // Margin Y cho khối ảnh strip dọc (40)
+    const vertTextH = VERT_TEXT_H; // Chiều cao khu vực chữ strip dọc
     
-    const gridOuterPadding = 40; // Lề ngoài cho lưới (sử dụng GRID_MARGIN)
-    const gridGap = 30; // Khoảng cách giữa các ảnh (ngang/dọc)
-    const gridTextH = 250; 
+    const gridOuterPadding = GRID_OUTER_PADDING; // Lề ngoài cho lưới (40)
+    const gridGap = GRID_GAP; // Khoảng cách giữa các ảnh (ngang/dọc) (30)
+    const gridTextH = GRID_TEXT_H; // Chiều cao khu vực chữ cho lưới
 
-    // 1. Tính toán Kích thước Canvas (W x H)
+    // 1. Tính toán Kích thước Canvas (W x H) và vị trí Text Strip
     let textStripYStart;
+    let textStripTotalHeight; 
 
     if (layout === 'vertical') {
-        // Vertical Strip (4x1) - BORDERLESS (Sử dụng cấu trúc cũ để giữ lại tỷ lệ strip)
+        // Vertical Strip (4x1) - BORDERLESS
+        const numPhotos = images.length;
+        const numGaps = numPhotos - 1;
+        
         W = photoW + stripMarginX * 2; // 450 + 60 = 510
-        H = 4 * photoH + stripTextH; // 4*450 + 250 = 2050
-        textStripYStart = 4 * photoH; 
-
+        // CẬP NHẬT: Thêm VERT_MARGIN_Y vào chiều cao total H
+        H = numPhotos * photoH + numGaps * VERT_GAP + vertTextH + vertMarginY * 2; 
+        
+        // CẬP NHẬT: textStripYStart = Lề trên + (Ảnh + Khoảng cách) * 4
+        textStripYStart = vertMarginY + numPhotos * photoH + numGaps * VERT_GAP; 
+        textStripTotalHeight = vertTextH + vertMarginY; // Chiều cao khu vực chữ + lề dưới
+        
         stripSizeText.textContent = `Strip size: ${W} x ${H} pixels (Fixed 1:1 Photo)`;
     } else { 
         // Grid (2x2) - BORDERLESS
         W = 2 * photoW + gridGap + 2 * gridOuterPadding; // 2*450 + 30 + 80 = 1010
         H = 2 * photoH + gridGap + 2 * gridOuterPadding + gridTextH; // 2*450 + 30 + 80 + 250 = 1260
-        textStripYStart = 2 * photoH + gridGap + 2 * gridOuterPadding;
-
+        textStripYStart = 2 * photoH + gridGap + 2 * gridOuterPadding; // Y start of text area: 1010
+        textStripTotalHeight = gridTextH; // Chiều cao khu vực chữ
+        
         stripSizeText.textContent = `Grid size: ${W} x ${H} pixels (Fixed 1:1 Photo)`;
     }
-
+    
+    // NEW: Tính toán chính xác chiều cao khu vực chữ (Chắc chắn đã được tính)
+    const textStripHeight = H - textStripYStart; 
+    // Dùng textStripHeight để gọi hàm vẽ background
+    
     // 2. Setup Canvas
     const canvas = document.createElement('canvas');
     canvas.width = W;
@@ -1439,7 +1891,8 @@ async function mergeStrip(images){
     ctx.imageSmoothingQuality = 'high';
 
     // 3. Draw Background
-    drawComplexBackground(ctx, W, H, backgroundId, layout, photoH, gridGap); 
+    // Đã cập nhật để truyền TextStripYStart và TextStripHeight
+    drawComplexBackground(ctx, W, H, backgroundId, layout, textStripYStart, textStripHeight); 
 
     // Logic điều chỉnh màu chữ
     let instaxTextColor = '#4A4A4A'; 
@@ -1473,7 +1926,8 @@ async function mergeStrip(images){
         
         if (layout === 'vertical') {
             finalImageX = stripMarginX;
-            finalImageY = i * photoH; 
+            // CẬP NHẬT: Thêm vertMarginY (lề trên) vào công thức
+            finalImageY = vertMarginY + i * photoH + i * VERT_GAP; 
         } else { // Grid
             const col = i % 2;
             const row = Math.floor(i / 2);
@@ -1492,19 +1946,20 @@ async function mergeStrip(images){
         drawOverlayFrame(ctx, finalImageX, finalImageY, photoW, photoH, overlayId);
     }
     
-    // 5. Text Strip Logic (Vẽ chữ và Sticker)
+    // 5. Text Strip Logic (Vẽ chữ)
     const customText = customStripText.value.toUpperCase(); 
 
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.font = '800 50px Nunito, system-ui, sans-serif'; 
     
     // Vị trí chữ (căn giữa khu vực Text Strip)
     const centerX = W / 2;
-    const centerY = textStripYStart + textStripH / 2;
+    // Sử dụng chiều cao Text Strip đã tính toán (textStripHeight)
+    const centerY = textStripYStart + textStripHeight / 2; 
     
     // Tính kích thước chữ (để co giãn nếu quá dài)
     let fontSize = 50; 
+    ctx.font = `800 ${fontSize}px Nunito, system-ui, sans-serif`; 
     let textWidth = ctx.measureText(customText).width;
     const maxTextWidth = W * 0.9; 
     
@@ -1512,21 +1967,14 @@ async function mergeStrip(images){
         fontSize = Math.floor(fontSize * (maxTextWidth / textWidth));
         ctx.font = `800 ${fontSize}px Nunito, system-ui, sans-serif`; 
     }
+    
+    // Vị trí y cho text (căn giữa theo font size)
+    const textY = centerY + fontSize * 0.3; // Dùng 0.3 để căn giữa tốt hơn
 
     ctx.fillStyle = instaxTextColor; // Màu chữ
-    ctx.fillText(customText, centerX, centerY);
+    ctx.fillText(customText, centerX, textY);
     
-    // Vẽ sticker/date (ở dưới/trên khu vực text strip)
-    const stickerValue = customStripSticker.value;
-    if (stickerValue) {
-        ctx.save();
-        ctx.font = '400 36px Nunito, system-ui, sans-serif'; 
-        ctx.fillStyle = instaxTextColor;
-        ctx.textAlign = 'center';
-        // Vị trí sticker: ở trên text (cách 10px)
-        ctx.fillText(stickerValue, centerX, centerY - fontSize / 2 - 10);
-        ctx.restore();
-    }
+    // ĐÃ XÓA: Logic vẽ sticker/date
     
     ctx.restore(); 
 
@@ -1551,6 +1999,7 @@ async function mergeStrip(images){
     ctx.fillText(getFormattedNow(), 16, H - 18);
     ctx.restore();
 
-    return { dataUrl: ctx.toDataURL('image/png'), W: W, H: H };
+    // SỬA LỖI: Sử dụng canvas.toDataURL thay vì ctx.toDataURL
+    return { dataUrl: canvas.toDataURL('image/png'), W: W, H: H };
 }
 </script>
