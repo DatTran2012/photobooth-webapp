@@ -132,14 +132,15 @@
   
   .preview-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:8px; }
   
-  /* Đã cập nhật: Bỏ aspect-ratio cứng, sẽ được set bằng JS dựa trên tỷ lệ film Instax */
+  /* Đã cập nhật: Bỏ aspect-ratio cứng, sẽ được set bằng JS dựa trên tỷ lệ film Instax (giờ là 1:1) */
   .instax-thumb-frame {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 100%; 
-    padding: 6px 6px 20px 6px; 
+    /* Đã bỏ padding dưới để giảm mô phỏng chân trắng Instax */
+    padding: 6px 6px 6px 6px; 
     background: #FFFFFF;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -258,7 +259,7 @@
               📸 Photobooth Instax Studio
           </h1>
           <p style="color: var(--muted); font-size: 1.1em; max-width: 500px; margin: 0 auto 30px;">
-              Sẵn sàng tạo ảnh strip 4 pose phong cách Instax với các tùy chọn tỷ lệ film và nền độc đáo.
+              Sẵn sàng tạo ảnh strip 4 pose phong cách Photobooth với các tùy chọn nền và layout độc đáo.
           </p>
           
           <div style="display: inline-block; text-align: left; background: var(--bg); padding: 18px 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px;">
@@ -266,7 +267,7 @@
               <ul style="list-style: none; padding: 0; margin: 10px 0 0; font-size: 0.95em;">
                   <li style="margin-bottom: 5px;">✅ Bấm **Bắt Đầu** và cấp quyền Camera.</li>
                   <li style="margin-bottom: 5px;">✅ Đếm ngược **3 giây** giữa mỗi lần chụp (tổng 4 pose).</li>
-                  <li>✅ Tùy chỉnh **Tỷ lệ Instax** trước khi chụp, **Nền/Layout** sau khi chụp xong.</li>
+                  <li>✅ Ảnh chụp cố định **Tỷ lệ 1:1 (Square)**. Tùy chỉnh **Nền/Layout** sau khi chụp xong.</li>
               </ul>
           </div>
 
@@ -306,16 +307,7 @@
 
 
     <div id="settingsSidebar">
-      <div style="font-weight:700; color: #3b2b47; margin-bottom: 10px;">TÙY CHỌN TỶ LỆ INSTAX</div>
-      
-      <div class="option-row" style="width:100%; margin-top:0px;">
-          <label class="small">Tỷ lệ Ảnh Instax:</label>
-          <select id="frameSelect" style="flex:1;">
-            <option value="mini">Instax Mini (Ảnh 0.74:1)</option>
-            <option value="square">Instax Square (Ảnh 1:1)</option>
-            <option value="wide">Instax Wide (Ảnh 1.60:1)</option>
-          </select>
-      </div>
+      <div style="font-weight:700; color: #3b2b47; margin-bottom: 10px;">TÙY CHỌN CHỤP ẢNH</div>
       
       <div class="option-row" style="width:100%; justify-content:space-between; flex-wrap:nowrap; margin-top:12px;">
         <label class="small">Timer (giữa mỗi pose):</label>
@@ -338,9 +330,9 @@
       <div style="font-weight:700; color: #3b2b47; margin-bottom: 10px;">TÙY CHỌN ẢNH GHÉP (MERGE)</div>
 
       <div class="option-row" style="width:100%; margin-top:0px;">
-          <label class="small">Background Instax:</label>
+          <label class="small">Background Strip:</label>
           <select id="backgroundSelect" style="flex:1;">
-            <option value="default">Mặc định (Theo Tỷ lệ Instax)</option>
+            <option value="default">Mặc định (Trắng Tối Giản)</option>
             <option value="soft_rose_gradient">❤️ Gradient Hồng Kem Dịu</option>
             <option value="romantic_red_velvet">🌹 Nhung Đỏ Lãng Mạn</option>
             <option value="lavender_haze_blur">✨ Xanh Tím Sương Mờ</option>
@@ -387,8 +379,8 @@
       <div class="option-row" style="width:100%; margin-top:10px; margin-bottom: 10px;">
         <label class="small">Layout In Ảnh:</label>
         <select id="layoutSelect" style="flex:1;">
-          <option value="vertical">1. Dọc (Strip) - Dynamic Size</option>
-          <option value="grid">2. Lưới (2x2) - Dynamic Size</option>
+          <option value="vertical">1. Dọc (Strip) - Fixed 1:1 Photo</option>
+          <option value="grid">2. Lưới (2x2) - Fixed 1:1 Photo</option>
         </select>
       </div>
 
@@ -422,7 +414,7 @@
     </div>
   </div>
 
-  <footer>Made for you — Instax Classic • Timezone: Asia/Ho_Chi_Minh</footer>
+  <footer>Made for you — Photobooth Square • Timezone: Asia/Ho_Chi_Minh</footer>
 </div>
 
 <script>
@@ -433,7 +425,7 @@ const overlayCtx = overlay.getContext('2d');
 const previewGrid = document.getElementById('previewGrid');
 const finalPreview = document.getElementById('finalPreview'); 
 const countdownEl = document.getElementById('countdown');
-const frameSelect = document.getElementById('frameSelect'); 
+// const frameSelect = document.getElementById('frameSelect'); // ĐÃ BỎ
 const layoutSelect = document.getElementById('layoutSelect'); 
 const backgroundSelect = document.getElementById('backgroundSelect'); 
 const customStripText = document.getElementById('customStripText');
@@ -462,7 +454,8 @@ const startPhotoboothBtn = document.getElementById('startPhotoboothBtn'); // Nú
 
 const controlsToDisable = [
     startBtn, redoBtn, stopCamBtn, switchCamBtn, refreshBtn, 
-    frameSelect, intervalSec, startPhotoboothBtn
+    // frameSelect, // ĐÃ BỎ
+    intervalSec, startPhotoboothBtn
 ];
 
 let captures = [];
@@ -475,7 +468,7 @@ let finalImageDataUrl = null;
 const INNER_BORDER = 3; 
 
 // NEW BASE CONSTANTS for dynamic sizing
-const BASE_FRAME_H = 450; // Chiều cao chuẩn cho một tấm film Instax
+const BASE_FRAME_H = 450; // Chiều cao chuẩn cho một tấm ảnh
 const VERT_MARGIN_X = 30; // Lề X cho strip dọc
 const VERT_TEXT_H = 250; // Chiều cao khu vực chữ strip dọc
 const GRID_MARGIN = 40; // Lề cho lưới (X, Y, khoảng cách giữa 2 ảnh)
@@ -487,50 +480,33 @@ const IMAGE_AREA_FOOTER_H = 60; // Chiều cao tối thiểu của chân trắng
 // devicePixelRatio helper
 function getDPR(){ return window.devicePixelRatio || 1; }
 
-/* -------------------- TỶ LỆ FILM INSTAX (ĐÃ CẬP NHẬT CHÍNH XÁ) -------------------- */
+/* -------------------- TỶ LỆ ẢNH CHỤP (CỐ ĐỊNH 1:1) -------------------- */
 
 // Hàm lấy tỷ lệ (W/H) của khu vực ảnh bên trong film (dùng cho live preview & drawing)
 function getInstaxPhotoRatio(frameStyle) {
-    // Photo Area Ratios (W/H)
-    // Mini: 46x62mm -> 0.7419...
-    // Square: 62x62mm -> 1.0
-    // Wide: 99x62mm -> 1.5967...
-    switch(frameStyle) {
-        case 'mini': return 46 / 62; // 0.7419
-        case 'square': return 1.0;
-        case 'wide': return 99 / 62; // 1.5967
-        default: return 46 / 62;
-    }
+    // Photo Area Ratios (W/H) - Cố định 1:1 (Square) theo yêu cầu bỏ tuỳ chọn
+    return 1.0; 
 }
 
 // Hàm lấy tỷ lệ (W/H) của toàn bộ film Instax (ảnh + chân trắng)
 function getInstaxFilmRatio(frameStyle) {
-    // Film Area Ratios (W/H)
-    // Mini: 54x86mm -> 0.6279...
-    // Square: 72x86mm -> 0.8372...
-    // Wide: 108x86mm -> 1.2558...
-    switch(frameStyle) {
-        case 'square': return 72 / 86; // 0.8372
-        case 'wide': return 108 / 86; // 1.2558
-        case 'mini': 
-        default: return 54 / 86; // 0.6279
-    }
+    // Film Area Ratios (W/H) - Dùng tỷ lệ 1:1 cho thumbnail (đã bỏ mô phỏng film)
+    return 1.0;
 }
 
 // Cập nhật tỷ lệ cho tất cả thumbnails trên màn hình review
-// Dùng tỷ lệ FILM (ảnh + border) để REVIEW giống sản phẩm thật
+// Dùng tỷ lệ 1:1 (đã bỏ mô phỏng film)
 function updateThumbnailAspectRatios() {
-    const frameStyle = frameSelect.value;
-    const numericRatio = getInstaxFilmRatio(frameStyle); 
+    const numericRatio = getInstaxFilmRatio('square'); 
 
     const thumbs = document.querySelectorAll('.instax-thumb-frame');
     thumbs.forEach(thumb => {
-        // Sử dụng numericRatio / 1 cho CSS aspectRatio
+        // Sử dụng numericRatio / 1 cho CSS aspectRatio (fixed 1:1)
         thumb.style.aspectRatio = `${numericRatio} / 1`; 
     });
 }
 
-/* ----------------- END TỶ LỆ FILM INSTAX LOGIC ------------------ */
+/* ----------------- END TỶ LỆ ẢNH CHỤP LOGIC ------------------ */
 
 
 /* --------------- UI SWITCHING LOGIC (GIỮ NGUYÊN) --------------- */
@@ -615,76 +591,93 @@ async function switchCamera() {
         alert('Bạn chỉ có thể chuyển đổi camera trước khi bắt đầu chụp. Hãy bấm "Reset Ảnh Chụp" nếu muốn đổi.');
         return;
     }
-
     if (stream) {
-        stopCamera(); 
+        stopCamera();
     }
-
     currentFacingMode = (currentFacingMode === 'user' ? 'environment' : 'user');
-    
     await startCamera();
 }
 
 function resizeOverlay(){
   const dpr = getDPR();
-  const vcw = video.clientWidth; 
+  const vcw = video.clientWidth;
   const vch = video.clientHeight;
-  const vw = video.videoWidth; 
+  const vw = video.videoWidth;
   const vh = video.videoHeight;
   
-  if (vw === 0 || vh === 0 || vcw === 0 || vch === 0) { return; }
-  
+  if (vw === 0 || vh === 0 || vcw === 0 || vch === 0) return;
+
+  const aspect = vw / vh;
+  const wrapAspect = vcw / vch;
+
+  let newW, newH, xOffset, yOffset;
+
+  // Căn giữa video trong wrap area (object-fit: cover)
+  if (aspect > wrapAspect) {
+    newH = vch;
+    newW = vch * aspect;
+    xOffset = (vcw - newW) / 2;
+    yOffset = 0;
+  } else {
+    newW = vcw;
+    newH = vcw / aspect;
+    xOffset = 0;
+    yOffset = (vch - newH) / 2;
+  }
+
+  // Cập nhật kích thước canvas (theo kích thước hiển thị thực tế của video)
+  overlay.width = vcw * dpr;
+  overlay.height = vch * dpr;
   overlay.style.width = vcw + 'px';
   overlay.style.height = vch + 'px';
-  overlay.width = Math.max(1, Math.round(vw * dpr));
-  overlay.height = Math.max(1, Math.round(vh * dpr));
-  overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
 
-// Hàm vẽ nội dung overlay (khung và ngày giờ)
-function drawOverlayContent(ctx, w, h, frameStyle) {
-    ctx.clearRect(0, 0, w, h);
-    drawFrameBorder(ctx, w, h, frameStyle); // Vẽ khung guideline
-    drawDateTime(ctx, w, h); // Vẽ ngày giờ
+  // Cập nhật transformation để vẽ
+  overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  overlayCtx.clearRect(0, 0, vcw, vch);
+  
+  // Thiết lập biến transform cho drawing (dùng để vẽ khung ảnh và ngày giờ)
+  // Biến này sẽ được dùng trong drawInstaxGuide
+  overlayCtx.globalTransform = {
+      scaleX: newW / vw, 
+      scaleY: newH / vh, 
+      offsetX: xOffset,
+      offsetY: yOffset,
+      dpr: dpr,
+      vcw: vcw, 
+      vch: vch
+  };
 }
 
 function drawFrameLoop(){
-  requestAnimationFrame(drawFrameLoop);
-  
-  if (video.videoWidth > 0 && (overlay.width === 0 || overlay.width !== Math.round(video.videoWidth * getDPR()))) {
-      resizeOverlay(); 
-  }
-  
-  if (stream) {
-    const dpr = getDPR();
-    const w = overlay.width / dpr; 
-    const h = overlay.height / dpr; 
-    const selectedFrame = frameSelect.value;
-  
-    drawOverlayContent(overlayCtx, w, h, selectedFrame);
+  // Tắt/Mở camera không cần gọi drawFrameLoop nữa
+  if (stream) { 
+    drawInstaxGuide(overlayCtx, video.clientWidth, video.clientHeight);
+    drawDateTime(overlayCtx, video.clientWidth, video.clientHeight);
+    requestAnimationFrame(drawFrameLoop); 
   }
 }
 
-function roundRect(ctx, x, y, w, h, r){
-  ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.lineTo(x+w-r, y);
-  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-  ctx.lineTo(x+w, y+h-r);
-  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-  ctx.lineTo(x+r, y+h);
-  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
-  ctx.lineTo(x, y+r);
-  ctx.quadraticCurveTo(x, y, x+r, y);
-  ctx.closePath();
+function roundRect(ctx, x, y, w, h, r) {
+    if (w < 2 * r) r = w / 2;
+    if (h < 2 * r) r = h / 2;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
 }
 
-// Đã cập nhật: Bỏ khung nét đứt (Guideline) theo yêu cầu người dùng, chỉ giữ lại khung ngoài camera.
-function drawFrameBorder(ctx, w, h, frameStyle){
+function drawInstaxGuide(ctx, w, h){
+    // Bỏ tuỳ chọn Instax Frame Ratio, cố định tỷ lệ ảnh là 1:1 (Square Photo Area)
+    const frameStyle = 'square'; 
+    const targetRatio = getInstaxPhotoRatio(frameStyle); // 1.0
+    
+    let innerColor = 'rgba(255, 255, 255, 0.4)'; 
     const pad = 12;
     const cornerRadius = 18;
-    let outerColor = 'rgba(255, 255, 255, 0.4)';
-    
+
     ctx.save();
     
     // 1. Vẽ khung ngoài (cố định)
@@ -692,20 +685,46 @@ function drawFrameBorder(ctx, w, h, frameStyle){
     const y_outer = pad;
     const w_outer = w - 2 * pad;
     const h_outer = h - 2 * pad;
+    
     roundRect(ctx, x_outer, y_outer, w_outer, h_outer, cornerRadius);
     ctx.lineWidth = 4;
-    ctx.strokeStyle = outerColor;
+    ctx.strokeStyle = innerColor;
     ctx.stroke();
 
-    // Khung nét đứt (guideline Instax) đã được loại bỏ.
+    // 2. Tính toán và vẽ khung ẢNH BÊN TRONG (Photo Area) dựa trên tỷ lệ cố định (1:1)
+    // Tỷ lệ video là vw/vh. Tỷ lệ ảnh mong muốn là targetRatio (1.0).
+    const maxPhotoW = w_outer - 2 * pad; 
+    const maxPhotoH = h_outer - 2 * pad; 
     
-    ctx.setLineDash([]); 
+    let finalPhotoW, finalPhotoH;
+    
+    // Căn tỷ lệ ảnh (targetRatio) vào khu vực xem (maxPhotoW x maxPhotoH)
+    if ((maxPhotoW / maxPhotoH) > targetRatio) {
+        // Chiều cao là giới hạn
+        finalPhotoH = maxPhotoH;
+        finalPhotoW = Math.round(finalPhotoH * targetRatio);
+    } else {
+        // Chiều rộng là giới hạn
+        finalPhotoW = maxPhotoW;
+        finalPhotoH = Math.round(finalPhotoW / targetRatio);
+    }
+
+    const x_inner = x_outer + pad + (maxPhotoW - finalPhotoW) / 2;
+    const y_inner = y_outer + pad + (maxPhotoH - finalPhotoH) / 2;
+
+    // Vẽ khung nét đứt cho khu vực ảnh (Photo Area)
+    ctx.strokeStyle = innerColor;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 8]);
+    ctx.strokeRect(x_inner, y_inner, finalPhotoW, finalPhotoH);
+    
+    ctx.setLineDash([]);
     ctx.restore();
 }
 
 function drawDateTime(ctx, w, h) {
   ctx.save();
-  ctx.font = '600 14px Nunito, system-ui, sans-serif'; 
+  ctx.font = '600 14px Nunito, system-ui, sans-serif';
   let textColor = 'rgba(255,255,255,0.9)';
   ctx.fillStyle = textColor;
   ctx.textAlign = 'left';
@@ -715,81 +734,48 @@ function drawDateTime(ctx, w, h) {
 
 function getFormattedNow(){
   const now = new Date();
-  const fmt = new Intl.DateTimeFormat('vi-VN', {
-    timeZone: timeZone,
-    year:'numeric', month:'2-digit', day:'2-digit',
-    hour:'2-digit', minute:'2-digit', second:'2-digit'
+  const fmt = new Intl.DateTimeFormat('vi-VN', { 
+    timeZone: timeZone, 
+    year:'numeric', 
+    month:'2-digit', 
+    day:'2-digit', 
+    hour:'2-digit', 
+    minute:'2-digit', 
+    second:'2-digit' 
   });
   return fmt.format(now).replace(',', '');
 }
 
-// NEW: Functions to control button/setting state
+// NEW: Functions to control capture buttons
 function disableControls() {
-    controlsToDisable.forEach(el => el.disabled = true);
+    controlsToDisable.forEach(ctrl => {
+        if (ctrl) ctrl.disabled = true;
+    });
 }
 
 function enableControls() {
-    controlsToDisable.forEach(el => el.disabled = false);
+    controlsToDisable.forEach(ctrl => {
+        if (ctrl) ctrl.disabled = false;
+    });
 }
 
-/* --------------- Capture & flow --------------- */
-// NEW: Handler cho nút Bắt Đầu ở màn hình Welcome
-document.getElementById('startPhotoboothBtn').addEventListener('click', async () => {
-  showCaptureScreen(); 
-  await startCamera();
-});
-
-// Handler cho nút Start Photobooth sau khi camera đã bật
-document.getElementById('startBtn').addEventListener('click', async () => {
-  if (!stream) {
-    await startCamera();
-    await new Promise(r=>setTimeout(r,300));
-  }
-  startPhotobooth();
-});
-
-document.getElementById('redoBtn').addEventListener('click', resetAll);
-document.getElementById('stopCamBtn').addEventListener('click', () => { 
-    stopCamera(); 
-    resetAll(); // resetAll will now enable controls
-});
-document.getElementById('switchCamBtn').addEventListener('click', switchCamera); 
-document.getElementById('refreshBtn').addEventListener('click', () => {
-    window.location.reload(); 
-});
-
-// NEW: Listener cho frameSelect (Tỷ lệ Instax) - Cập nhật overlay và review realtime
-frameSelect.addEventListener('change', () => {
-    // drawFrameLoop() sẽ tự gọi lại và cập nhật overlay vì nó là requestAnimationFrame
-    if (captures.length > 0) {
-        // Cập nhật tỷ lệ thumbnail và final review ngay lập tức
-        updateThumbnailAspectRatios(); 
-        mergeAndShowFinal(); 
-    }
-}); 
-
-// Listener for background change - Cập nhật final review realtime
+// Cập nhật: Khi thay đổi background/text/layout, cập nhật final review realtime
 backgroundSelect.addEventListener('change', () => {
-    if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal(); 
+    if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal();
 });
-
-// Listener for custom text input - Cập nhật final review realtime
 customStripText.addEventListener('input', () => {
     if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal();
 });
-
 // Listener for layout change - Cập nhật final review realtime
 layoutSelect.addEventListener('change', () => {
     // Không cần cập nhật stripSizeText ở đây nữa, vì mergeStrip sẽ làm việc đó
-    if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal(); 
-    else resetAll(); 
+    if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal();
+    else resetAll();
 });
-
 // NEW: Listener cho overlaySelect
-overlaySelect.addEventListener('change', () => { 
-    if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal(); 
+overlaySelect.addEventListener('change', () => {
+    if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal();
 });
-
 // NEW: Listener cho customStripSticker
 customStripSticker.addEventListener('input', () => {
     if (captures.length > 0 && reviewScreen.style.display !== 'none') mergeAndShowFinal();
@@ -797,7 +783,7 @@ customStripSticker.addEventListener('input', () => {
 
 document.getElementById('downloadFinalBtn').addEventListener('click', () => {
   if (finalImageDataUrl) {
-    triggerDownload(finalImageDataUrl, `photobooth_instax_${dateForFilename()}.png`); 
+    triggerDownload(finalImageDataUrl, `photobooth_strip_${dateForFilename()}.png`);
   } else {
     alert('Không tìm thấy ảnh đã ghép để tải xuống. Vui lòng chụp ảnh trước.');
   }
@@ -805,835 +791,142 @@ document.getElementById('downloadFinalBtn').addEventListener('click', () => {
 
 backToCaptureBtn.addEventListener('click', showWelcomeScreen); // Quay lại màn hình Welcome
 
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function sleep(ms){
+  return new Promise(r=>setTimeout(r,ms));
+}
 
 async function startPhotobooth(){
-  // Bắt đầu: Vô hiệu hóa controls
-  disableControls();
+    // Bắt đầu: Vô hiệu hóa controls
+    disableControls();
+    
+    captures = [];
+    previewGrid.innerHTML = '';
+    finalPreview.innerHTML = '<div class="small">Đang chụp...</div>';
+    finalActionsEl.style.display = 'none';
 
-  captures = []; previewGrid.innerHTML = ''; finalPreview.innerHTML = '<div class="small">Đang chụp...</div>';
-  finalActionsEl.style.display = 'none'; 
-  
-  // Đảm bảo đang ở màn hình chụp
-  if (captureScreen.style.display === 'none') {
-      showCaptureScreen(); 
-  }
-  
-  const interval = Math.max(1, parseInt(document.getElementById('intervalSec').value||2,10));
-  
-  const stepLabels = ['FIRST', 'SECOND', 'THIRD', 'FINAL']; 
+    // Đảm bảo đang ở màn hình chụp
+    if (captureScreen.style.display === 'none') {
+        showCaptureScreen();
+    }
+    
+    const interval = Math.max(1, parseInt(document.getElementById('intervalSec').value||2,10));
+    const stepLabels = ['FIRST', 'SECOND', 'THIRD', 'FINAL'];
 
-  for (let i=1;i<=4;i++){ 
-    const label = stepLabels[i - 1] + ' PHOTO'; 
-    await doCountdown(3, label); 
-    const img = takeSnapshot();
-    captures.push(img);
-    addThumbnail(img);
-    if (i < 4) await sleep(interval*1000);
-  }
-
-  countdownEl.textContent = 'DONE!';
-  countdownEl.style.flexDirection = 'row'; 
-  countdownEl.style.display = 'flex';
-  await sleep(1000); 
-  countdownEl.style.display = 'none';
-
-  await mergeAndShowFinal();
-  
-  showReviewScreen();
-
-  // Kết thúc: Kích hoạt lại controls
-  enableControls();
+    for (let i=1;i<=4;i++){
+        const label = stepLabels[i - 1] + ' PHOTO';
+        await doCountdown(3, label);
+        const img = takeSnapshot();
+        captures.push(img);
+        addThumbnail(img, i);
+        // Sau khi chụp ảnh thứ 1, 2, 3 thì delay thêm interval giây
+        if (i < 4 && interval > 0) {
+            countdownEl.style.display = 'flex';
+            countdownEl.style.flexDirection = 'row';
+            countdownEl.innerHTML = `<span style="font-size: 0.35em; font-weight: 600; opacity: 0.8;">WAITING</span><span style="line-height: 1; margin-left: 10px;">${interval}s</span>`;
+            await sleep(interval * 1000);
+            countdownEl.textContent = '';
+            countdownEl.style.display = 'none';
+        }
+    }
+    
+    // Kết thúc: Kích hoạt lại controls
+    enableControls();
+    
+    // Chuyển sang màn hình review và tạo ảnh cuối
+    showReviewScreen();
+    mergeAndShowFinal();
 }
 
-async function mergeAndShowFinal(){
-  if (captures.length < 1) return;
-  // Cập nhật: Hàm mergeStrip giờ trả về object { dataUrl, W, H }
-  const result = await mergeStrip(captures);
-  showFinal(result);
+// NEW: Hàm takeSnapshot để chụp ảnh 1:1
+function takeSnapshot() {
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
+    const targetRatio = getInstaxPhotoRatio('square'); // 1.0
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Tính toán kích thước cắt (crop)
+    const videoRatio = videoWidth / videoHeight;
+    let cropX = 0, cropY = 0, cropW = videoWidth, cropH = videoHeight;
+    
+    if (videoRatio > targetRatio) {
+        // Video rộng hơn (cần cắt ngang)
+        cropW = videoHeight * targetRatio;
+        cropX = (videoWidth - cropW) / 2;
+    } else {
+        // Video cao hơn (cần cắt dọc)
+        cropH = videoWidth / targetRatio;
+        cropY = (videoHeight - cropH) / 2;
+    }
+
+    // Canvas sẽ là hình vuông (W=H) với kích thước nhỏ hơn của cropW/cropH
+    canvas.width = Math.min(cropW, cropH); 
+    canvas.height = Math.min(cropW, cropH);
+    
+    // Vẽ ảnh đã cắt từ video vào canvas
+    // Dùng transform để lật ảnh nếu là camera trước
+    ctx.save();
+    if (currentFacingMode === 'user') {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+    }
+
+    ctx.drawImage(video, 
+        cropX, cropY, cropW, cropH, // Source (từ video)
+        0, 0, canvas.width, canvas.height // Destination (lên canvas)
+    );
+    
+    ctx.restore();
+
+    // Áp dụng hiệu ứng film cũ (nếu có) LÊN ẢNH GỐC (trước khi merge)
+    // Nếu muốn áp dụng hiệu ứng film ngay khi chụp thì gọi hàm ở đây
+    
+    // Chụp xong thì flash và phát âm thanh
+    flashEffect();
+    playShutterSound();
+    
+    return canvas.toDataURL('image/png');
 }
 
-function addThumbnail(imgDataUrl){
-  const frameDiv = document.createElement('div');
-  frameDiv.className = 'instax-thumb-frame';
-  frameDiv.onclick = ()=> triggerDownload(imgDataUrl, `capture_${dateForFilename()}.png`); 
 
-  // NEW: Thiết lập tỷ lệ film Instax cho thumbnail ngay khi tạo (Sử dụng tỷ lệ chính xác)
-  const numericRatio = getInstaxFilmRatio(frameSelect.value); 
-  frameDiv.style.aspectRatio = `${numericRatio} / 1`; 
+function mergeAndShowFinal() {
+    mergeStrip(captures).then(result => {
+        showFinal(result);
+    }).catch(e => {
+        console.error('Lỗi khi ghép ảnh:', e);
+        finalPreview.innerHTML = '<div class="small" style="color:red">Lỗi khi ghép ảnh. Xem console.</div>';
+    });
+}
 
-  const img = document.createElement('img');
-  img.src = imgDataUrl;
-  
-  frameDiv.appendChild(img);
-  previewGrid.appendChild(frameDiv);
+function addThumbnail(imgDataUrl, index){
+    const wrapper = document.createElement('div');
+    wrapper.className = 'instax-thumb-frame';
+    wrapper.dataset.index = index;
+    wrapper.style.aspectRatio = getInstaxFilmRatio('square') + ' / 1'; 
+    
+    const img = document.createElement('img');
+    img.src = imgDataUrl;
+    img.alt = `Pose ${index}`;
+    wrapper.appendChild(img);
+    
+    wrapper.onclick = () => {
+        triggerDownload(imgDataUrl, `photobooth_pose_${index}_${dateForFilename()}.png`);
+    };
+    
+    previewGrid.appendChild(wrapper);
 }
 
 function dateForFilename(){
-  const now = new Date();
-  const fmt = new Intl.DateTimeFormat('sv', { timeZone: timeZone, year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit' });
-  return fmt.format(now).replace(/[: ]/g,'-');
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat('sv', { timeZone: timeZone, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    return fmt.format(now).replace(/[-: ]/g, '').replace('T', '_');
 }
 
-function doCountdown(sec, stepLabel){ 
-  return new Promise(async (resolve)=>{
-    countdownEl.style.display = 'flex';
-    countdownEl.style.flexDirection = 'column'; 
-    
-    for (let s=sec; s>=1; s--){
-      countdownEl.innerHTML = `<span style="font-size: 0.35em; font-weight: 600; margin-bottom: 5px; opacity: 0.8;">${stepLabel}</span><span style="line-height: 1;">${s}</span>`;
-      
-      playBeep();
-      await sleep(850);
-    }
-    
-    countdownEl.style.flexDirection = 'row'; 
-    countdownEl.textContent = ''; 
-    countdownEl.style.display = 'none';
-
-    flashEffect();
-    await sleep(150);
-    resolve();
-  });
-}
-
-function playBeep(){
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator(); const g = ctx.createGain();
-    o.type='sine'; o.frequency.value = 800;
-    g.gain.value = 0.05;
-    o.connect(g); g.connect(ctx.destination);
-    o.start(); o.stop(ctx.currentTime + 0.08);
-  } catch(e){}
-}
-
-function flashEffect(){
-  const el = document.createElement('div');
-  el.style.position='absolute'; el.style.inset='0'; el.style.background='rgba(255,255,255,0.9)';
-  el.style.zIndex = 9999; el.style.pointerEvents='none';
-  document.getElementById('cameraWrap').appendChild(el);
-  setTimeout(()=> el.remove(), 90);
-}
-
-function takeSnapshot(){
-  const w = video.videoWidth || 1280;
-  const h = video.videoHeight || 720;
-  const tmp = document.createElement('canvas');
-  tmp.width = w; tmp.height = h;
-  const c = tmp.getContext('2d');
-
-  c.save();
-  if (currentFacingMode === 'user') {
-    c.scale(-1,1);
-    c.drawImage(video, -w, 0, w, h);
-  } else {
-    c.drawImage(video, 0, 0, w, h);
-  }
-  c.restore();
-  
-  try {
-    // Chỉ vẽ Date/Time lên ảnh chụp, không vẽ khung guideline
-    drawDateTime(c.getContext('2d'), w, h);
-
-  } catch(e){ console.warn('overlay draw failed', e); }
-
-  return tmp.toDataURL('image/png');
-}
-
-function drawComplexBackground(ctx, W, H, backgroundId, layout, frameH, GRID_MARGIN){
-    
-    // Default background (White)
-    ctx.fillStyle = '#FFFFFF'; 
-    ctx.fillRect(0, 0, W, H);
-
-    if (backgroundId === 'soft_rose_gradient') {
-        const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#FFF5F5'); // Very Light Pink
-        grad.addColorStop(0.5, '#FFDADA'); // Soft Pink
-        grad.addColorStop(1, '#FFEBEB'); // Lighter Pink
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-        
-    } else if (backgroundId === 'romantic_red_velvet') {
-        ctx.fillStyle = '#A31C3D'; // Deep Rose Red
-        ctx.fillRect(0, 0, W, H);
-        
-        // Add subtle velvet texture (dark noise)
-        const noiseCanvas = document.createElement('canvas');
-        noiseCanvas.width = 100; noiseCanvas.height = 100;
-        const nCtx = noiseCanvas.getContext('2d');
-        for (let i = 0; i < 2000; i++) {
-            nCtx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.15})`; 
-            nCtx.fillRect(Math.random() * 100, Math.random() * 100, 1, 1);
-        }
-        const pattern = ctx.createPattern(noiseCanvas, 'repeat');
-        ctx.fillStyle = pattern;
-        ctx.fillRect(0, 0, W, H);
-
-    } else if (backgroundId === 'lavender_haze_blur') {
-        const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W/2);
-        grad.addColorStop(0, '#FFFFFF');
-        grad.addColorStop(0.3, '#E6E6FA'); // Light Lavender
-        grad.addColorStop(0.7, '#DDA0DD'); // Plum
-        grad.addColorStop(1, '#C0C0C0'); // Silver edges
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-
-    } else if (backgroundId === 'sweetheart_pink_dots') {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, W, H);
-
-        const patternCanvas = document.createElement('canvas');
-        const patternSize = 60;
-        patternCanvas.width = patternSize;
-        patternCanvas.height = patternSize;
-        const pCtx = patternCanvas.getContext('2d');
-        pCtx.fillStyle = '#FFFFFF';
-        pCtx.fillRect(0, 0, patternSize, patternSize);
-        
-        const drawMiniHeart = (cx, cy, s) => {
-            pCtx.beginPath();
-            pCtx.moveTo(cx, cy + s * 0.3);
-            pCtx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
-            pCtx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
-            pCtx.fill();
-        };
-
-        pCtx.fillStyle = '#FFB6C1'; // Light Pink
-        drawMiniHeart(patternSize * 0.25, patternSize * 0.25, 4);
-        pCtx.fillStyle = '#FF69B4'; // Hot Pink
-        drawMiniHeart(patternSize * 0.75, patternSize * 0.75, 3);
-        
-        const pattern = ctx.createPattern(patternCanvas, 'repeat');
-        ctx.fillStyle = pattern;
-        ctx.fillRect(0, 0, W, H);
-
-    } else if (backgroundId === 'sunset_kiss_gradient') {
-        const grad = ctx.createLinearGradient(0, H, W, 0);
-        grad.addColorStop(0, '#FF4D4D'); // Red-Orange
-        grad.addColorStop(0.5, '#FFD700'); // Gold/Yellow
-        grad.addColorStop(1, '#8A2BE2'); // Blue Violet
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-
-    } else if (backgroundId === 'champagne_toast') {
-        ctx.fillStyle = '#FFF5E6'; // Cream
-        ctx.fillRect(0, 0, W, H);
-
-        const noiseCanvas = document.createElement('canvas');
-        noiseCanvas.width = 100; noiseCanvas.height = 100;
-        const nCtx = noiseCanvas.getContext('2d');
-        for (let i = 0; i < 3000; i++) {
-            nCtx.fillStyle = `rgba(255, 215, 0, ${Math.random() * 0.05})`; // Gold subtle dots
-            nCtx.fillRect(Math.random() * 100, Math.random() * 100, 1, 1);
-        }
-        const pattern = ctx.createPattern(noiseCanvas, 'repeat');
-        ctx.fillStyle = pattern;
-        ctx.fillRect(0, 0, W, H);
-
-    } else if (backgroundId === 'blush_watercolor') {
-        const grad = ctx.createRadialGradient(W*0.3, H*0.7, 0, W*0.5, H*0.5, W*0.5);
-        grad.addColorStop(0, 'rgba(255, 240, 245, 0.9)'); // Very Light Blush
-        grad.addColorStop(0.7, 'rgba(255, 192, 203, 0.6)'); // Pink
-        grad.addColorStop(1, '#FFFFFF'); 
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-        
-    } else if (backgroundId === 'mint_love_stripes') {
-        const patternCanvas = document.createElement('canvas');
-        const stripeW = 80;
-        patternCanvas.width = stripeW * 2;
-        patternCanvas.height = 1; 
-        const pCtx = patternCanvas.getContext('2d');
-        
-        pCtx.fillStyle = '#F0FFF0'; // Honeydew
-        pCtx.fillRect(0, 0, stripeW * 2, 1);
-        
-        pCtx.fillStyle = '#B0E0E6'; // Powder Blue (Mint Tone)
-        pCtx.fillRect(0, 0, stripeW, 1);
-
-        const pattern = ctx.createPattern(patternCanvas, 'repeat-y');
-        ctx.fillStyle = pattern;
-        ctx.fillRect(0, 0, W, H);
-
-    } else if (backgroundId === 'starry_night_light') {
-        const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#36454F'); // Charcoal
-        grad.addColorStop(1, '#000033'); // Dark Indigo
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-        
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        for (let i = 0; i < 150; i++) {
-             ctx.fillRect(Math.random() * W, Math.random() * H, 1, 1);
-        }
-
-    } else if (backgroundId === 'coral_dream') {
-        ctx.fillStyle = '#FF7F50'; // Coral
-        ctx.fillRect(0, 0, W, H);
-
-    } else if (backgroundId === 'berry_smoothie') {
-        const grad = ctx.createLinearGradient(W/2, 0, W/2, H);
-        grad.addColorStop(0, '#DA70D6'); // Orchid
-        grad.addColorStop(1, '#BA55D3'); // Medium Orchid
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-        
-    } else if (backgroundId === 'lilac_blossom_texture') {
-        ctx.fillStyle = '#E6E6FA'; // Lavender
-        ctx.fillRect(0, 0, W, H);
-        
-        const noiseCanvas = document.createElement('canvas');
-        noiseCanvas.width = 100; noiseCanvas.height = 100;
-        const nCtx = noiseCanvas.getContext('2d');
-        for (let i = 0; i < 3000; i++) {
-            nCtx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.02})`; // Very subtle dark noise
-            nCtx.fillRect(Math.random() * 100, Math.random() * 100, 1, 1);
-        }
-        const pattern = ctx.createPattern(noiseCanvas, 'repeat');
-        ctx.fillStyle = pattern;
-        ctx.fillRect(0, 0, W, H);
-
-    } else if (backgroundId === 'peachy_glow') {
-        const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W/2);
-        grad.addColorStop(0, '#FFDAB9'); // Peach Puff
-        grad.addColorStop(0.7, '#FFC0CB'); // Pink
-        grad.addColorStop(1, '#FFFFFF'); 
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-
-    } else if (backgroundId === 'cotton_candy_swirl') {
-        const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#ADD8E6'); // Light Blue
-        grad.addColorStop(0.5, '#FFFFFF'); 
-        grad.addColorStop(1, '#FFC0CB'); // Pink
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-
-    } else if (backgroundId === 'valentines_day_hearts') {
-        ctx.fillStyle = '#FFFAFA'; // Snow White
-        ctx.fillRect(0, 0, W, H);
-        
-        const patternCanvas = document.createElement('canvas');
-        const patternSize = 70;
-        patternCanvas.width = patternSize;
-        patternCanvas.height = patternSize;
-        const pCtx = patternCanvas.getContext('2d');
-        pCtx.fillStyle = '#FFFAFA';
-        pCtx.fillRect(0, 0, patternSize, patternSize);
-        
-        const drawMiniHeart = (cx, cy, s, color) => {
-            pCtx.fillStyle = color;
-            pCtx.beginPath();
-            pCtx.moveTo(cx, cy + s * 0.3);
-            pCtx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
-            pCtx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
-            pCtx.fill();
-        };
-
-        drawMiniHeart(patternSize * 0.25, patternSize * 0.25, 4, '#FFB6C1'); // Light Pink
-        drawMiniHeart(patternSize * 0.75, patternSize * 0.75, 5, '#FF69B4'); // Hot Pink
-        
-        const pattern = ctx.createPattern(patternCanvas, 'repeat');
-        ctx.fillStyle = pattern;
-        ctx.fillRect(0, 0, W, H);
-        
-    } else if (backgroundId === 'aurora_pink_blue') {
-        const grad = ctx.createLinearGradient(0, H, W, 0);
-        grad.addColorStop(0, '#00BFFF'); // Deep Sky Blue
-        grad.addColorStop(0.5, '#FFFFFF'); 
-        grad.addColorStop(1, '#FF69B4'); // Hot Pink
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-        
-    } else if (backgroundId === 'lemonade_pink') {
-        const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#FFD700'); // Gold
-        grad.addColorStop(0.7, '#FFC0CB'); // Pink
-        grad.addColorStop(1, '#FFFFFF');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-        
-    } else if (backgroundId === 'dreamy_cloud_pastel') {
-        ctx.fillStyle = '#F0F8FF'; // Alice Blue
-        ctx.fillRect(0, 0, W, H);
-        
-        // Soft clouds texture
-        const patternCanvas = document.createElement('canvas');
-        const patternSize = 150;
-        patternCanvas.width = patternSize;
-        patternCanvas.height = patternSize;
-        const pCtx = patternCanvas.getContext('2d');
-
-        pCtx.fillStyle = '#F0F8FF'; 
-        pCtx.fillRect(0, 0, patternSize, patternSize);
-
-        pCtx.fillStyle = 'rgba(255, 255, 255, 0.7)'; 
-        pCtx.beginPath();
-        pCtx.arc(30, 40, 20, 0, Math.PI * 2);
-        pCtx.arc(50, 30, 25, 0, Math.PI * 2);
-        pCtx.arc(75, 40, 20, 0, Math.PI * 2);
-        pCtx.fill();
-
-        const pattern = ctx.createPattern(patternCanvas, 'repeat');
-        ctx.fillStyle = pattern;
-        ctx.fillRect(0, 0, W, H);
-        
-    } else if (backgroundId === 'minimal_white_texture') {
-        ctx.fillStyle = '#FDFDFD';
-        ctx.fillRect(0, 0, W, H);
-        
-        const noiseCanvas = document.createElement('canvas');
-        noiseCanvas.width = 100; noiseCanvas.height = 100;
-        const nCtx = noiseCanvas.getContext('2d');
-        for (let i = 0; i < 2000; i++) {
-            nCtx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.03})`; 
-            nCtx.fillRect(Math.random() * 100, Math.random() * 100, 1, 1);
-        }
-        const pattern = ctx.createPattern(noiseCanvas, 'repeat');
-        ctx.fillStyle = pattern;
-        ctx.fillRect(0, 0, W, H);
-    }
-    
-    // Vị trí sọc (footer) sẽ nằm ở khu vực TEXT STRIP
-    const textStripYStart = layout === 'vertical' 
-        ? 4 * frameH 
-        : 2 * frameH + 2 * GRID_MARGIN;
-    const textStripH = H - textStripYStart; 
-    const stripeHeight = textStripH / 8; // Chia khu vực text thành 8 dải sọc
-
-    if (backgroundId === 'stripes_bw' || backgroundId === 'stripes_red_white') {
-        
-        const colorA = backgroundId === 'stripes_bw' ? '#000000' : '#FF4444'; 
-        const colorB = '#FFFFFF';
-
-        // Đảm bảo phần trên (khu vực ảnh) vẫn là màu trắng/màu nền mặc định (nếu backgroundSelect không phải 'default')
-        if (backgroundId !== 'default') {
-             ctx.fillStyle = '#FFFFFF'; 
-             ctx.fillRect(0, 0, W, textStripYStart);
-        }
-        
-        for (let i = 0; i < 8; i++) {
-            // Vẽ dải sọc xen kẽ
-            ctx.fillStyle = i % 2 === 0 ? colorA : colorB;
-            ctx.fillRect(0, textStripYStart + i * stripeHeight, W, stripeHeight);
-        }
-    } 
-    
-    // Logic mới cho Fuji Classic Clean Style
-    if (backgroundId === 'fuji_classic_clean') {
-        // 1. Đảm bảo toàn bộ nền là màu trắng (hoặc rất nhạt)
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, W, H);
-        
-        // 2. Vẽ dải màu ở khu vực Footer/Text Strip (Màu xanh Fuji nhẹ nhàng)
-        const fujiFooterColor = '#B3D0FF'; // Màu xanh nhạt (Light Fuji Blue)
-        
-        ctx.fillStyle = fujiFooterColor;
-        ctx.fillRect(0, textStripYStart, W, textStripH);
-    }
-}
-
-// Hàm lấy màu nền film Instax mặc định
-function getFilmColor(frameStyle, backgroundId) {
-    if (backgroundId !== 'default') return '#FFFFFF'; 
-    if (frameStyle === 'square') return '#333333';
-    if (frameStyle === 'wide') return '#B3E5FC';
-    return '#FFFFFF';
-}
-
-async function mergeStrip(images){
-  const layout = layoutSelect.value;
-  const frameStyle = frameSelect.value;
-  const backgroundId = backgroundSelect.value; 
-  const overlayId = overlaySelect.value; // <--- LẤY GIÁ TRỊ OVERLAY
-  const stickerText = customStripSticker.value; // <--- LẤY GIÁ TRỊ STICKER
-  let W, H;
-
-  // 1. Tính toán Kích thước một tấm film (Film W x Film H)
-  let frameW;
-  const frameH = BASE_FRAME_H; 
-  
-  // Lấy TỶ LỆ FILM CHÍNH XÁ (W/H) dưới dạng số
-  const numericFilmRatio = getInstaxFilmRatio(frameStyle); 
-  
-  // Tính toán frameW dựa trên tỷ lệ chính xác
-  frameW = Math.round(frameH * numericFilmRatio);
-  
-  // 2. Tính toán Kích thước Canvas Tổng (W, H)
-  if (layout === 'vertical') {
-    // W = frameW + 2 * VERT_MARGIN_X
-    W = frameW + 2 * VERT_MARGIN_X; 
-    // H = 4 * frameH + VERT_TEXT_H
-    H = 4 * frameH + VERT_TEXT_H; 
-    
-    stripSizeText.textContent = `Strip size: ${W}×${H} (Dynamic)`;
-    
-  } else { // layout === 'grid'
-    const gridH = 2 * frameH;
-    const gridTextH = Math.round(gridH * GRID_TEXT_RATIO); 
-    
-    // W = 2 * frameW + 3 * GRID_MARGIN
-    W = 2 * frameW + 3 * GRID_MARGIN; 
-    // H = 2 * frameH + gridTextH + 2 * GRID_MARGIN (Top/Bottom Margin)
-    H = gridH + gridTextH + 2 * GRID_MARGIN; 
-    
-    stripSizeText.textContent = `Grid size: ${W}×${H} (Dynamic)`;
-  }
-  
-  // Khởi tạo Canvas
-  const c = document.createElement('canvas');
-  c.width = W; c.height = H;
-  const ctx = c.getContext('2d');
-  
-  // Cài đặt màu chữ và viền phụ thuộc vào Instax style
-  let instaxTextColor = '#FF69B4'; 
-  let innerBorderColor = '#444444'; 
-
-  // VẼ BACKGROUND CHUNG
-  if (backgroundId !== 'default') {
-      drawComplexBackground(ctx, W, H, backgroundId, layout, frameH, GRID_MARGIN); 
-      instaxTextColor = '#4A4A4A'; 
-      innerBorderColor = '#4A4A4A';
-      
-      // Đặc biệt cho các màu nền đậm, chữ cần màu sáng
-      if (backgroundId === 'romantic_red_velvet' || backgroundId === 'starry_night_light' || backgroundId === 'berry_smoothie' || backgroundId === 'coral_dream') {
-          instaxTextColor = '#FFFFFF'; 
-          innerBorderColor = '#FFFFFF';
-      }
-      
-      // Đặc biệt cho sọc, chữ phải là màu trắng/tối để nổi bật trên sọc
-      if (backgroundId === 'stripes_bw' || backgroundId === 'stripes_red_white') {
-          instaxTextColor = backgroundId === 'stripes_bw' ? '#FFFFFF' : '#FFFFFF'; // Chữ trắng trên sọc
-      }
-      
-      // Đặc biệt cho Fuji Clean
-      if (backgroundId === 'fuji_classic_clean') {
-          // Footer màu xanh nhạt, chữ cần màu đậm hơn (Black)
-          instaxTextColor = '#333333'; 
-          innerBorderColor = '#333333';
-      }
-      
-  } else {
-      ctx.fillStyle = getFilmColor(frameStyle, backgroundId);
-      ctx.fillRect(0,0,W,H);
-      
-      if (frameStyle === 'square') { 
-          instaxTextColor = '#FFFFFF'; 
-          innerBorderColor = '#FFFFFF'; 
-      } else if (frameStyle === 'wide') { 
-          instaxTextColor = '#333333'; 
-          innerBorderColor = '#333333';
-      }
-  }
-
-  // 3. LOGIC XỬ LÝ TỶ LỆ KHUNG ẢNH INSTAX (Image Area)
-  const targetRatio = getInstaxPhotoRatio(frameStyle); // SỬ DỤNG TỶ LỆ PHOTO CHÍNH XÁ
-  
-  const innerBorder = INNER_BORDER; 
-  const imageMarginYTop = IMAGE_AREA_TOP_MARGIN; // Khoảng cách từ đỉnh film đến ảnh (30px)
-  const imageH_max = frameH - imageMarginYTop - IMAGE_AREA_FOOTER_H; // Chiều cao tối đa của khu vực ảnh
-
-  if (layout === 'vertical') {
-    
-    const frameXStart = (W - frameW) / 2; // Vị trí X bắt đầu của tấm film (căn giữa)
-
-    for (let i=0;i<images.length;i++){
-      const img = await loadImage(images[i]);
-      const frameY = i * frameH;
-      
-      // Tính toán kích thước ảnh (Image Area) cần vẽ (crop/center)
-      let imageW_calc, imageH_calc;
-      
-      // Kích thước tối đa của ảnh bên trong film (giả định có 3px padding bên trong film)
-      const MAX_PHOTO_W = frameW - 2 * 3; 
-      const MAX_PHOTO_H = imageH_max; 
-      
-      if (targetRatio <= 1.0) { // Portrait or Square
-          // Ưu tiên chiều rộng, nhưng đảm bảo chiều cao không vượt quá MAX_PHOTO_H
-          imageW_calc = Math.min(MAX_PHOTO_W, Math.round(MAX_PHOTO_H * targetRatio)); 
-          imageH_calc = Math.round(imageW_calc / targetRatio); 
-          if (imageH_calc > MAX_PHOTO_H) { // Vẫn có thể xảy ra lỗi làm tròn
-            imageH_calc = MAX_PHOTO_H;
-            imageW_calc = Math.round(imageH_calc * targetRatio);
-          }
-      } else { // Landscape (Wide)
-          // Ưu tiên chiều cao, nhưng đảm bảo chiều rộng không vượt quá MAX_PHOTO_W
-          imageH_calc = Math.min(MAX_PHOTO_H, Math.round(MAX_PHOTO_W / targetRatio)); 
-          imageW_calc = Math.round(imageH_calc * targetRatio); 
-          if (imageW_calc > MAX_PHOTO_W) {
-            imageW_calc = MAX_PHOTO_W;
-            imageH_calc = Math.round(imageW_calc / targetRatio);
-          }
-      }
-
-      // Vị trí cuối cùng cho ảnh (căn giữa trong khu vực ảnh)
-      const finalImageX = frameXStart + (frameW - imageW_calc) / 2;
-      const finalImageY = frameY + imageMarginYTop + (imageH_max - imageH_calc) / 2;
-
-
-      // 1. Draw Film Background (frameW x frameH)
-      // Nếu backgroundId là 'default', vẽ màu film (trắng/đen/xanh)
-      if (backgroundId === 'default') {
-          ctx.fillStyle = getFilmColor(frameStyle, backgroundId);
-          ctx.fillRect(frameXStart, frameY, frameW, frameH); 
-      } else {
-          // Nếu background là phức tạp, vẽ khu vực film là MÀU TRẮNG
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(frameXStart, frameY, frameW, frameH); 
-      }
-      
-      // 2. Draw Inner Border (Xung quanh khu vực ảnh)
-      ctx.fillStyle = innerBorderColor;
-      ctx.fillRect(finalImageX - innerBorder, finalImageY - innerBorder, imageW_calc + 2*innerBorder, imageH_calc + 2*innerBorder);
-      
-      // 3. Draw Photo (Contain)
-      drawPhoto(ctx, img, finalImageX, finalImageY, imageW_calc, imageH_calc); 
-      
-      // 3.5. NEW: DRAW PHOTO OVERLAY
-      drawOverlayFrame(ctx, finalImageX, finalImageY, imageW_calc, imageH_calc, overlayId); // <--- ADD THIS
-    }
-
-  } else { // layout === 'grid'
-
-    const pos = GRID_MARGIN; // Margin cho lưới
-    const frameGap = GRID_MARGIN;
-    
-    // Vị trí bắt đầu của 4 frame trong canvas lưới
-    const positions = [
-      { x: pos, y: pos }, 
-      { x: pos + frameW + frameGap, y: pos }, 
-      { x: pos, y: pos + frameH + frameGap }, 
-      { x: pos + frameW + frameGap, y: pos + frameH + frameGap }
-    ];
-
-    for (let i=0;i<images.length;i++){
-      const img = await loadImage(images[i]);
-      const frameXStart = positions[i].x;
-      const frameY = positions[i].y;
-      
-      // Image Area Calculation is the same
-      const MAX_PHOTO_W = frameW - 2 * 3; 
-      const MAX_PHOTO_H = imageH_max; 
-      
-      let imageW_calc, imageH_calc;
-      if (targetRatio <= 1.0) { 
-          imageW_calc = Math.min(MAX_PHOTO_W, Math.round(MAX_PHOTO_H * targetRatio)); 
-          imageH_calc = Math.round(imageW_calc / targetRatio); 
-          if (imageH_calc > MAX_PHOTO_H) { 
-            imageH_calc = MAX_PHOTO_H;
-            imageW_calc = Math.round(imageH_calc * targetRatio);
-          }
-      } else { 
-          imageH_calc = Math.min(MAX_PHOTO_H, Math.round(MAX_PHOTO_W / targetRatio)); 
-          imageW_calc = Math.round(imageH_calc * targetRatio); 
-          if (imageW_calc > MAX_PHOTO_W) {
-            imageW_calc = MAX_PHOTO_W;
-            imageH_calc = Math.round(imageW_calc / targetRatio);
-          }
-      }
-
-      const finalImageX = frameXStart + (frameW - imageW_calc) / 2;
-      const finalImageY = frameY + imageMarginYTop + (imageH_max - imageH_calc) / 2;
-
-      // 1. Draw Film Background (frameW x frameH)
-      if (backgroundId === 'default') {
-          ctx.fillStyle = getFilmColor(frameStyle, backgroundId);
-          ctx.fillRect(frameXStart, frameY, frameW, frameH); 
-      } else {
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(frameXStart, frameY, frameW, frameH); 
-      }
-      
-      // 2. Draw Inner Border (Around the image area)
-      ctx.fillStyle = innerBorderColor;
-      ctx.fillRect(finalImageX - innerBorder, finalImageY - innerBorder, imageW_calc + 2*innerBorder, imageH_calc + 2*innerBorder);
-      
-      // 3. Draw Photo (Contain)
-      drawPhoto(ctx, img, finalImageX, finalImageY, imageW_calc, imageH_calc);
-      
-      // 3.5. NEW: DRAW PHOTO OVERLAY
-      drawOverlayFrame(ctx, finalImageX, finalImageY, imageW_calc, imageH_calc, overlayId); // <--- ADD THIS
-    }
-  }
-
-  // 4. Text Strip Logic (Vẽ chữ và Sticker)
-  const textStripYStart = layout === 'vertical' ? 4 * frameH : 2 * frameH + 2 * GRID_MARGIN;
-  const textStripH = H - textStripYStart; 
-  const customText = customStripText.value.toUpperCase(); 
-  
-  // NEW: Text and Sticker are drawn here
-  if (customText || stickerText) {
-      ctx.save();
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = instaxTextColor; 
-      
-      const centerX = W / 2;
-      let centerY = textStripYStart + textStripH / 2; 
-
-      // 4.1. DRAW STICKER (EMOJI) - Sử dụng font lớn
-      if (stickerText) {
-          const stickerFontSize = layout === 'vertical' ? '64px' : '96px';
-          ctx.font = `normal ${stickerFontSize} system-ui, sans-serif`; 
-          
-          // Dời vị trí chữ (customText) lên trên một chút để nhường chỗ cho sticker
-          if (customText) {
-              if (layout === 'vertical') {
-                  centerY -= 20; 
-              } else {
-                  centerY -= 30;
-              }
-          }
-          
-          // Vẽ Sticker (Căn giữa phía dưới)
-          const stickerY = textStripYStart + textStripH * 0.7; // 70% từ đỉnh text strip
-          ctx.fillText(stickerText.trim(), centerX, stickerY);
-      }
-
-      // 4.2. DRAW CUSTOM TEXT
-      if (customText) {
-          const defaultFont = 'Varela Round'; 
-          const fontSize = layout === 'vertical' ? '32px' : '64px'; 
-          const fontWeight = '600'; 
-          
-          ctx.font = `${fontWeight} ${fontSize} '${defaultFont}', system-ui, sans-serif`;
-
-          const lines = customText.length > 15 && customText.includes('&') 
-              ? customText.split(/\s*&\s*/) 
-              : [customText];
-          
-          if (lines.length > 1) {
-              const lineHeight = layout === 'vertical' ? 50 : 80; 
-              let textY = centerY - (lineHeight / 2); 
-              
-              for (let j = 0; j < lines.length; j++) {
-                  ctx.fillText(lines[j].trim(), centerX, textY + j * lineHeight);
-              }
-          } else {
-              // Nếu có sticker, centerY đã bị dịch chuyển lên trên
-              ctx.fillText(customText, centerX, centerY);
-          }
-      }
-      
-      ctx.restore();
-  }
-
-  // 5. Vẽ Viền Ngoại Cùng
-  ctx.strokeStyle = '#444444'; 
-  ctx.lineWidth = 4;
-  ctx.strokeRect(2, 2, W-4, H-4);
-
-  // 6. Vẽ Ngày Giờ ở dưới cùng
-  ctx.save();
-  ctx.font = '600 16px Nunito, system-ui, sans-serif';
-  
-  ctx.fillStyle = (backgroundId === 'default' && frameStyle === 'square' 
-                   ? 'rgba(255,255,255,0.7)' 
-                   : 'rgba(60,70,90,0.7)'); 
-                   
-  // Đặc biệt cho Fuji Clean hoặc nền đậm
-  if (backgroundId === 'fuji_classic_clean' || backgroundId === 'romantic_red_velvet' || backgroundId === 'starry_night_light' || backgroundId === 'berry_smoothie' || backgroundId === 'coral_dream') {
-      ctx.fillStyle = '#FFFFFF'; 
-  }
-  
-  ctx.textAlign = 'left';
-  ctx.fillText(getFormattedNow(), 16, H - 18); 
-  ctx.restore();
-
-  // Cập nhật: Trả về dataUrl và kích thước
-  return { 
-    dataUrl: c.toDataURL('image/png'), 
-    W: W, 
-    H: H 
-  };
-}
-
-// Cập nhật: Thay đổi logic từ drawCover (crop) sang drawPhoto (contain)
-function drawPhoto(ctx, img, x, y, w, h){
-  // w, h là kích thước target của photo bên trong khung Instax
-  const iw = img.width, ih = img.height;
-  
-  // Tính ratio để CONTAIN (vừa khít, không bị mất/lệch ra ngoài)
-  const r = Math.min(w/iw, h/ih); 
-  
-  const nw = iw * r, nh = ih * r;
-  
-  // Tính toán offset để center (căn giữa)
-  const centeredX = x + (w - nw) / 2; // Vị trí X đã căn giữa trong khu vực Instax
-  const centeredY = y + (h - nh) / 2; // Vị trí Y đã căn giữa trong khu vực Instax
-  
-  // Draw the image at the centered position
-  // Sử dụng 9-argument version: (Source Image, Source X, Source Y, Source W, Source H, Dest X, Dest Y, Dest W, Dest H)
-  ctx.drawImage(img, 
-                0, 0, iw, ih, 
-                centeredX, centeredY, nw, nh
-  );
-}
-
-/* NEW FUNCTION: Draw Frame Overlay onto a single Instax photo area */
-function drawOverlayFrame(ctx, x, y, w, h, overlayId) {
-    if (overlayId === 'none') return;
-    
-    ctx.save();
-    
-    if (overlayId === 'heart_corners') {
-        const size = Math.min(w, h) * 0.15; 
-        const color = '#FF69B4'; 
-        
-        ctx.fillStyle = color;
-        
-        // Helper để vẽ trái tim đơn giản
-        const drawHeart = (cx, cy, s) => {
-            ctx.beginPath();
-            ctx.moveTo(cx, cy + s * 0.3);
-            ctx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
-            ctx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
-            ctx.fill();
-        };
-        
-        // 4 góc
-        drawHeart(x + size, y + size, size); // Top-Left
-        
-        ctx.save();
-        ctx.scale(-1, 1); 
-        drawHeart(-(x + w - size), y + size, size); // Top-Right (mirror X)
-        ctx.restore();
-        
-        ctx.save();
-        ctx.scale(1, -1); 
-        drawHeart(x + size, -(y + h - size), size); // Bottom-Left (mirror Y)
-        ctx.restore();
-        
-        ctx.save();
-        ctx.scale(-1, -1); 
-        drawHeart(-(x + w - size), -(y + h - size), size); // Bottom-Right (mirror X, Y)
-        ctx.restore();
-
-    } else if (overlayId === 'film_damage') {
-        // Thêm các vết trầy xước và bụi giả lập film cũ
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-        for (let i = 0; i < 5; i++) {
-            ctx.fillRect(x + Math.random() * w, y, 1, h); // Sọc dọc (trắng)
-        }
-        
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.globalAlpha = 0.5;
-        for (let i = 0; i < 20; i++) {
-            ctx.beginPath();
-            ctx.arc(x + Math.random() * w, y + Math.random() * h, 0.5, 0, Math.PI * 2);
-            ctx.fill(); // Bụi (đen)
-        }
-    }
-    
-    ctx.restore();
-}
-
-function loadImage(dataUrl){
-  return new Promise((res, rej)=>{
+function loadImg(dataUrl){
+  return new Promise((res, rej) => {
     const i = new Image();
-    i.onload = ()=> res(i);
+    i.onload = () => res(i);
     i.onerror = rej;
     i.src = dataUrl;
   });
@@ -1682,20 +975,582 @@ function triggerDownload(dataUrl, filename){
   a.remove();
 }
 
-// KHỞI TẠO: Bắt đầu bằng màn hình Welcome và KHÔNG bật camera ngay
-window.addEventListener('load', async () => {
-  resetAll(); 
-  showWelcomeScreen(); 
+// KHỞI TẠO
+document.addEventListener('DOMContentLoaded', () => {
+    if (startPhotoboothBtn) {
+        startPhotoboothBtn.addEventListener('click', () => {
+            showCaptureScreen();
+            startCamera();
+        });
+    }
+
+    // Gắn sự kiện cho các nút điều khiển
+    startBtn.addEventListener('click', startPhotobooth);
+    redoBtn.addEventListener('click', () => {
+        if(confirm('Bạn có chắc chắn muốn RESET tất cả ảnh đã chụp và bắt đầu lại?')) {
+            showWelcomeScreen(); // Quay lại màn hình welcome để dễ dàng khởi động lại
+        }
+    });
+    stopCamBtn.addEventListener('click', stopCamera);
+    switchCamBtn.addEventListener('click', switchCamera);
+    refreshBtn.addEventListener('click', () => {
+        window.location.reload();
+    });
+    
+    // Gắn sự kiện resize để điều chỉnh overlay
+    window.addEventListener('resize', resizeOverlay);
 });
 
-window.addEventListener('resize', () => {
-    resizeOverlay();
-    // Đảm bảo Final Preview hiển thị đúng tỷ lệ khi resize
-    if (finalImageDataUrl && reviewScreen.style.display !== 'none') mergeAndShowFinal();
-});
-</script>
+/* ---------------------------------------------------- */
+/* -------------------- DRAWING LOGIC ----------------- */
+/* ---------------------------------------------------- */
+
+// Countdown helper (unchanged)
+function doCountdown(sec, stepLabel){
+  return new Promise(resolve => {
+    countdownEl.style.display = 'flex';
+    countdownEl.style.flexDirection = 'column';
+    
+    let timer = sec;
+    
+    const intervalId = setInterval(() => {
+        if (timer > 0) {
+            countdownEl.innerHTML = `<span style="font-size: 0.35em; font-weight: 600; margin-bottom: 5px; opacity: 0.8;">${stepLabel}</span><span style="line-height: 1;">${timer}</span>`;
+            playBeep();
+            timer--;
+        } else {
+            clearInterval(intervalId);
+            countdownEl.style.flexDirection = 'row';
+            countdownEl.textContent = '';
+            countdownEl.style.display = 'none';
+            resolve();
+        }
+    }, 1000); 
+    
+  });
+}
+
+// NEW: Simple sound/effect for capture
+function flashEffect() {
+    const flash = document.createElement('div');
+    flash.style.cssText = 'position: absolute; inset: 0; background: white; opacity: 0; z-index: 10;';
+    document.getElementById('cameraWrap').appendChild(flash);
+
+    flash.animate([
+        { opacity: 1, offset: 0 },
+        { opacity: 0, offset: 0.5 },
+        { opacity: 0, offset: 1 }
+    ], {
+        duration: 300,
+        easing: 'ease-out'
+    }).onfinish = () => flash.remove();
+}
+
+function playShutterSound() {
+    // Có thể thêm âm thanh thực tế ở đây, ví dụ:
+    // const audio = new Audio('shutter.mp3');
+    // audio.play();
+    console.log('Shutter sound played (simulated)');
+}
+
+function playBeep() {
+    // Có thể thêm âm thanh beep thực tế ở đây, ví dụ:
+    // const audio = new Audio('beep.mp3');
+    // audio.play();
+    console.log('Beep sound played (simulated)');
+}
+
+
+// Draw Photo on Canvas (unchanged)
+function drawPhoto(ctx, img, x, y, w, h){
+  const imgRatio = img.width / img.height;
+  const targetRatio = w / h; // Luôn là 1.0 vì W=H=photoW/photoH
+
+  let dw, dh, dx, dy;
+
+  if (imgRatio > targetRatio) {
+    // Chiều cao là giới hạn (Crop ngang)
+    dh = h;
+    dw = h * imgRatio;
+    dx = x + (w - dw) / 2;
+    dy = y;
+  } else {
+    // Chiều rộng là giới hạn (Crop dọc)
+    dw = w;
+    dh = w / imgRatio;
+    dx = x;
+    dy = y + (h - dh) / 2;
+  }
   
+  // drawImage (crop/cover)
+  ctx.drawImage(img, dx, dy, dw, dh);
+}
 
+// Draw Overlay on Photo Area (unchanged)
+function drawOverlayFrame(ctx, x, y, w, h, overlayId){
+    if (overlayId === 'none') return;
+    
+    ctx.save();
+    
+    // Set clip path to the photo area
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.clip(); 
+    
+    if (overlayId === 'heart_corners') {
+        const size = Math.min(w, h) / 10; // Kích thước trái tim
+        ctx.fillStyle = '#FF69B4'; // Hot Pink
 
-</body>
-</html>
+        const drawHeart = (cx, cy, s) => {
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + s * 0.3);
+            ctx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
+            ctx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
+            ctx.fill();
+        };
+
+        // 4 góc
+        drawHeart(x + size, y + size, size); // Top-Left
+        ctx.save();
+        ctx.scale(-1, 1);
+        drawHeart(-(x + w - size), y + size, size); // Top-Right (mirror X)
+        ctx.restore();
+        ctx.save();
+        ctx.scale(1, -1);
+        drawHeart(x + size, -(y + h - size), size); // Bottom-Left (mirror Y)
+        ctx.restore();
+        ctx.save();
+        ctx.scale(-1, -1);
+        drawHeart(-(x + w - size), -(y + h - size), size); // Bottom-Right (mirror X, Y)
+        ctx.restore();
+
+    } else if (overlayId === 'film_damage') {
+        // Simple film dust/scratches overlay
+        ctx.fillStyle = 'rgba(0,0,0,0.1)'; 
+        
+        // Add dust/specks
+        for (let i = 0; i < 50; i++) {
+            ctx.fillRect(x + Math.random() * w, y + Math.random() * h, 1, 1);
+        }
+        
+        // Add light scratches
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)'; 
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i < 5; i++) {
+            const sx = x + Math.random() * w;
+            const sy = y + Math.random() * h;
+            ctx.beginPath();
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(sx + Math.random() * 50 - 25, sy + Math.random() * 50 - 25);
+            ctx.stroke();
+        }
+    }
+    
+    ctx.restore(); 
+}
+
+// Draw Complex Background (unchanged)
+function drawComplexBackground(ctx, W, H, backgroundId, layout, photoH, gridGap){
+    ctx.save();
+    
+    // Vùng khu vực chữ strip (tính lại vị trí)
+    let textStripYStart;
+    if (layout === 'vertical') {
+        textStripYStart = 4 * photoH; 
+    } else { 
+        // Lưới: 2*photoH + gridGap + 2*gridOuterPadding (từ mergeStrip)
+        // Vị trí text strip bắt đầu ngay dưới khu vực ảnh
+        const gridOuterPadding = (W - (2 * (W - 2 * 30) / 2 - 30))/2; // Lấy lại gridOuterPadding
+        const photoW = (W - 2*gridOuterPadding - gridGap) / 2;
+        textStripYStart = 2 * photoH + gridGap + 2 * gridOuterPadding; // Dùng 2*gridOuterPadding ở đây để khớp H
+    }
+    const textStripH = H - textStripYStart;
+    
+    if (backgroundId === 'soft_rose_gradient') {
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        grad.addColorStop(0, '#FFD1DC'); 
+        grad.addColorStop(1, '#FFEBCD'); 
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'romantic_red_velvet') {
+        ctx.fillStyle = '#8B0000'; // Dark Red
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'lavender_haze_blur') {
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        grad.addColorStop(0, '#E6E6FA'); // Lavender
+        grad.addColorStop(1, '#B0E0E6'); // Powder Blue
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'sweetheart_pink_dots') {
+        const patternCanvas = document.createElement('canvas');
+        const patternSize = 60;
+        patternCanvas.width = patternSize;
+        patternCanvas.height = patternSize;
+        const pCtx = patternCanvas.getContext('2d');
+        pCtx.fillStyle = '#FFFFFF';
+        pCtx.fillRect(0, 0, patternSize, patternSize);
+        const drawMiniHeart = (cx, cy, s) => {
+            pCtx.beginPath();
+            pCtx.moveTo(cx, cy + s * 0.3);
+            pCtx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
+            pCtx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
+            pCtx.fill();
+        };
+        pCtx.fillStyle = '#FFB6C1'; // Light Pink
+        drawMiniHeart(patternSize * 0.25, patternSize * 0.25, 4);
+        pCtx.fillStyle = '#FF69B4'; // Hot Pink
+        drawMiniHeart(patternSize * 0.75, patternSize * 0.75, 3);
+        const pattern = ctx.createPattern(patternCanvas, 'repeat');
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'sunset_kiss_gradient') {
+        const grad = ctx.createLinearGradient(0, H, W, 0);
+        grad.addColorStop(0, '#FF4D4D'); // Red-Orange
+        grad.addColorStop(0.5, '#FFD700'); // Gold/Yellow
+        grad.addColorStop(1, '#FFC0CB'); // Pink
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'champagne_toast') {
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        grad.addColorStop(0, '#F5DEB3'); // Wheat
+        grad.addColorStop(0.5, '#FFFACD'); // Lemon Chiffon
+        grad.addColorStop(1, '#FFE4E1'); // Misty Rose
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'blush_watercolor') {
+        ctx.fillStyle = '#FEE5E2'; // Very Pale Pink
+        ctx.fillRect(0, 0, W, H);
+        const spots = [
+            { x: W * 0.1, y: H * 0.2, r: W * 0.1, color: 'rgba(255,192,203,0.5)' },
+            { x: W * 0.8, y: H * 0.6, r: W * 0.15, color: 'rgba(255,160,192,0.4)' },
+            { x: W * 0.4, y: H * 0.9, r: W * 0.08, color: 'rgba(255,105,180,0.3)' }
+        ];
+        spots.forEach(spot => {
+            const grad = ctx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, spot.r);
+            grad.addColorStop(0, spot.color);
+            grad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(spot.x, spot.y, spot.r, 0, 2 * Math.PI);
+            ctx.fill();
+        });
+    } else if (backgroundId === 'mint_love_stripes') {
+        const colorA = '#F0FFF0'; // Honeydew
+        const colorB = '#98FB98'; // Pale Green
+        const stripeHeight = H / 20; 
+        for (let i = 0; i < 20; i++) {
+            ctx.fillStyle = i % 2 === 0 ? colorA : colorB;
+            ctx.fillRect(0, i * stripeHeight, W, stripeHeight);
+        }
+        // Footer (Text Strip) vẫn là màu stripes
+    } else if (backgroundId === 'starry_night_light') {
+        ctx.fillStyle = '#191970'; // Midnight Blue
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        for (let i = 0; i < 150; i++) {
+            ctx.fillRect(Math.random() * W, Math.random() * H, 1, 1);
+        }
+    } else if (backgroundId === 'coral_dream') {
+        ctx.fillStyle = '#FF7F50'; // Coral
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'berry_smoothie') {
+        const grad = ctx.createLinearGradient(W/2, 0, W/2, H);
+        grad.addColorStop(0, '#DA70D6'); // Orchid
+        grad.addColorStop(1, '#BA55D3'); // Medium Orchid
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'lilac_blossom_texture') {
+        ctx.fillStyle = '#E6E6FA'; // Lavender
+        ctx.fillRect(0, 0, W, H);
+        const noiseCanvas = document.createElement('canvas');
+        noiseCanvas.width = 100;
+        noiseCanvas.height = 100;
+        const nCtx = noiseCanvas.getContext('2d');
+        for (let i = 0; i < 3000; i++) {
+            nCtx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.02})`; // Very subtle dark noise
+            nCtx.fillRect(Math.random() * 100, Math.random() * 100, 1, 1);
+        }
+        const pattern = ctx.createPattern(noiseCanvas, 'repeat');
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'peachy_glow') {
+        const grad = ctx.createLinearGradient(0, H, W, 0);
+        grad.addColorStop(0, '#FFDAB9'); // Peach Puff
+        grad.addColorStop(1, '#FFC0CB'); // Pink
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'cotton_candy_swirl') {
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        grad.addColorStop(0, '#ADD8E6'); // Light Blue
+        grad.addColorStop(0.5, '#FFB6C1'); // Light Pink
+        grad.addColorStop(1, '#F0E68C'); // Khaki
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'valentines_day_hearts') {
+        ctx.fillStyle = '#FFFFFF'; 
+        ctx.fillRect(0, 0, W, H);
+        const patternCanvas = document.createElement('canvas');
+        const patternSize = 80;
+        patternCanvas.width = patternSize;
+        patternCanvas.height = patternSize;
+        const pCtx = patternCanvas.getContext('2d');
+        pCtx.fillStyle = '#F0F0F0'; 
+        pCtx.fillRect(0, 0, patternSize, patternSize);
+        pCtx.fillStyle = '#FF69B4'; // Hot Pink
+        const drawSmallHeart = (cx, cy, s) => {
+            pCtx.beginPath();
+            pCtx.moveTo(cx, cy + s * 0.3);
+            pCtx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
+            pCtx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
+            pCtx.fill();
+        };
+        drawSmallHeart(patternSize * 0.25, patternSize * 0.25, 4);
+        drawSmallHeart(patternSize * 0.75, patternSize * 0.5, 3);
+        const pattern = ctx.createPattern(patternCanvas, 'repeat');
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'aurora_pink_blue') {
+        const grad = ctx.createLinearGradient(0, H, W, 0);
+        grad.addColorStop(0, '#00BFFF'); // Deep Sky Blue
+        grad.addColorStop(0.5, '#FFFFFF');
+        grad.addColorStop(1, '#FF69B4'); // Hot Pink
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'lemonade_pink') {
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        grad.addColorStop(0, '#FFD700'); // Gold
+        grad.addColorStop(0.7, '#FFC0CB'); // Pink
+        grad.addColorStop(1, '#FFFFFF');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'dreamy_cloud_pastel') {
+        ctx.fillStyle = '#F0F8FF'; // Alice Blue
+        ctx.fillRect(0, 0, W, H);
+        // Soft clouds texture
+        const patternCanvas = document.createElement('canvas');
+        const patternSize = 150;
+        patternCanvas.width = patternSize;
+        patternCanvas.height = patternSize;
+        const pCtx = patternCanvas.getContext('2d');
+        pCtx.fillStyle = '#F0F8FF';
+        pCtx.fillRect(0, 0, patternSize, patternSize);
+        pCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        pCtx.beginPath();
+        pCtx.arc(30, 30, 20, 0, 2 * Math.PI);
+        pCtx.fill();
+        pCtx.beginPath();
+        pCtx.arc(120, 80, 40, 0, 2 * Math.PI);
+        pCtx.fill();
+        const pattern = ctx.createPattern(patternCanvas, 'repeat');
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'minimal_white_texture') {
+        ctx.fillStyle = '#FFFFFF'; 
+        ctx.fillRect(0, 0, W, H);
+        const noiseCanvas = document.createElement('canvas');
+        noiseCanvas.width = 100;
+        noiseCanvas.height = 100;
+        const nCtx = noiseCanvas.getContext('2d');
+        for (let i = 0; i < 5000; i++) {
+            nCtx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.01})`; 
+            nCtx.fillRect(Math.random() * 100, Math.random() * 100, 1, 1);
+        }
+        const pattern = ctx.createPattern(noiseCanvas, 'repeat');
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, W, H);
+    } else if (backgroundId === 'stripes_bw') {
+        const colorA = '#FFFFFF'; 
+        const colorB = '#333333';
+        const stripeHeight = H / 25; 
+        for (let i = 0; i < 25; i++) {
+            ctx.fillStyle = i % 2 === 0 ? colorA : colorB;
+            ctx.fillRect(0, i * stripeHeight, W, stripeHeight);
+        }
+    } else if (backgroundId === 'fuji_classic_clean') {
+        // 1. Đảm bảo toàn bộ nền là màu trắng (hoặc rất nhạt)
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, W, H);
+        // 2. Vẽ dải màu ở khu vực Footer/Text Strip (Màu xanh Fuji nhẹ nhàng)
+        const fujiFooterColor = '#B3D0FF'; // Màu xanh nhạt (Light Fuji Blue)
+        ctx.fillStyle = fujiFooterColor;
+        ctx.fillRect(0, textStripYStart, W, textStripH);
+    }
+    
+    ctx.restore();
+}
+
+// Hàm lấy màu nền film Instax mặc định
+function getFilmColor(frameStyle, backgroundId) {
+    if (backgroundId !== 'default') return '#FFFFFF'; 
+    // Nếu là background mặc định, bây giờ sẽ dùng màu trắng vì đã bỏ viền Instax
+    return '#FFFFFF';
+}
+
+async function mergeStrip(images){
+    const layout = layoutSelect.value;
+    // Đã bỏ frameSelect. Cố định tỷ lệ ảnh chụp (photo area) là 1:1 (Square)
+    const frameStyle = 'square'; 
+    const backgroundId = backgroundSelect.value;
+    const overlayId = overlaySelect.value; 
+    const stickerText = customStripSticker.value; 
+    
+    let W, H; 
+    
+    // Tỷ lệ Ảnh BÊN TRONG (Photo Area Ratio) cố định 1:1
+    const targetRatio = 1.0; 
+    
+    // Sử dụng BASE_FRAME_H (450px) làm Chiều cao Cố định của 1 tấm ảnh (PHOTO)
+    const photoH = BASE_FRAME_H; // 450
+    const photoW = Math.round(photoH * targetRatio); // 450 (Cố định 1:1)
+    
+    // Cài đặt margins
+    // Note: VERT_MARGIN_X = 30; VERT_TEXT_H = 250; GRID_MARGIN = 40; 
+    const stripMarginX = 30; // Margin X cho strip dọc (sử dụng VERT_MARGIN_X)
+    const stripTextH = 250; // Chiều cao khu vực chữ (sử dụng VERT_TEXT_H)
+    
+    const gridOuterPadding = 40; // Lề ngoài cho lưới (sử dụng GRID_MARGIN)
+    const gridGap = 30; // Khoảng cách giữa các ảnh (ngang/dọc)
+    const gridTextH = 250; 
+
+    // 1. Tính toán Kích thước Canvas (W x H)
+    let textStripYStart;
+
+    if (layout === 'vertical') {
+        // Vertical Strip (4x1) - BORDERLESS (Sử dụng cấu trúc cũ để giữ lại tỷ lệ strip)
+        W = photoW + stripMarginX * 2; // 450 + 60 = 510
+        H = 4 * photoH + stripTextH; // 4*450 + 250 = 2050
+        textStripYStart = 4 * photoH; 
+
+        stripSizeText.textContent = `Strip size: ${W} x ${H} pixels (Fixed 1:1 Photo)`;
+    } else { 
+        // Grid (2x2) - BORDERLESS
+        W = 2 * photoW + gridGap + 2 * gridOuterPadding; // 2*450 + 30 + 80 = 1010
+        H = 2 * photoH + gridGap + 2 * gridOuterPadding + gridTextH; // 2*450 + 30 + 80 + 250 = 1260
+        textStripYStart = 2 * photoH + gridGap + 2 * gridOuterPadding;
+
+        stripSizeText.textContent = `Grid size: ${W} x ${H} pixels (Fixed 1:1 Photo)`;
+    }
+
+    // 2. Setup Canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+
+    // 3. Draw Background
+    drawComplexBackground(ctx, W, H, backgroundId, layout, photoH, gridGap); 
+
+    // Logic điều chỉnh màu chữ
+    let instaxTextColor = '#4A4A4A'; 
+    let innerBorderColor = '#4A4A4A'; 
+    
+    // Tạm thời bỏ qua logic màu film mặc định
+    if (backgroundId !== 'default') {
+        if (backgroundId === 'romantic_red_velvet' || backgroundId === 'starry_night_light' || backgroundId === 'berry_smoothie' || backgroundId === 'coral_dream') { 
+            instaxTextColor = '#FFFFFF'; 
+            innerBorderColor = '#FFFFFF'; 
+        } else if (backgroundId === 'stripes_bw') { 
+            instaxTextColor = '#FFFFFF'; 
+            innerBorderColor = '#FFFFFF';
+        } else if (backgroundId === 'fuji_classic_clean') { 
+            instaxTextColor = '#333333'; 
+            innerBorderColor = '#333333'; 
+        }
+    } else {
+        // Nếu là default, nền trắng, chữ đen
+        ctx.fillStyle = getFilmColor(frameStyle, backgroundId); // GetFilmColor giờ là White
+        ctx.fillRect(0,0,W,H);
+    }
+    
+    // 4. Draw Photos
+    const imagesToProcess = await Promise.all(images.map(loadImg)); 
+
+    for (let i=0; i < imagesToProcess.length; i++) {
+        const img = imagesToProcess[i];
+        
+        let finalImageX, finalImageY;
+        
+        if (layout === 'vertical') {
+            finalImageX = stripMarginX;
+            finalImageY = i * photoH; 
+        } else { // Grid
+            const col = i % 2;
+            const row = Math.floor(i / 2);
+            
+            finalImageX = gridOuterPadding + col * (photoW + gridGap); 
+            finalImageY = gridOuterPadding + row * (photoH + gridGap); 
+        }
+        
+        // DRAW Photo (Border-less) - Có thêm viền nội 3px
+        ctx.fillStyle = innerBorderColor;
+        ctx.fillRect(finalImageX - INNER_BORDER, finalImageY - INNER_BORDER, photoW + 2*INNER_BORDER, photoH + 2*INNER_BORDER);
+        
+        drawPhoto(ctx, img, finalImageX, finalImageY, photoW, photoH);
+        
+        // DRAW Overlay
+        drawOverlayFrame(ctx, finalImageX, finalImageY, photoW, photoH, overlayId);
+    }
+    
+    // 5. Text Strip Logic (Vẽ chữ và Sticker)
+    const customText = customStripText.value.toUpperCase(); 
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = '800 50px Nunito, system-ui, sans-serif'; 
+    
+    // Vị trí chữ (căn giữa khu vực Text Strip)
+    const centerX = W / 2;
+    const centerY = textStripYStart + textStripH / 2;
+    
+    // Tính kích thước chữ (để co giãn nếu quá dài)
+    let fontSize = 50; 
+    let textWidth = ctx.measureText(customText).width;
+    const maxTextWidth = W * 0.9; 
+    
+    if (textWidth > maxTextWidth) {
+        fontSize = Math.floor(fontSize * (maxTextWidth / textWidth));
+        ctx.font = `800 ${fontSize}px Nunito, system-ui, sans-serif`; 
+    }
+
+    ctx.fillStyle = instaxTextColor; // Màu chữ
+    ctx.fillText(customText, centerX, centerY);
+    
+    // Vẽ sticker/date (ở dưới/trên khu vực text strip)
+    const stickerValue = customStripSticker.value;
+    if (stickerValue) {
+        ctx.save();
+        ctx.font = '400 36px Nunito, system-ui, sans-serif'; 
+        ctx.fillStyle = instaxTextColor;
+        ctx.textAlign = 'center';
+        // Vị trí sticker: ở trên text (cách 10px)
+        ctx.fillText(stickerValue, centerX, centerY - fontSize / 2 - 10);
+        ctx.restore();
+    }
+    
+    ctx.restore(); 
+
+    // 6. Vẽ Viền Ngoại Cùng
+    ctx.strokeStyle = '#444444'; 
+    ctx.lineWidth = 4;
+    ctx.strokeRect(2, 2, W-4, H-4); 
+
+    // 7. Vẽ Ngày Giờ ở dưới cùng
+    ctx.save();
+    ctx.font = '600 16px Nunito, system-ui, sans-serif';
+    ctx.fillStyle = (backgroundId === 'default' ? 'rgba(60,70,90,0.7)' : 'rgba(255,255,255,0.7)'); 
+
+    // Đặc biệt cho Fuji Clean hoặc nền đậm
+    if (backgroundId === 'fuji_classic_clean' || backgroundId === 'romantic_red_velvet' || backgroundId === 'starry_night_light' || backgroundId === 'berry_smoothie' || backgroundId === 'coral_dream') { 
+        ctx.fillStyle = '#FFFFFF';
+    } else if (backgroundId === 'minimal_white_texture' || backgroundId === 'default') {
+        ctx.fillStyle = 'rgba(60,70,90,0.7)';
+    }
+
+    ctx.textAlign = 'left';
+    ctx.fillText(getFormattedNow(), 16, H - 18);
+    ctx.restore();
+
+    return { dataUrl: ctx.toDataURL('image/png'), W: W, H: H };
+}
+</script>
