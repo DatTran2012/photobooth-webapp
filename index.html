@@ -125,12 +125,33 @@
       display: none; 
       flex-direction: column;
   }
-  .review-inner { padding:8px 14px; display:flex; flex-direction:column; }
   
-  /* Thiết lập riêng cho khối settings trên Review để không có padding trên dưới*/
-  #reviewSettings { padding-top: 0; padding-bottom: 0; }
+  /* Wrapper cho 2 cột trên Review Screen */
+  #reviewMainContent {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr; /* Tùy chọn (trái) 1fr, Preview (phải) 1.2fr */
+      gap: 18px;
+      padding: 0 10px; /* Thêm padding ngang cho desktop */
+      align-items: flex-start;
+  }
   
-  .preview-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:8px; }
+  .review-inner { 
+      /* Bỏ padding cũ, sẽ set lại padding cụ thể cho từng block */
+      display:flex; 
+      flex-direction:column; 
+      background: var(--bg); /* Thêm background cho block */
+      border-radius: 10px;
+      padding: 14px;
+      height: 100%; /* Giúp 2 cột cân bằng chiều cao trên desktop */
+  }
+  
+  /* Đã tối ưu hóa lại để Final Review ở trên, 4 ảnh ở dưới */
+  .preview-grid{ 
+      display:grid; 
+      grid-template-columns:repeat(2,1fr); 
+      gap:10px; 
+      margin-top:8px; 
+  }
   
   /* Đã cập nhật: Bỏ aspect-ratio cứng, sẽ được set bằng JS dựa trên tỷ lệ film Instax (giờ là 1:1) */
   .instax-thumb-frame {
@@ -182,8 +203,22 @@
   }
 
   .small{ font-size:13px; color:var(--muted); }
-.countdown { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;
-    font-size:92px; color:white; font-weight:900; text-shadow:0 8px 30px rgba(0,0,0,0.6); }
+.countdown { 
+    position:absolute; 
+    inset:0; 
+    display:flex; 
+    align-items:center; 
+    justify-content:center; 
+    pointer-events:none;
+    font-size:92px; 
+    color:white; 
+    font-weight:900; 
+    text-shadow:0 8px 30px rgba(0,0,0,0.6); 
+    /* NEW: Cho phép multi-line text */
+    flex-direction: column; 
+    text-align: center;
+    line-height: 1.2;
+}
 
   .theme-line{ display:flex; align-items:center; gap:8px; justify-content:space-between; margin-top:8px;}
   .theme-tag{ background:linear-gradient(90deg,var(--accent2),var(--accent1)); padding:6px 10px; border-radius:999px; font-weight:700; color:#3b2b47; box-shadow:0 6px 20px rgba(255,105,180,0.06); }
@@ -217,6 +252,21 @@
     /* FIX: Điều chỉnh max-width trên tablet/màn hình nhỏ để ảnh ghép không bị co quá nhiều */
     .final-preview{ max-width: 220px; } 
     .final-wrap{ justify-content: center; } 
+    
+    /* New Mobile Adjustment for Review Screen */
+    #reviewMainContent {
+        grid-template-columns: 1fr; /* Trở về 1 cột trên mobile */
+        gap: 10px; /* Giảm gap */
+        padding: 0;
+    }
+
+    /* Loại bỏ background, giảm padding cho mobile để gọn gàng hơn */
+    .review-inner { 
+        background: transparent;
+        border-radius: 0;
+        padding: 4px 10px; /* Giảm padding cho mobile */
+        height: auto; /* Bỏ giới hạn chiều cao */
+    }
   }
 
   @media (max-width:500px){
@@ -246,7 +296,7 @@
     
     .final-preview { max-width: 100%; width: 100%; height: auto; flex-shrink: 0; }
     
-    .review-inner { padding: 4px; overflow-x: hidden; }
+    /* Đã chuyển .review-inner mobile setting lên @media (max-width:900px) */
     #finalActions { padding-top: 0 !important; }
   }
 </style>
@@ -268,7 +318,8 @@
               <strong style="color: #3b2b47;">Hướng dẫn:</strong>
               <ul style="list-style: none; padding: 0; margin: 10px 0 0; font-size: 0.95em;">
                   <li style="margin-bottom: 5px;">✅ Bấm **Bắt Đầu** và cấp quyền Camera.</li>
-                  <li style="margin-bottom: 5px;">✅ Đếm ngược **3 giây** giữa mỗi lần chụp (tổng 4 pose).</li>
+                  <li style="margin-bottom: 5px;">✅ Đếm ngược **3 giây** trước *mỗi* pose.</li>
+                  <li style="margin-bottom: 5px;">✅ Thời gian **Tùy chọn** là khoảng **nghỉ chuẩn bị** giữa các pose.</li>
                   <li>✅ Ảnh chụp cố định **Tỷ lệ 1:1 (Square)**. Tùy chỉnh **Nền/Layout** sau khi chụp xong.</li>
               </ul>
           </div>
@@ -312,10 +363,22 @@
       <div style="font-weight:700; color: #3b2b47; margin-bottom: 10px;">TÙY CHỌN CHỤP ẢNH</div>
       
       <div class="option-row" style="width:100%; justify-content:space-between; flex-wrap:nowrap; margin-top:12px;">
-        <label class="small">Timer (giữa mỗi pose):</label>
-        <input id="intervalSec" type="number" value="2" min="1" style="width:70px"/>
+        <label class="small">Khoảng Nghỉ (giữa mỗi pose):</label>
+        <input id="intervalSec" type="number" value="2" min="1" max="10" style="width:70px"/>
       </div>
       
+      <div class="option-row" style="width:100%; justify-content:space-between; flex-wrap:nowrap; margin-top:12px;">
+          <label class="small">Làm Mịn Da (Beauty):</label>
+          <select id="beautyLevel" style="width:120px;">
+              <option value="0">0. Tắt</option>
+              <option value="1">1. Rất Nhẹ</option>
+              <option value="2">2. Nhẹ</option>
+              <option value="3" selected>3. Vừa (Đề Xuất)</option>
+              <option value="4">4. Trung Bình</option>
+              <option value="5">5. Mạnh</option>
+              <option value="6">6. Rất Mạnh</option>
+          </select>
+      </div>
       <div class="theme-line" style="width:100%; margin-top:10px;">
         <div class="theme-tag">Photobooth - Made by Dat Tran</div>
         <div class="small">Photobooth Studio • 4 pose</div>
@@ -328,114 +391,125 @@
         <span style="font-size: 1.1em; line-height: 1;">←</span> Quay lại trang Chụp Ảnh
     </button>
     
-    <div id="reviewSettings" class="review-inner">
-      <div style="font-weight:700; color: #3b2b47; margin-bottom: 10px;">TÙY CHỌN ẢNH GHÉP (MERGE)</div>
+    <div id="reviewMainContent">
+      <div id="reviewSettings" class="review-inner">
+        <div style="font-weight:700; color: #3b2b47; margin-bottom: 10px;">TÙY CHỌN ẢNH GHÉP (MERGE)</div>
 
-      <div class="option-row" style="width:100%; margin-top:0px;">
-          <label class="small">Background Strip:</label>
-          <select id="backgroundSelect" style="flex:1;">
-            <option value="default">Mặc định (Trắng Tối Giản)</option>
-            <option value="soft_rose_gradient">❤️ Gradient Hồng Kem Dịu</option>
-            <option value="romantic_red_velvet">🌹 Nhung Đỏ Lãng Mạn</option>
-            <option value="lavender_haze_blur">✨ Xanh Tím Sương Mờ</option>
-            <option value="sweetheart_pink_dots">💖 Chấm Bi Trái Tim Hồng</option>
-            <option value="sunset_kiss_gradient">🌅 Gradient Hôn Chiều Tà</option>
-            <option value="champagne_toast">🥂 Vàng Kem Ánh Kim</option>
-            <option value="blush_watercolor">🌸 Màu Nước Hồng Phớt</option>
-            <option value="mint_love_stripes">🌿 Sọc Xanh Mint Dịu Mát</option>
-            <option value="starry_night_light">🌌 Bầu Trời Đêm Lấp Lánh</option>
-            <option value="coral_dream">🧡 San Hô Mơ Màng</option>
-            <option value="berry_smoothie">💜 Hồng Mâm Xôi Tươi Tắn</option>
-            <option value="lilac_blossom_texture">🔮 Texture Vải Tím Lilac</option>
-            <option value="peachy_glow">🍑 Cam Đào Rạng Rỡ</option>
-            <option value="cotton_candy_swirl">🍭 Xoáy Kẹo Bông Gòn Pastel</option>
-            <option value="valentines_day_hearts">💌 Họa Tiết Trái Tim Lễ Tình Nhân</option>
-            <option value="aurora_pink_blue">🌈 Bắc Cực Quang Hồng Xanh</option>
-            <option value="lemonade_pink">☀️ Gradient Vàng Hồng Tươi</option>
-            <option value="dreamy_cloud_pastel">☁️ Họa Tiết Mây Bồng Bềnh</option>
-            <option value="minimal_white_texture">⬜ Texture Trắng Tối Giản (Cổ điển)</option>
-            <option value="stripes_bw">▪️ Sọc Đen Trắng (Cổ điển)</option> 
-            <option value="fuji_classic_clean">🟦 Fuji Classic Clean (Footer Xanh)</option>
+        <div class="option-row" style="width:100%; margin-top:0px;">
+            <label class="small">Background Strip:</label>
+            <select id="backgroundSelect" style="flex:1;">
+              <option value="default">Mặc định (Trắng Tối Giản)</option>
+              
+              <option disabled>──────── TẾT NGUYÊN ĐÁN 2026 ────────</option>
+              <option value="tet_red_gold_silk">🧧 Vải Lụa Đỏ Vàng (Cổ điển)</option>
+              <option value="tet_cherry_blossom">🌸 Hoa Mai/Đào Rực Rỡ</option>
+              <option value="tet_banh_chung_green">💚 Lá Chuối Gói Bánh</option>
+              <option value="tet_firecracker_pattern">🧨 Họa Tiết Pháo Bông</option>
+              <option value="tet_lucky_money">💰 Tiền Lì Xì & Đồng Xu</option>
+              <option value="tet_golden_dragon">🐉 Rồng Vàng Thịnh Vượng</option>
+              <option value="tet_bamboo_stripes">🎋 Sọc Tre Xanh Tối Giản</option>
+              <option value="tet_lantern_glow">🏮 Ánh Đèn Lồng Ấm Áp</option>
+              <option value="tet_calligraphy_paper">📜 Giấy Thư Pháp (Đỏ đậm)</option>
+              <option value="tet_minimal_auspice">🌟 Tối Giản May Mắn</option>
+              
+              <option disabled>──────── GIÁNG SINH ────────</option>
+              <option value="xmas_red_white_stripes">🎄 Sọc Kẹo Bông (Đỏ Trắng)</option>
+              <option value="xmas_pine_forest_green">🌲 Rừng Thông Xanh Thẳm</option>
+              <option value="xmas_snowy_bokeh">❄️ Bokeh Tuyết Lấp Lánh</option>
+              <option value="xmas_gold_glitter">✨ Lấp Lánh Vàng (Glitter)</option>
+              <option value="xmas_cozy_knit">🧶 Họa Tiết Len Đan (Đỏ/Kem)</option>
+              <option value="xmas_gingerbread">🍪 Bánh Gừng Màu Nâu Ấm</option>
+              <option value="xmas_santa_suit">🎅 Nhung Đỏ & Viền Trắng</option>
+              <option value="xmas_holly_berries">🌿 Lá Thường Xuân & Trái Đỏ</option>
+              <option value="xmas_minimal_white">🤍 Tuyết Rơi Trắng Tối Giản</option>
+              <option value="xmas_twinkle_lights">💡 Ánh Đèn Nhấp Nháy</option>
+              
+              <option disabled>──────── TÌNH YÊU ────────</option>
+              <option value="love_hot_pink_blur">💕 Hồng Tình Yêu (Mờ ảo)</option>
+              <option value="love_watercolor_hearts">💖 Trái Tim Màu Nước (Đỏ/Hồng)</option>
+              <option value="love_rose_petals">🌹 Cánh Hoa Hồng Rơi</option>
+              <option value="love_scribble_lines">💌 Vẽ Nguệch Ngoạc (Đỏ/Đen)</option>
+              <option value="love_velvet_magenta">💜 Nhung Tím Đậm Quyến Rũ</option>
+              <option value="love_couple_galaxy">🌌 Dải Ngân Hà Lãng Mạn</option>
+              <option value="love_checkerboard_pink">🎀 Kẻ Caro Hồng Trắng</option>
+              <option value="love_soft_peach_glow">🧡 Cam Đào Tỏa Sáng</option>
+              <option value="love_minimal_line">〰️ Viền Line Art Tối Giản</option>
+              <option value="love_polaroid_tape">🧻 Dải Băng Dính Vintage</option>
+            </select>
+        </div>
+        
+        <div class="option-row" style="width:100%; margin-top:10px;">
+            <label class="small">Khung Overlay (cho mỗi ảnh):</label>
+            <select id="overlaySelect" style="flex:1;">
+              <option value="none">Không có (Clean)</option>
+              <option value="heart_corners">1. Góc Trái Tim (Hồng)</option>
+              <option value="film_damage">2. Bụi & Vết Xước (Cổ điển)</option>
+              <option disabled>────── NHIỄU & CỔ ĐIỂN ──────</option>
+              <option value="film_grain_light">3. Hạt Nhiễu Film (Nhẹ)</option>
+              <option value="film_grain_heavy">4. Hạt Nhiễu Film (Nặng)</option>
+              <option value="vintage_sepia_light">5. Màu Nâu Đỏ (Sepia Nhẹ)</option>
+              <option value="faded_matte">6. Hiệu ứng Mờ Nhạt (Matte)</option>
+              <option value="dust_scratches_medium">7. Bụi & Vết Xước (Trung bình)</option>
+              
+              <option disabled>──────── ÁNH SÁNG ────────</option>
+              <option value="golden_light_leak">8. Rò Rỉ Ánh Sáng (Vàng)</option>
+              <option value="sunset_light_leak">9. Rò Rỉ Ánh Sáng (Hoàng Hôn)</option>
+              <option value="soft_bokeh">10. Hiệu ứng Bokeh (Mờ nhẹ)</option>
+              <option value="blue_vignette">11. Tối Góc (Xanh Lạnh)</option>
+              <option value="rainbow_prism">12. Vệt Lăng Kính (Cầu Vồng)</option>
+              <option value="film_burn_top">13. Cháy Film (Top)</option>
+              
+              <option disabled>──────── KHUNG & HÌNH DẠNG ────────</option>
+              <option value="polaroid_border_thin">14. Khung Trong (Polaroid Mỏng)</option>
+              <option value="black_frame_thin">15. Viền Đen Mỏng</option>
+              <option value="white_cross_hatch">16. Gạch Chéo Trắng (Texture)</option>
+              <option value="heart_shaped_mask">17. Mask Hình Trái Tim (Viền)</option>
+              <option value="scribble_corners">18. Vẽ Nguệch Ngoạc (Góc)</option>
+              <option value="tape_strip_top">19. Dải Băng Dính (Top)</option>
+              
+              <option disabled>──────── HIỆU ỨNG ĐẶC BIỆT ────────</option>
+              <option value="holographic_glitch">20. Lỗi Hologram (Glitch)</option>
+              <option value="half_tone_dots">21. Chấm Mực (Halftone)</option>
+              <option value="glitter_sparkle">22. Lấp Lánh (Giả)</option>
+            </select>
+            </div>
+        
+        <div class="option-row" style="width:100%; justify-content:flex-start; flex-wrap:nowrap; margin-top:10px;">
+          <label class="small" style="white-space:nowrap; margin-left:10px;">Text Strip:</label>
+          <input id="customStripText" type="text" value="INSTAX MOMENT" style="flex:1;" maxlength="30" placeholder="VD: INSTAX MOMENT"/>
+        </div>
+        
+        <div class="option-row" style="width:100%; margin-top:10px; margin-bottom: 10px;">
+          <label class="small">Layout In Ảnh:</label>
+          <select id="layoutSelect" style="flex:1;">
+            <option value="vertical">1. Dọc (Strip) - Fixed 1:1 Photo</option>
+            <option value="grid">2. Lưới (2x2) - Fixed 1:1 Photo</option>
           </select>
-      </div>
-      
-      <div class="option-row" style="width:100%; margin-top:10px;">
-          <label class="small">Khung Overlay (cho mỗi ảnh):</label>
-          <select id="overlaySelect" style="flex:1;">
-            <option value="none">Không có (Clean)</option>
-            <option value="beauty_smooth_pink">✨ Làm mịn da & Môi hồng (Beauty)</option>
-            <option value="heart_corners">1. Góc Trái Tim (Hồng)</option>
-            <option value="film_damage">2. Bụi & Vết Xước (Cổ điển)</option>
-            <option disabled>────── NHIỄU & CỔ ĐIỂN ──────</option>
-            <option value="film_grain_light">3. Hạt Nhiễu Film (Nhẹ)</option>
-            <option value="film_grain_heavy">4. Hạt Nhiễu Film (Nặng)</option>
-            <option value="vintage_sepia_light">5. Màu Nâu Đỏ (Sepia Nhẹ)</option>
-            <option value="faded_matte">6. Hiệu ứng Mờ Nhạt (Matte)</option>
-            <option value="dust_scratches_medium">7. Bụi & Vết Xước (Trung bình)</option>
-            
-            <option disabled>──────── ÁNH SÁNG ────────</option>
-            <option value="golden_light_leak">8. Rò Rỉ Ánh Sáng (Vàng)</option>
-            <option value="sunset_light_leak">9. Rò Rỉ Ánh Sáng (Hoàng Hôn)</option>
-            <option value="soft_bokeh">10. Hiệu ứng Bokeh (Mờ nhẹ)</option>
-            <option value="blue_vignette">11. Tối Góc (Xanh Lạnh)</option>
-            <option value="rainbow_prism">12. Vệt Lăng Kính (Cầu Vồng)</option>
-            <option value="film_burn_top">13. Cháy Film (Top)</option>
-            
-            <option disabled>──────── KHUNG & HÌNH DẠNG ────────</option>
-            <option value="polaroid_border_thin">14. Khung Trong (Polaroid Mỏng)</option>
-            <option value="black_frame_thin">15. Viền Đen Mỏng</option>
-            <option value="white_cross_hatch">16. Gạch Chéo Trắng (Texture)</option>
-            <option value="heart_shaped_mask">17. Mask Hình Trái Tim (Viền)</option>
-            <option value="scribble_corners">18. Vẽ Nguệch Ngoạc (Góc)</option>
-            <option value="tape_strip_top">19. Dải Băng Dính (Top)</option>
-            
-            <option disabled>──────── HIỆU ỨNG ĐẶC BIỆT ────────</option>
-            <option value="holographic_glitch">20. Lỗi Hologram (Glitch)</option>
-            <option value="half_tone_dots">21. Chấm Mực (Halftone)</option>
-            <option value="glitter_sparkle">22. Lấp Lánh (Giả)</option>
-          </select>
-          </div>
-      
-      <div class="option-row" style="width:100%; justify-content:flex-start; flex-wrap:nowrap; margin-top:10px;">
-        <label class="small" style="white-space:nowrap; margin-left:10px;">Text Strip:</label>
-        <input id="customStripText" type="text" value="INSTAX MOMENT" style="flex:1;" maxlength="30" placeholder="VD: INSTAX MOMENT"/>
-      </div>
-      
-      <div class="option-row" style="width:100%; margin-top:10px; margin-bottom: 10px;">
-        <label class="small">Layout In Ảnh:</label>
-        <select id="layoutSelect" style="flex:1;">
-          <option value="vertical">1. Dọc (Strip) - Fixed 1:1 Photo</option>
-          <option value="grid">2. Lưới (2x2) - Fixed 1:1 Photo</option>
-        </select>
-      </div>
-
-    </div>
-    
-    <div class="review-inner">
-      <div style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
-        <div>
-          <strong>Preview (4 pose)</strong>
-          <div class="small">Click vào khung ảnh để download từng tấm</div>
         </div>
-        <div class="small" id="stripSizeText">Strip size: Dynamic Size</div> 
       </div>
-
-      <div class="preview-grid" id="previewGrid" style="margin-top:8px;"></div>
       
-      <div class="final-wrap">
-        <div>
-          <div style="font-weight:700">Final Review (Ảnh đã ghép - Merge)</div>
-          <div class="final-preview" id="finalPreview">
-            <div class="small">Chưa có ảnh</div>
+      <div id="previewAndFinal" class="review-inner">
+        
+        <div style="font-weight:700; color: #3b2b47;">ẢNH GHÉP HOÀN CHỈNH (MERGE)</div>
+        <div class="final-wrap">
+          <div>
+            <div class="final-preview" id="finalPreview">
+              <div class="small">Chưa có ảnh</div>
+            </div>
+          </div>
+          <div id="finalActions" style="display:none; flex-direction:column; gap:8px; align-items:flex-start; padding-top:20px;">
+            <div class="small">Ảnh đã ghép xong. Kích thước: <strong id="stripSizeText">Dynamic Size</strong></div>
+            <button class="btn" id="downloadFinalBtn">
+              <span style="font-size: 1.1em; line-height: 1;">📥</span> Download Final
+            </button>
           </div>
         </div>
-        <div id="finalActions" style="display:none; flex-direction:column; gap:8px; align-items:flex-start; padding-top:20px;">
-          <div class="small">Ảnh đã ghép xong.</div>
-          <button class="btn" id="downloadFinalBtn">
-            <span style="font-size: 1.1em; line-height: 1;">📥</span> Download Final
-          </button>
+        <div style="margin-top: 20px;">
+            <strong style="color: #3b2b47;">Ảnh Chụp Gốc (4 pose)</strong>
+            <div class="small">Click vào khung ảnh để download từng tấm riêng</div>
         </div>
-      </div>
+        <div class="preview-grid" id="previewGrid" style="margin-top:8px;"></div>
+        </div>
     </div>
   </div>
 
@@ -450,7 +524,6 @@ const overlayCtx = overlay.getContext('2d');
 const previewGrid = document.getElementById('previewGrid');
 const finalPreview = document.getElementById('finalPreview'); 
 const countdownEl = document.getElementById('countdown');
-// const frameSelect = document.getElementById('frameSelect'); // ĐÃ BỎ
 const layoutSelect = document.getElementById('layoutSelect'); 
 const backgroundSelect = document.getElementById('backgroundSelect'); 
 const customStripText = document.getElementById('customStripText');
@@ -459,6 +532,7 @@ const finalActionsEl = document.getElementById('finalActions');
 
 // NEW VARIABLES FOR OVERLAY/STICKER
 const overlaySelect = document.getElementById('overlaySelect'); 
+const beautyLevel = document.getElementById('beautyLevel'); // NEW: Cấp độ làm mịn da
 // END NEW VARIABLES
 
 // NEW UI ELEMENTS FOR SCREEN SWITCHING
@@ -478,8 +552,7 @@ const startPhotoboothBtn = document.getElementById('startPhotoboothBtn'); // Nú
 
 const controlsToDisable = [
     startBtn, redoBtn, stopCamBtn, switchCamBtn, refreshBtn, 
-    // frameSelect, // ĐÃ BỎ
-    intervalSec, startPhotoboothBtn
+    intervalSec, startPhotoboothBtn, beautyLevel
 ];
 
 let captures = [];
@@ -489,23 +562,17 @@ let currentFacingMode = 'user';
 let finalImageDataUrl = null; 
 
 // CONSTANTS
-const INNER_BORDER = 3; 
-// CẬP NHẬT THEO YÊU CẦU: Tăng khoảng cách giữa các ảnh trong strip dọc
+const INNER_BORDER = 5; 
 const VERT_GAP = 40; 
-
-// NEW BASE CONSTANTS for dynamic sizing
-const BASE_FRAME_H = 450; // Chiều cao chuẩn cho một tấm ảnh
-const VERT_MARGIN_X = 30; // Lề X cho strip dọc
-// NEW CONSTANT: Lề trên/dưới cho khối ảnh trong strip dọc (Tương ứng với VERT_GAP)
+const BASE_FRAME_H = 450; 
+const VERT_MARGIN_X = 30; 
 const VERT_MARGIN_Y = 40; 
-const VERT_TEXT_H = 250; // Chiều cao khu vực chữ strip dọc
-const GRID_OUTER_PADDING = 40; // Lề ngoài cho lưới (sử dụng thay cho GRID_MARGIN)
-const GRID_GAP = 30; // Khoảng cách giữa các ảnh (ngang/dọc)
-const GRID_TEXT_H = 250; // Chiều cao khu vực chữ cho lưới
-
-// [NEW] Cài đặt viền 1 line cho ảnh ghép (Final Review)
-const FINAL_PHOTO_BORDER_WIDTH = 2; // 2px (1 line)
-const FINAL_PHOTO_BORDER_COLOR = '#444444'; // Màu viền xám đậm
+const VERT_TEXT_H = 250; 
+const GRID_OUTER_PADDING = 40; 
+const GRID_GAP = 30; 
+const GRID_TEXT_H = 250; 
+const FINAL_PHOTO_BORDER_WIDTH = 4; 
+const FINAL_PHOTO_BORDER_COLOR = '#333333'; 
 
 // devicePixelRatio helper
 function getDPR(){ return window.devicePixelRatio || 1; }
@@ -514,24 +581,20 @@ function getDPR(){ return window.devicePixelRatio || 1; }
 
 // Hàm lấy tỷ lệ (W/H) của khu vực ảnh bên trong film (dùng cho live preview & drawing)
 function getInstaxPhotoRatio(frameStyle) {
-    // Photo Area Ratios (W/H) - Cố định 1:1 (Square) theo yêu cầu bỏ tuỳ chọn
     return 1.0; 
 }
 
 // Hàm lấy tỷ lệ (W/H) của toàn bộ film Instax (ảnh + chân trắng)
 function getInstaxFilmRatio(frameStyle) {
-    // Film Area Ratios (W/H) - Dùng tỷ lệ 1:1 cho thumbnail (đã bỏ mô phỏng film)
     return 1.0;
 }
 
 // Cập nhật tỷ lệ cho tất cả thumbnails trên màn hình review
-// Dùng tỷ lệ 1:1 (đã bỏ mô phỏng film)
 function updateThumbnailAspectRatios() {
     const numericRatio = getInstaxFilmRatio('square'); 
 
     const thumbs = document.querySelectorAll('.instax-thumb-frame');
     thumbs.forEach(thumb => {
-        // Sử dụng numericRatio / 1 cho CSS aspectRatio (fixed 1:1)
         thumb.style.aspectRatio = `${numericRatio} / 1`; 
     });
 }
@@ -554,7 +617,6 @@ function showReviewScreen() {
     captureScreen.style.display = 'none';
     reviewScreen.style.display = 'flex'; 
     
-    // NEW: Đảm bảo tỷ lệ thumbnails chính xác khi chuyển màn hình
     updateThumbnailAspectRatios(); 
 
     window.scrollTo({ top: 0, behavior: 'smooth' }); 
@@ -563,7 +625,6 @@ function showReviewScreen() {
 function showCaptureScreen() {
     welcomeScreen.style.display = 'none';
     reviewScreen.style.display = 'none';
-    // Đặt captureScreen thành 'grid' để áp dụng bố cục 2 cột (Camera mở rộng + Sidebar)
     captureScreen.style.display = 'grid'; 
 }
 
@@ -681,17 +742,13 @@ function resizeOverlay(){
 }
 
 function drawFrameLoop(){
-    // Tắt/Mở camera không cần gọi drawFrameLoop nữa
     if (stream) {
         drawInstaxGuide(overlayCtx, video.clientWidth, video.clientHeight);
-        drawDateTime(overlayCtx, video.clientWidth, video.clientHeight);
         requestAnimationFrame(drawFrameLoop);
     }
 }
 
 function roundRect(ctx, x, y, w, h, r) {
-    // Bắt buộc w và h phải là dương trước khi gọi hàm này
-    // Lỗi IndexSizeError xảy ra nếu r trở thành âm
     if (w < 2 * r) r = w / 2;
     if (h < 2 * r) r = h / 2;
     ctx.beginPath();
@@ -707,361 +764,359 @@ function drawInstaxGuide(ctx, w, h){
     if (!ctx.globalTransform) return;
     ctx.save();
     
-    // Lấy biến transform
     const t = ctx.globalTransform;
     const cw = w;
     const ch = h; 
     
-    // Tọa độ và kích thước khung ảnh (photo area)
-    const targetRatio = getInstaxPhotoRatio('square'); // Tỷ lệ ảnh mong muốn (1:1)
+    const targetRatio = getInstaxPhotoRatio('square'); 
     
-    // Tính toán kích thước ảnh (đã transform)
     let photoW = t.scaleY * video.videoHeight * targetRatio;
     let photoH = t.scaleY * video.videoHeight;
     
-    // Điều chỉnh nếu chiều rộng bị vượt quá (do tỷ lệ video quá rộng)
     if (photoW > t.scaleX * video.videoWidth) {
         photoW = t.scaleX * video.videoWidth;
         photoH = photoW / targetRatio;
     }
     
-    // Vị trí ảnh (căn giữa)
     const x_outer = (cw - photoW) / 2;
     const y_outer = (ch - photoH) / 2;
     
-    // Vẽ khung đen cho khu vực ảnh (Photo Area)
     const padding = 10;
-    const innerColor = 'rgba(255, 255, 255, 0.9)'; // Màu nét đứt
+    const innerColor = 'rgba(255, 255, 255, 0.9)'; 
 
     ctx.save();
     ctx.beginPath();
     roundRect(ctx, x_outer - padding, y_outer - padding, photoW + 2 * padding, photoH + 2 * padding, 10);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; // Màu nền mờ
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; 
     ctx.fill();
     
-    // Vẽ khung nét đứt cho khu vực ảnh
     ctx.strokeStyle = innerColor;
     ctx.lineWidth = 2;
     ctx.setLineDash([8, 8]);
     ctx.strokeRect(x_outer, y_outer, photoW, photoH);
     ctx.setLineDash([]);
     
-    ctx.restore();
+    ctx.font = '16px Nunito, sans-serif';
+    ctx.fillStyle = innerColor;
+    ctx.textAlign = 'center';
+    ctx.fillText('1:1 SQUARE', cw / 2, y_outer - padding - 8); 
+    
+    ctx.font = '14px Nunito, sans-serif';
+    ctx.fillStyle = innerColor;
+    ctx.textAlign = 'left';
+    ctx.fillText(currentFacingMode === 'user' ? 'CAM TRƯỚC (SELFIE)' : 'CAM SAU (ENV)', 15, 30);
     
     ctx.restore();
-}
-
-function drawDateTime(ctx, w, h) {
-    ctx.save();
-    ctx.font = '600 14px Nunito, system-ui, sans-serif';
-    let textColor = 'rgba(255,255,255,0.9)';
-    ctx.fillStyle = textColor;
-    ctx.textAlign = 'left';
-    ctx.fillText(getFormattedNow(), 14, h - 18);
-    ctx.restore();
+    
+    ctx.photoArea = { x: x_outer, y: y_outer, w: photoW, h: photoH };
 }
 
 function getFormattedNow(){
-    const now = new Date();
-    const fmt = new Intl.DateTimeFormat('vi-VN', { 
-        timeZone: timeZone, 
-        year:'numeric', 
-        month:'2-digit', 
-        day:'2-digit', 
-        hour:'2-digit', 
-        minute:'2-digit', 
-        hour12: false 
-    });
-    return fmt.format(now).replace(', ', ' / ');
-}
-
-function disableControls(){
-    controlsToDisable.forEach(el => el.disabled = true);
-}
-
-function enableControls(){
-    controlsToDisable.forEach(el => el.disabled = false);
-}
-
-function flashEffect() {
-    // Simple white flash effect on overlay canvas
-    overlayCtx.save();
-    overlayCtx.fillStyle = 'rgba(255, 255, 255, 1)';
-    overlayCtx.fillRect(0, 0, overlay.width / getDPR(), overlay.height / getDPR());
-    overlayCtx.restore();
-
-    setTimeout(() => {
-        // Clear flash after 50ms
-        overlayCtx.clearRect(0, 0, overlay.width / getDPR(), overlay.height / getDPR());
-    }, 50);
-}
-
-function playShutterSound() {
     try {
-        const audio = new Audio('https://dat-tran.com/sounds/shutter.mp3'); // Giả định có file sound
-        audio.play();
+        const now = new Date();
+        const dateOptions = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: timeZone };
+        const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timeZone };
+        const datePart = now.toLocaleDateString('en-GB', dateOptions).replace(/\//g, '/');
+        const timePart = now.toLocaleTimeString('en-GB', timeOptions);
+        return `${datePart} ${timePart}`;
     } catch (e) {
-        console.warn('Could not play sound:', e);
+        return '';
     }
 }
 
-// Hàm đếm ngược
-async function doCountdown(start, label) {
-    countdownEl.style.display = 'flex';
-    countdownEl.textContent = label;
-    countdownEl.style.fontSize = '1.5em';
-    countdownEl.style.color = 'white';
-
-    await sleep(800);
+// ** NEW: Helper function to apply beauty filter **
+// Helper function to apply beauty filter (changes pixel data)
+function applyBeautyFilter(ctx, x, y, w, h, intensity) {
+    if (intensity <= 0) return; // Không làm gì nếu cường độ là 0
     
-    for (let i = start; i > 0; i--) {
-        countdownEl.textContent = i;
-        countdownEl.style.fontSize = '92px';
-        countdownEl.style.color = 'yellow';
-        playShutterSound(); // dùng sound nhẹ cho đếm ngược
-        await sleep(1000);
-    }
+    // Ánh xạ cường độ (1-6) sang các hệ số
+    // Intensity 1 -> 0.02 (Very Light) | 6 -> 0.12 (Very Strong)
+    const smoothFactor = intensity * 0.02; 
     
-    countdownEl.textContent = 'CHỤP!';
-    countdownEl.style.color = 'red';
-    await sleep(500);
-    countdownEl.style.display = 'none';
-    countdownEl.style.fontSize = '92px'; // Reset lại font size
-}
+    // Rosy Boost Factor: max 1.10 + 10 (cường độ 1), min 1.05 + 5 (cường độ 6)
+    const rosyBoostFactor = 1.05 + (6 - intensity) * 0.01; 
+    const rosyAdditive = 5 + (6 - intensity) * 1; 
+    // Độ sáng tổng thể tăng nhẹ theo cường độ
+    const brightnessBoost = 1.01 + intensity * 0.005; 
 
-function backToWelcome() {
-    stopCamera();
-    showWelcomeScreen(); // Quay lại màn hình Welcome
-}
-
-function sleep(ms){
-    return new Promise(r=>setTimeout(r,ms));
-}
-
-async function startPhotobooth(){
-    // Bắt đầu: Vô hiệu hóa controls
-    disableControls();
-    captures = [];
-    previewGrid.innerHTML = '';
-    finalPreview.innerHTML = '<div class="small">Đang chụp...</div>';
-    finalActionsEl.style.display = 'none';
-
-    // Đảm bảo đang ở màn hình chụp
-    if (captureScreen.style.display === 'none') {
-        showCaptureScreen();
-    }
-
-    const interval = Math.max(1, parseInt(document.getElementById('intervalSec').value||2,10));
-    const stepLabels = ['FIRST', 'SECOND', 'THIRD', 'FINAL'];
-
-    for (let i=1;i<=4;i++){
-        const label = stepLabels[i - 1] + ' PHOTO';
-        await doCountdown(3, label);
-        const img = takeSnapshot();
-        captures.push(img);
-        addThumbnail(img, i);
-
-        // Sau khi chụp ảnh thứ 1, 2, 3 thì delay thêm interval giây
-        if (i < 4 && interval > 0) {
-            countdownEl.style.display = 'flex';
-            countdownEl.style.flexDirection = 'row';
-            countdownEl.innerHTML = `<span style="font-size: 0.35em; font-weight: 600; opacity: 0.8;">WAITING</span><span style="line-height: 1; margin-left: 10px;">${interval}s</span>`;
-            await sleep(interval * 1000);
-            countdownEl.textContent = '';
-            countdownEl.style.display = 'none';
-        }
-    }
-
-    // Kết thúc: Kích hoạt lại controls
-    enableControls();
-    
-    // Chuyển sang màn hình review và tạo ảnh cuối
-    showReviewScreen();
-    mergeAndShowFinal();
-}
-
-// NEW: Hàm takeSnapshot để chụp ảnh 1:1
-function takeSnapshot() {
-    const videoWidth = video.videoWidth;
-    const videoHeight = video.videoHeight;
-    const targetRatio = getInstaxPhotoRatio('square'); // 1.0
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    // Tính toán kích thước cắt (crop)
-    const videoRatio = videoWidth / videoHeight;
-    let cropW, cropH, cropX, cropY;
-
-    if (videoRatio > targetRatio) {
-        // Chiều cao video là giới hạn, cần cắt ngang
-        cropH = videoHeight;
-        cropW = videoHeight * targetRatio;
-        cropX = (videoWidth - cropW) / 2;
-        cropY = 0;
-    } else {
-        // Chiều rộng video là giới hạn, cần cắt dọc (ít xảy ra với 1:1)
-        cropW = videoWidth;
-        cropH = videoWidth / targetRatio;
-        cropX = 0;
-        cropY = (videoHeight - cropH) / 2;
-    }
-
-    // Thiết lập kích thước canvas là kích thước ảnh 1:1 đã cắt
-    canvas.width = cropW;
-    canvas.height = cropH;
-
-    // Vẽ video lên canvas (đã cắt)
-    // Tùy chỉnh để lật ngược nếu là camera trước
-    ctx.save();
-    if (currentFacingMode === 'user') {
-        ctx.scale(-1, 1);
-        ctx.drawImage(video, 
-            cropX, cropY, cropW, cropH, // Source (từ video)
-            -cropW, 0, cropW, cropH     // Destination (vẽ lên canvas)
-        );
-    } else {
-        ctx.drawImage(video, 
-            cropX, cropY, cropW, cropH, // Source
-            0, 0, cropW, cropH          // Destination
-        );
-    }
-    ctx.restore();
-
-    // Chụp xong thì flash và phát âm thanh
-    flashEffect();
-    playShutterSound();
-
-    return canvas.toDataURL('image/png');
-}
-
-function mergeAndShowFinal() {
-    mergeStrip(captures).then(result => {
-        showFinal(result);
-    }).catch(e => {
-        console.error('Lỗi khi ghép ảnh:', e);
-        finalPreview.innerHTML = '<div class="small" style="color:red">Lỗi khi ghép ảnh. Xem console.</div>';
-    });
-}
-
-function addThumbnail(imgDataUrl, index){
-    const wrapper = document.createElement('div');
-    wrapper.className = 'instax-thumb-frame';
-    wrapper.dataset.index = index;
-    wrapper.style.aspectRatio = getInstaxFilmRatio('square') + ' / 1';
-
-    const img = document.createElement('img');
-    img.src = imgDataUrl;
-    img.alt = `Pose ${index}`;
-
-    wrapper.appendChild(img);
-    wrapper.onclick = () => {
-        triggerDownload(imgDataUrl, `photobooth_pose_${index}_${dateForFilename()}.png`);
-    };
-    previewGrid.appendChild(wrapper);
-}
-
-function showFinal(result){
-    finalPreview.innerHTML = ''; 
-    finalImageDataUrl = result.dataUrl; 
-    finalActionsEl.style.display = 'flex'; 
-
-    // Áp dụng tỷ lệ động đã tính toán
-    finalPreview.style.aspectRatio = `${result.W} / ${result.H}`;
-
-    const img = document.createElement('img');
-    img.src = result.dataUrl;
-    finalPreview.appendChild(img);
-    
-    finalPreview.style.width = 'auto'; 
-    finalPreview.style.height = 'auto'; 
-}
-
-
-function resetAll(){
-    captures = []; 
-    previewGrid.innerHTML = ''; 
-    finalPreview.innerHTML = '<div class="small">Chưa có ảnh</div>';
-    finalImageDataUrl = null; 
-    finalActionsEl.style.display = 'none'; 
-
-    // Đã bỏ aspect-ratio mặc định khỏi resetAll
-    
-    finalPreview.style.width = 'auto';
-    finalPreview.style.height = 'auto';
-
-    // Kích hoạt lại controls sau khi reset
-    enableControls(); 
-}
-
-function triggerDownload(dataUrl, filename){
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-}
-
-function dateForFilename(){
-    const now = new Date();
-    const fmt = new Intl.DateTimeFormat('sv', { 
-        timeZone: timeZone, 
-        year:'numeric', 
-        month:'2-digit', 
-        day:'2-digit', 
-        hour:'2-digit', 
-        minute:'2-digit', 
-        second:'2-digit'
-    });
-    return fmt.format(now).replace(/[\-\s\:]/g, '_').replace(' ', '_');
-}
-
-// --------------- PIXEL MANIPULATION FUNCTIONS (OVERLAYS) ---------------
-
-// NEW: Helper function for Beauty Filter (Skin smoothing approximation and Pink Lips)
-// Ghi chú: Đây là phương pháp đơn giản, không sử dụng nhận diện khuôn mặt, chỉ thực hiện
-// thay đổi màu sắc tổng thể và làm giảm nhiễu hạt để tạo hiệu ứng "làm mịn" và "hồng hào".
-function applyBeautyFilter(ctx, x, y, w, h) {
     try {
         const imageData = ctx.getImageData(x, y, w, h);
         const data = imageData.data;
-        
         for (let i = 0; i < data.length; i += 4) {
             let r = data[i];
             let g = data[i + 1];
             let b = data[i + 2];
 
-            // 1. Pink Lips/Rosy Glow Effect: Tăng cường sắc đỏ/hồng
-            // Kiểm tra và tăng nhẹ kênh màu đỏ nếu nó đã chiếm ưu thế (giả lập vùng môi/da)
-            if (r > 100 && r > g * 1.05 && r > b * 1.05) {
-                // Tăng nhẹ màu đỏ để tạo hiệu ứng hồng hào (rosy)
-                r = Math.min(255, r * 1.10 + 10);
+            // 1. Rosy Lips/Cheeks boost (Nếu ảnh có thiên hướng ấm)
+            if (r > g * 1.05 && r > b * 1.05) { 
+                r = Math.min(255, r * rosyBoostFactor + rosyAdditive); 
             }
             
             // 2. Simple 'Smoothing' (Làm mịn/Glowing): Dịch chuyển nhẹ màu về giá trị trung bình
             const avg = (r + g + b) / 3;
-            // Dịch chuyển 5% giá trị màu về màu xám trung bình để giảm độ tương phản gắt
-            const smoothFactor = 0.05; 
-            r = r + (avg - r) * smoothFactor; 
+            // Dịch chuyển smoothFactor % giá trị màu về màu xám trung bình để giảm độ tương phản gắt
+            r = r + (avg - r) * smoothFactor;
             g = g + (avg - g) * smoothFactor;
             b = b + (avg - b) * smoothFactor;
-
-            // 3. Apply slight overall brightness/warmth
-            r = Math.min(255, r * 1.03);
-            g = Math.min(255, g * 1.03);
-            b = Math.min(255, b * 1.03);
             
+            // 3. Apply slight overall brightness/warmth
+            r = Math.min(255, r * brightnessBoost);
+            g = Math.min(255, g * brightnessBoost);
+            b = Math.min(255, b * brightnessBoost);
+
             data[i] = r;
             data[i + 1] = g;
             data[i + 2] = b;
         }
-
         ctx.putImageData(imageData, x, y);
     } catch(e) { 
-        console.warn('Could not apply applyBeautyFilter:', e); 
+        console.warn('Could not apply applyBeautyFilter:', e);
     }
 }
-// END NEW
+// ** END NEW: Helper function to apply beauty filter **
+
+
+// Chụp ảnh
+function captureFrame(video, overlay) {
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    const canvas = document.createElement('canvas');
+    
+    const cropSize = vh; 
+    const cropX = (vw - cropSize) / 2; 
+    
+    canvas.width = cropSize; 
+    canvas.height = cropSize; 
+    const ctx = canvas.getContext('2d');
+    
+    // Xử lý transform để lật ảnh (nếu là camera trước)
+    ctx.save();
+    if (currentFacingMode === 'user') {
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 
+                      cropX, 0, cropSize, cropSize, 
+                      -cropSize, 0, cropSize, cropSize);
+    } else {
+        ctx.drawImage(video, 
+                      cropX, 0, cropSize, cropSize, 
+                      0, 0, cropSize, cropSize);
+    }
+    ctx.restore();
+    
+    // ** NEW: Áp dụng LÀM MỊN DA (Beauty Filter) trước tiên **
+    const smoothingLevel = parseInt(beautyLevel.value, 10);
+    if (smoothingLevel > 0) {
+        // Tạo một canvas tạm để áp dụng smoothing filter pixel-based
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(canvas, 0, 0); // Copy ảnh đã chụp (còn gốc) sang temp canvas
+        
+        applyBeautyFilter(tempCtx, 0, 0, tempCanvas.width, tempCanvas.height, smoothingLevel);
+        
+        // Vẽ ngược lại ảnh đã làm mịn lên canvas chính
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(tempCanvas, 0, 0);
+    }
+    // ** END NEW SMOOTHING **
+
+    // Áp dụng Overlay/Filter đã chọn (nếu có)
+    const overlayId = overlaySelect.value;
+    if (overlayId && overlayId !== 'none') {
+        // Tạo một canvas tạm để áp dụng overlay filter pixel-based
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(canvas, 0, 0); // Copy ảnh đã chụp sang temp canvas
+        
+        // Áp dụng overlay/filter lên tempCtx
+        drawOverlayFrame_ORIGINAL(tempCtx, 0, 0, tempCanvas.width, tempCanvas.height, overlayId);
+        
+        // Vẽ ngược lại lên canvas chính
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(tempCanvas, 0, 0);
+    }
+    
+    return canvas.toDataURL('image/png');
+}
+
+// [REPLACEMENT] Bổ sung âm thanh Beep/Shutter đáng tin cậy bằng Web Audio API
+function playTone(frequency = 440, duration = 100, volume = 0.5) {
+    try {
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, context.currentTime);
+        gainNode.gain.setValueAtTime(volume, context.currentTime);
+
+        // Fade out for clean stop
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + (duration / 1000));
+        
+        oscillator.start();
+        oscillator.stop(context.currentTime + (duration / 1000));
+    } catch(e) { 
+        /* ignore - sometimes mobile browsers block audio context without user interaction */
+    }
+}
+
+function playBeepSound() {
+    // Tần số tiêu chuẩn (Standard beep)
+    playTone(440, 150, 0.4); 
+}
+
+function playShutterSound() {
+    // Tần số cao hơn và ngắn hơn (Higher pitch for shutter)
+    playTone(880, 50, 0.3); 
+}
+// END REPLACEMENT
+
+// Countdown and Capture Sequence
+let captureIndex = 0;
+const MAX_CAPTURES = 4;
+let isCapturing = false;
+
+function disableControls() {
+    controlsToDisable.forEach(el => el.disabled = true);
+}
+function enableControls() {
+    controlsToDisable.forEach(el => el.disabled = false);
+}
+
+function flashEffect(){
+    const flash = document.createElement('div');
+    flash.style.cssText = 'position:absolute; inset:0; background:white; opacity:0; pointer-events:none; transition:opacity 0.1s linear;';
+    document.getElementById('cameraWrap').appendChild(flash);
+    setTimeout(()=>{
+        flash.style.opacity = '1';
+        setTimeout(() => {
+            flash.style.opacity = '0';
+            setTimeout(() => flash.remove(), 200);
+        }, 100);
+    }, 10);
+}
+
+function startPhotobooth(){
+    if (isCapturing || stream === null) return;
+    
+    resetAll();
+    captureIndex = 0;
+    isCapturing = true;
+    disableControls();
+    
+    // Khoảng thời gian nghỉ sau khi chụp xong mỗi pose (Pose 1, 2, 3)
+    const userInterval = parseInt(intervalSec.value, 10);
+    // Đảm bảo thời gian nghỉ nằm trong khoảng [1, 10]
+    const intervalDelaySec = Math.min(10, Math.max(1, userInterval)); 
+    
+    // Đếm ngược cố định trước mỗi pose
+    const fixedCountdownSec = 3; 
+
+    // NEW: Hàm đếm ngược thời gian nghỉ và gọi doCapture cho pose tiếp theo
+    const startRestPeriod = (nextIndex, seconds) => {
+        countdownEl.style.display = 'flex';
+        // Giảm cỡ chữ để chứa thông báo đa dòng
+        countdownEl.style.fontSize = '40px'; 
+        let count = seconds;
+        
+        // Hiện thông báo ban đầu
+        countdownEl.innerHTML = `CHUẨN BỊ POSE ${nextIndex + 1} (Nghỉ ${count}s)` + 
+                                `<div style="font-size: 72px; font-weight: 800; margin-top: 10px;">${count}</div>`;
+        playBeepSound(); 
+
+        const restTimer = setInterval(() => {
+            count--;
+            
+            if (count >= 0) {
+                // Cập nhật số giây còn lại
+                countdownEl.innerHTML = `CHUẨN BỊ POSE ${nextIndex + 1} (Nghỉ ${count}s)` + 
+                                        `<div style="font-size: 72px; font-weight: 800; margin-top: 10px;">${count}</div>`;
+                playBeepSound(); 
+            }
+            
+            if (count < 0) {
+                clearInterval(restTimer);
+                // Khôi phục cỡ chữ và bắt đầu đếm ngược cố định
+                countdownEl.style.fontSize = '92px'; 
+                doCapture(nextIndex); 
+            }
+        }, 1000);
+    }
+    // END NEW
+    
+    const doCapture = (index) => {
+        if (index >= MAX_CAPTURES) {
+            // Đây là phần dọn dẹp cuối cùng nếu logic ở dưới không gọi
+            isCapturing = false;
+            enableControls();
+            showReviewScreen();
+            mergeAndShowFinal();
+            return;
+        }
+        
+        // BƯỚC 1: Đếm ngược 3 giây trước mỗi lần chụp
+        countdownEl.style.display = 'flex';
+        // Đảm bảo cỡ chữ là 92px cho 3, 2, 1
+        countdownEl.style.fontSize = '92px'; 
+        let count = fixedCountdownSec;
+        countdownEl.textContent = count;
+        
+        if (count > 0) {
+            playBeepSound(); 
+        }
+
+        const timer = setInterval(() => {
+            count--;
+            
+            if (count > 0) {
+                countdownEl.textContent = count;
+                playBeepSound(); 
+            } else if (count === 0) {
+                countdownEl.textContent = 'CHỤP!'; 
+                playBeepSound(); 
+            } else {
+                clearInterval(timer);
+                countdownEl.style.display = 'none';
+                
+                // BƯỚC 2: CHỤP VÀ HIỂN THỊ
+                const imgDataUrl = captureFrame(video, overlay);
+                captures.push(imgDataUrl);
+                addThumbnail(imgDataUrl, index + 1);
+                
+                flashEffect();
+                playShutterSound();
+                
+                // BƯỚC 3: NGHỈ KHOẢNG THỜI GIAN NGƯỜI DÙNG SET (chỉ nghỉ nếu chưa phải pose cuối)
+                if (index < MAX_CAPTURES - 1) {
+                    // MỚI: Gọi hàm đếm ngược thời gian nghỉ (intervalDelaySec đã là số giây)
+                    startRestPeriod(index + 1, intervalDelaySec);
+                } else {
+                    // Nếu là pose cuối cùng, không cần nghỉ, chuyển sang màn hình review
+                    isCapturing = false;
+                    enableControls();
+                    showReviewScreen();
+                    mergeAndShowFinal();
+                }
+            }
+        }, 1000);
+    };
+
+    // Bắt đầu chuỗi với Pose 1
+    doCapture(0);
+}
+
+function backToWelcome() {
+    stopCamera(); 
+    showWelcomeScreen();
+}
+
+/* ---------------- OVERLAY/FILTER LOGIC (UNCHANGED) ---------------- */
 
 // Helper function for film grain (changes pixel data)
 function addGrain(alpha, x, y, w, h, ctx) {
@@ -1069,36 +1124,34 @@ function addGrain(alpha, x, y, w, h, ctx) {
         const imageData = ctx.getImageData(x, y, w, h);
         const data = imageData.data;
         for (let i = 0; i < data.length; i += 4) {
-            // Tạo nhiễu ngẫu nhiên (từ -25 đến +25 * alpha)
-            const grain = (Math.random() - 0.5) * 50 * alpha;
-            data[i] = data[i] + grain;
-            data[i + 1] = data[i + 1] + grain;
-            data[i + 2] = data[i + 2] + grain;
+            const grain = (Math.random() - 0.5) * 50 * alpha; 
+            data[i] = Math.min(255, Math.max(0, data[i] + grain));
+            data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + grain));
+            data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + grain));
         }
         ctx.putImageData(imageData, x, y);
-    } catch(e) { 
-        console.warn('Could not apply addGrain, may be due to CORS on image source if not local:', e); 
+    } catch(e) {
+        console.warn('Could not apply addGrain:', e);
     }
 }
 
-// Helper function for Sepia color (changes pixel data)
+// Helper function to apply sepia (changes pixel data)
 function applySepia(ctx, x, y, w, h) {
     try {
         const imageData = ctx.getImageData(x, y, w, h);
         const data = imageData.data;
         for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
+            let r = data[i];
+            let g = data[i + 1];
+            let b = data[i + 2];
             
-            // Sepia conversion matrix
             data[i] = Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189)); // R
             data[i + 1] = Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168)); // G
             data[i + 2] = Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131)); // B
         }
         ctx.putImageData(imageData, x, y);
-    } catch(e) { 
-        console.warn('Could not apply applySepia:', e); 
+    } catch(e) {
+        console.warn('Could not apply applySepia:', e);
     }
 }
 
@@ -1123,368 +1176,357 @@ function addScratches(intensity, color, ctx, x, y, w, h) {
     ctx.restore();
 }
 
-// Draw Overlay on Photo Area (unchanged)
+// Draw Overlay on Photo Area
 function drawOverlayFrame_ORIGINAL(ctx, x, y, w, h, overlayId){
     if (overlayId === 'none') return;
+    
     ctx.save();
     // Set clip path to the photo area
     ctx.beginPath();
     ctx.rect(x, y, w, h);
     ctx.clip();
     
-    // Bắt đầu: Thêm logic Beauty Filter vào luồng xử lý
-    if (overlayId === 'beauty_smooth_pink') {
-        // Áp dụng pixel manipulation TRỰC TIẾP lên ảnh
-        applyBeautyFilter(ctx, x, y, w, h);
-        ctx.restore(); // Phục hồi context sau khi clip
-        return; 
+    // ** LƯU Ý: Hiệu ứng làm mịn da đã được áp dụng trong captureFrame() **
+    
+    // Nếu là filter pixel-based khác (Sepia, Grain), áp dụng trước khi vẽ khung
+    switch(overlayId) {
+        case 'film_grain_light':
+            addGrain(0.3, x, y, w, h, ctx);
+            break;
+        case 'film_grain_heavy':
+            addGrain(0.8, x, y, w, h, ctx);
+            break;
+        case 'vintage_sepia_light':
+            applySepia(ctx, x, y, w, h);
+            // Subtle White overlay for fading
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(x, y, w, h);
+            break;
     }
-    // Kết thúc: Thêm logic Beauty Filter
-
+    
+    // Áp dụng Overlay/Filter còn lại (vẽ hình học/màu sắc)
     switch(overlayId){
-    case 'heart_corners':
-        const size = Math.min(w, h) / 10; // Kích thước trái tim
-        ctx.fillStyle = '#FF69B4'; // Hot Pink
-        const drawHeart = (cx, cy, s) => {
+        case 'heart_corners':
+            const size = Math.min(w, h) * 0.1;
+            ctx.fillStyle = '#FF69B4'; // Hot Pink
+            ctx.globalAlpha = 0.8;
+            ctx.save();
+            // Top-Left
             ctx.beginPath();
-            ctx.moveTo(cx, cy + s * 0.3);
-            ctx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
-            ctx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
+            roundRect(ctx, x, y, size, size, 5); 
             ctx.fill();
-        };
-
-        // 4 góc
-        drawHeart(x + size, y + size, size); // Top-Left
-        ctx.save();
-        ctx.scale(-1, 1);
-        drawHeart(-(x + w - size), y + size, size); // Top-Right (mirror X)
-        ctx.restore();
-        
-        ctx.save();
-        ctx.scale(1, -1);
-        drawHeart(x + size, -(y + h - size), size); // Bottom-Left (mirror Y)
-        ctx.restore();
-
-        ctx.save();
-        ctx.scale(-1, -1);
-        drawHeart(-(x + w - size), -(y + h - size), size); // Bottom-Right (mirror X, Y)
-        ctx.restore();
-        break;
-    case 'film_damage':
-        // Simple film dust/scratches overlay
-        ctx.fillStyle = 'rgba(0,0,0,0.1)'; // Add dust/specks
-        for (let i = 0; i < 50; i++) {
-            ctx.fillRect(x + Math.random() * w, y + Math.random() * h, 1, 1);
-        }
-        // Add light scratches
-        addScratches(1, 'rgba(255,255,255,0.2)', ctx, x, y, w, h);
-        break;
-
-    // ---------------------------------
-    // --- NHIỄU & CỔ ĐIỂN MỚI ---
-    // ---------------------------------
-    case 'film_grain_light':
-        addGrain(0.3, x, y, w, h, ctx);
-        break;
-    case 'film_grain_heavy':
-        addGrain(0.8, x, y, w, h, ctx);
-        break;
-    case 'vintage_sepia_light':
-        // Sepia
-        applySepia(ctx, x, y, w, h);
-        // Subtle White overlay for fading
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.fillRect(x, y, w, h);
-        break;
-    case 'faded_matte':
-        // Làm tối góc (Vignette)
-        const vignetteGrad = ctx.createRadialGradient(x + w/2, y + h/2, Math.min(w,h)/4, x + w/2, y + h/2, Math.min(w,h)/2);
-        vignetteGrad.addColorStop(0, 'rgba(0,0,0,0)');
-        vignetteGrad.addColorStop(1, 'rgba(0,0,0,0.4)');
-        ctx.fillStyle = vignetteGrad;
-        ctx.fillRect(x, y, w, h);
-        // Matte effect: Tăng độ sáng kênh tối
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.globalCompositeOperation = 'soft-light'; // Áp dụng sáng nhẹ
-        ctx.fillRect(x, y, w, h);
-        ctx.globalCompositeOperation = 'source-over'; 
-        break;
-    case 'dust_scratches_medium':
-        // Bụi và vết xước đậm hơn
-        ctx.fillStyle = 'rgba(0,0,0,0.15)'; // Add dust/specks
-        for (let i = 0; i < 80; i++) {
-            ctx.fillRect(x + Math.random() * w, y + Math.random() * h, 1, 1);
-        }
-        addScratches(1.5, 'rgba(255,255,255,0.3)', ctx, x, y, w, h);
-        break;
-
-    // ---------------------------------
-    // --- ÁNH SÁNG MỚI ---
-    // ---------------------------------
-    case 'golden_light_leak':
-        ctx.globalCompositeOperation = 'lighter'; // Chế độ hòa trộn sáng hơn
-        ctx.globalAlpha = 0.6;
-        const goldGrad = ctx.createRadialGradient(x, y + h, 0, x, y + h, w);
-        goldGrad.addColorStop(0, 'rgba(255, 223, 0, 0.8)'); // Gold
-        goldGrad.addColorStop(0.5, 'rgba(255, 165, 0, 0.2)'); // Orange
-        goldGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        ctx.fillStyle = goldGrad;
-        ctx.fillRect(x, y, w, h);
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 1;
-        break;
-    case 'sunset_light_leak':
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = 0.5;
-        const sunsetGrad = ctx.createLinearGradient(x, y, x + w, y + h);
-        sunsetGrad.addColorStop(0, 'rgba(255, 140, 0, 0.3)'); // Orange
-        sunsetGrad.addColorStop(0.6, 'rgba(255, 255, 0, 0.3)'); // Yellow
-        sunsetGrad.addColorStop(1, 'rgba(255, 0, 100, 0.2)'); // Pink
-        ctx.fillStyle = sunsetGrad;
-        ctx.fillRect(x, y, w, h);
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 1;
-        break;
-    case 'soft_bokeh':
-        // Simulation: draw a few blurred circles
-        ctx.globalCompositeOperation = 'overlay';
-        ctx.globalAlpha = 0.5;
-        const bokehColors = ['#FFC0CB', '#ADD8E6', '#90EE90'];
-        for(let i=0; i<5; i++) {
-            const cx = x + Math.random() * w;
-            const cy = y + Math.random() * h;
-            const r = Math.min(w,h) * (Math.random() * 0.1 + 0.05);
-            ctx.fillStyle = bokehColors[i % 3];
-            // Faking blur with transparent radial gradient
-            const bGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-            bGrad.addColorStop(0, ctx.fillStyle);
-            bGrad.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = bGrad;
+            // Top-Right (mirror X)
+            ctx.translate(x + w, 0);
+            ctx.scale(-1, 1);
             ctx.beginPath();
-            ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+            roundRect(ctx, 0, y, size, size, 5); 
             ctx.fill();
-        }
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 1;
-        break;
-    case 'blue_vignette':
-        const blueGrad = ctx.createRadialGradient(x + w/2, y + h/2, Math.min(w,h)*0.3, x + w/2, y + h/2, Math.min(w,h)*0.5);
-        blueGrad.addColorStop(0, 'rgba(0,0,0,0)');
-        blueGrad.addColorStop(1, 'rgba(0,50,100,0.6)'); // Dark Blue
-        ctx.fillStyle = blueGrad;
-        ctx.fillRect(x, y, w, h);
-        break;
-    case 'rainbow_prism':
-        ctx.globalCompositeOperation = 'overlay';
-        ctx.globalAlpha = 0.4;
-        const prismGrad = ctx.createLinearGradient(x, y, x + w, y + h);
-        prismGrad.addColorStop(0, 'rgba(255,0,0,0.5)');
-        prismGrad.addColorStop(0.25, 'rgba(255,255,0,0.5)');
-        prismGrad.addColorStop(0.5, 'rgba(0,255,0,0.5)');
-        prismGrad.addColorStop(0.75, 'rgba(0,0,255,0.5)');
-        prismGrad.addColorStop(1, 'rgba(255,0,255,0.5)');
-        ctx.fillStyle = prismGrad;
-        ctx.fillRect(x, y, w, h);
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 1;
-        break;
-    case 'film_burn_top':
-        ctx.globalCompositeOperation = 'overlay';
-        ctx.globalAlpha = 0.7;
-        const burnGrad = ctx.createLinearGradient(x, y, x, y + h/4);
-        burnGrad.addColorStop(0, 'rgba(255, 0, 0, 0.9)'); // Red Burn
-        burnGrad.addColorStop(0.5, 'rgba(255, 165, 0, 0.4)'); // Orange
-        burnGrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)'); // Transparent
-        ctx.fillStyle = burnGrad;
-        ctx.fillRect(x, y, w, h);
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 1;
-        break;
-
-    // ---------------------------------
-    // --- KHUNG & HÌNH DẠNG MỚI ---
-    // ---------------------------------
-    case 'polaroid_border_thin':
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 15;
-        ctx.strokeRect(x, y, w, h);
-        break;
-    case 'black_frame_thin':
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 10;
-        ctx.strokeRect(x, y, w, h);
-        break;
-    case 'white_cross_hatch':
-        ctx.globalAlpha = 0.5;
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        const spacing = w / 15;
-        for(let i = 0; i < w + h; i += spacing) {
+            // Bottom-Left (mirror Y)
+            ctx.translate(-(x + w), 0);
+            ctx.translate(0, y + h);
+            ctx.scale(1, -1);
             ctx.beginPath();
-            ctx.moveTo(x + i, y);
-            ctx.lineTo(x, y + i);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(x + w - i, y);
-            ctx.lineTo(x + w, y + i);
-            ctx.stroke();
-        }
-        ctx.globalAlpha = 1;
-        break;
-    case 'heart_shaped_mask':
-        // Vẽ mask hình trái tim (chỉ hiện thị ảnh bên trong mask)
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.fillStyle = 'rgba(255,255,255,1)';
-        const maskSize = Math.min(w,h) * 0.45;
-        const maskCX = x + w/2;
-        const maskCY = y + h/2;
-        // Xóa hình chữ nhật trước
-        ctx.fillRect(x, y, w, h);
-        // Vẽ hình trái tim
-        const drawHeartMask = (cx, cy, s) => {
-            ctx.beginPath();
-            ctx.moveTo(cx, cy + s * 0.3);
-            ctx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
-            ctx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
+            roundRect(ctx, x, 0, size, size, 5); 
             ctx.fill();
-        };
-        ctx.globalCompositeOperation = 'source-over';
-        drawHeartMask(maskCX, maskCY, maskSize);
-
-        // Vẽ viền trái tim
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = '#FF69B4'; // Hot Pink
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(maskCX, maskCY + maskSize * 0.3);
-        ctx.bezierCurveTo(maskCX + maskSize * 0.5, maskCY - maskSize * 0.8, maskCX + maskSize * 1.0, maskCY - maskSize * 0.4, maskCX, maskCY + maskSize * 0.6);
-        ctx.bezierCurveTo(maskCX - maskSize * 1.0, maskCY - maskSize * 0.4, maskCX - maskSize * 0.5, maskCY - maskSize * 0.8, maskCX, maskCY + maskSize * 0.3);
-        ctx.stroke();
-        
-        ctx.globalCompositeOperation = 'source-over';
-        break;
-    case 'scribble_corners':
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 5;
-        ctx.lineCap = 'round';
-        const scribbleSize = Math.min(w,h) * 0.15;
-
-        const scribble = (startX, startY, endX, endY) => {
-            const numPoints = 10;
-            const points = [{x: startX, y: startY}];
-            for(let i = 1; i < numPoints - 1; i++) {
-                const frac = i / (numPoints - 1);
-                const x_base = startX + (endX - startX) * frac;
-                const y_base = startY + (endY - startY) * frac;
-                const offset = Math.random() * 10 - 5;
-                points.push({x: x_base + offset, y: y_base + offset});
-            }
-            points.push({x: endX, y: endY});
-
+            // Bottom-Right (mirror X, Y)
+            ctx.translate(x + w, 0);
+            ctx.scale(-1, 1);
             ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
-            for(let i = 1; i < points.length; i++) {
-                ctx.lineTo(points[i].x, points[i].y);
+            roundRect(ctx, 0, 0, size, size, 5); 
+            ctx.fill();
+            
+            ctx.restore();
+            ctx.globalAlpha = 1;
+            break;
+        case 'film_damage':
+            // Simple film dust/scratches overlay
+            ctx.fillStyle = 'rgba(0,0,0,0.1)'; // Add dust/specks
+            for (let i = 0; i < 50; i++) {
+                ctx.fillRect(x + Math.random() * w, y + Math.random() * h, 1, 1);
             }
-            ctx.stroke();
-        };
-
-        // Top Left
-        scribble(x, y, x + scribbleSize, y);
-        scribble(x, y, x, y + scribbleSize);
-        // Top Right
-        scribble(x + w, y, x + w - scribbleSize, y);
-        scribble(x + w, y, x + w, y + scribbleSize);
-        // Bottom Left
-        scribble(x, y + h, x + scribbleSize, y + h);
-        scribble(x, y + h, x, y + h - scribbleSize);
-        // Bottom Right
-        scribble(x + w, y + h, x + w - scribbleSize, y + h);
-        scribble(x + w, y + h, x + w, y + h - scribbleSize);
-        break;
-    case 'tape_strip_top':
-        ctx.fillStyle = 'rgba(255,255,255,0.7)'; // White/transparent tape
-        const tapeHeight = h * 0.08;
-        ctx.fillRect(x, y, w, tapeHeight);
-        
-        // Vẽ viền xước (Tape Edge simulation)
-        ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-        ctx.lineWidth = 1;
-        for(let i = 0; i < w; i += 5) {
-            ctx.beginPath();
-            ctx.moveTo(x + i, y + tapeHeight - (Math.random() * 5));
-            ctx.lineTo(x + i + 5, y + tapeHeight - (Math.random() * 5));
-            ctx.stroke();
-        }
-        break;
-
-    // ---------------------------------
-    // --- HIỆU ỨNG ĐẶC BIỆT MỚI ---
-    // ---------------------------------
-    case 'holographic_glitch':
-        // Glitch effect: Dịch chuyển kênh màu
-        const imageDataGlitch = ctx.getImageData(x, y, w, h);
-        const dataGlitch = imageDataGlitch.data;
-        const offset = 5; 
-        
-        // Dịch chuyển kênh Đỏ (R)
-        for (let i = 0; i < dataGlitch.length; i += 4) {
-            if ((i / 4) % w < w - offset) {
-                dataGlitch[i] = dataGlitch[i + 4 * offset];
+            // Add light scratches
+            addScratches(1, 'rgba(255,255,255,0.2)', ctx, x, y, w, h);
+            break;
+        // ---------------------------------
+        case 'faded_matte':
+            // Làm tối góc (Vignette)
+            const vignetteGrad = ctx.createRadialGradient(x + w/2, y + h/2, Math.min(w,h)/4, x + w/2, y + h/2, Math.min(w,h)/2);
+            vignetteGrad.addColorStop(0, 'rgba(0,0,0,0)');
+            vignetteGrad.addColorStop(1, 'rgba(0,0,0,0.4)');
+            ctx.fillStyle = vignetteGrad;
+            ctx.fillRect(x, y, w, h);
+            // Matte effect: Tăng độ sáng kênh tối
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.globalCompositeOperation = 'soft-light'; // Áp dụng sáng nhẹ
+            ctx.fillRect(x, y, w, h);
+            ctx.globalCompositeOperation = 'source-over';
+            break;
+        case 'dust_scratches_medium':
+            // Bụi & Vết xước trung bình
+            ctx.fillStyle = 'rgba(0,0,0,0.15)'; // Dust/specks
+            for (let i = 0; i < 100; i++) {
+                ctx.fillRect(x + Math.random() * w, y + Math.random() * h, 1, 1);
             }
-        }
+            addScratches(2, 'rgba(255,255,255,0.3)', ctx, x, y, w, h); // Scratches
+            break;
         
-        // Dịch chuyển kênh Xanh Lam (B)
-        for (let i = dataGlitch.length - 4; i >= 0; i -= 4) {
-            if ((i / 4) % w >= offset) {
-                dataGlitch[i + 2] = dataGlitch[i - 4 * offset + 2];
-            }
-        }
-        ctx.putImageData(imageDataGlitch, x, y);
-        
-        // Thêm vạch ngang giả Hologram
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        for(let i = y; i < y + h; i += 10) {
-            ctx.fillRect(x, i, w, 1);
-        }
-        break;
-    case 'half_tone_dots':
-        // Halftone (chỉ mô phỏng bằng cách overlay)
-        ctx.globalCompositeOperation = 'overlay';
-        ctx.globalAlpha = 0.6;
-        const dotSize = 8;
-        ctx.fillStyle = '#FFFFFF';
-        for(let i = x; i < x + w; i += dotSize) {
-            for(let j = y; j < y + h; j += dotSize) {
-                // Giả lập dot size dựa trên vị trí (hoặc độ sáng trung bình)
-                const radius = (Math.random() * 0.5 + 0.2) * dotSize / 2;
+        // ---------------------------------
+        // ──────── ÁNH SÁNG ────────
+        // ---------------------------------
+        case 'golden_light_leak':
+            // Ánh sáng rò rỉ vàng ấm
+            ctx.globalCompositeOperation = 'screen'; 
+            ctx.globalAlpha = 0.6;
+            const goldenGrad = ctx.createRadialGradient(x + w*0.8, y + h*0.2, w*0.05, x + w*0.8, y + h*0.2, w*0.4);
+            goldenGrad.addColorStop(0, '#FFD700'); // Gold
+            goldenGrad.addColorStop(1, 'rgba(255, 255, 0, 0)'); // White
+            ctx.fillStyle = goldenGrad;
+            ctx.fillRect(x, y, w, h);
+            break;
+        case 'sunset_light_leak':
+            // Ánh sáng hoàng hôn (hồng cam)
+            ctx.globalCompositeOperation = 'screen'; 
+            ctx.globalAlpha = 0.7;
+            const sunsetGrad = ctx.createRadialGradient(x + w*0.1, y + h*0.9, w*0.05, x + w*0.1, y + h*0.9, w*0.5);
+            sunsetGrad.addColorStop(0, '#FF4500'); // Orange Red
+            sunsetGrad.addColorStop(1, 'rgba(255, 105, 180, 0)'); // Hot Pink
+            ctx.fillStyle = sunsetGrad;
+            ctx.fillRect(x, y, w, h);
+            break;
+        case 'soft_bokeh':
+            // Vài vòng tròn mờ
+            ctx.globalCompositeOperation = 'overlay';
+            ctx.globalAlpha = 0.5;
+            const bokehColors = ['#FFC0CB', '#ADD8E6', '#90EE90'];
+            for(let i=0; i<5; i++) {
+                const cx = x + Math.random() * w;
+                const cy = y + Math.random() * h;
+                const r = Math.min(w,h) * (Math.random() * 0.1 + 0.05);
+                ctx.fillStyle = bokehColors[i % 3];
+                // Faking blur with transparent radial gradient
+                const bGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+                bGrad.addColorStop(0, ctx.fillStyle);
+                bGrad.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = bGrad;
                 ctx.beginPath();
-                ctx.arc(i + dotSize/2, j + dotSize/2, radius, 0, 2 * Math.PI);
+                ctx.arc(cx, cy, r, 0, 2 * Math.PI);
                 ctx.fill();
             }
-        }
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 1;
-        break;
-    case 'glitter_sparkle':
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = 0.7;
-        for (let i = 0; i < 200; i++) {
-            const color = ['#FFD700', '#FFFFFF', '#FFC0CB'][Math.floor(Math.random() * 3)];
-            const cx = x + Math.random() * w;
-            const cy = y + Math.random() * h;
-            const size = Math.random() * 2 + 1;
-            ctx.fillStyle = color;
-            ctx.fillRect(cx, cy, size, size);
-        }
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 1;
-        break;
-    default:
-        // Do nothing
-        break;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            break;
+        case 'blue_vignette':
+            const blueGrad = ctx.createRadialGradient(x + w/2, y + h/2, Math.min(w,h)*0.3, x + w/2, y + h/2, Math.min(w,h)*0.5);
+            blueGrad.addColorStop(0, 'rgba(0,0,0,0)');
+            blueGrad.addColorStop(1, 'rgba(0,50,100,0.6)'); // Dark Blue
+            ctx.fillStyle = blueGrad;
+            ctx.fillRect(x, y, w, h);
+            break;
+        case 'rainbow_prism':
+            ctx.globalCompositeOperation = 'overlay';
+            ctx.globalAlpha = 0.4;
+            const prismGrad = ctx.createLinearGradient(x, y, x + w, y + h);
+            prismGrad.addColorStop(0, 'rgba(255,0,0,0.5)');
+            prismGrad.addColorStop(0.25, 'rgba(255,255,0,0.5)');
+            prismGrad.addColorStop(0.5, 'rgba(0,255,0,0.5)');
+            prismGrad.addColorStop(0.75, 'rgba(0,0,255,0.5)');
+            prismGrad.addColorStop(1, 'rgba(255,0,255,0.5)');
+            ctx.fillStyle = prismGrad;
+            ctx.fillRect(x, y, w, h);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            break;
+        case 'film_burn_top':
+            // Cháy film (đỏ/cam ở trên cùng)
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.7;
+            const burnGrad = ctx.createLinearGradient(x, y, x, y + h * 0.3);
+            burnGrad.addColorStop(0, '#FF4500'); // Orange Red
+            burnGrad.addColorStop(0.5, '#FFD700'); // Gold
+            burnGrad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = burnGrad;
+            ctx.fillRect(x, y, w, h);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            break;
+        
+        // ---------------------------------
+        // ──────── KHUNG & HÌNH DẠNG ────────
+        // ---------------------------------
+        case 'polaroid_border_thin':
+            // Khung đen mỏng bên trong
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = w * 0.05; // 5% border
+            ctx.strokeRect(x, y, w, h);
+            break;
+        case 'black_frame_thin':
+            // Khung đen mỏng bên trong
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 2; 
+            ctx.strokeRect(x, y, w, h);
+            break;
+        case 'white_cross_hatch':
+            // Họa tiết gạch chéo trắng (Texture)
+            ctx.globalAlpha = 0.3;
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 1;
+            const spacing = w / 20;
+            for(let i = 0; i < w + h; i += spacing) {
+                // Chéo trái
+                ctx.beginPath();
+                ctx.moveTo(x + i, y);
+                ctx.lineTo(x, y + i);
+                ctx.stroke();
+                // Chéo phải
+                ctx.beginPath();
+                ctx.moveTo(x + w - i, y);
+                ctx.lineTo(x + w, y + i);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+            break;
+        case 'heart_shaped_mask':
+            const maskSize = Math.min(w, h) * 0.8;
+            const maskCX = x + w/2;
+            const maskCY = y + h/2 - maskSize * 0.1; // Dịch lên một chút
+            
+            // Mask bằng cách vẽ hình chữ nhật trước
+            ctx.fillStyle = 'rgba(0,0,0,0.5)'; // Màu tối/mờ cho mask
+            ctx.fillRect(x, y, w, h);
+
+            // Xóa hình trái tim khỏi mask (globalCompositeOperation = 'destination-out')
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = '#FFFFFF'; // Màu trắng sẽ bị xóa
+            const drawHeartMask = (cx, cy, s) => {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy + s * 0.3);
+                ctx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
+                ctx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
+                ctx.fill();
+            };
+            drawHeartMask(maskCX, maskCY, maskSize);
+
+            // Vẽ viền trái tim
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = '#FF69B4'; // Hot Pink
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(maskCX, maskCY + maskSize * 0.3);
+            ctx.bezierCurveTo(maskCX + maskSize * 0.5, maskCY - maskSize * 0.8, maskCX + maskSize * 1.0, maskCY - maskSize * 0.4, maskCX, maskCY + maskSize * 0.6);
+            ctx.bezierCurveTo(maskCX - maskSize * 1.0, maskCY - maskSize * 0.4, maskCX - maskSize * 0.5, maskCY - maskSize * 0.8, maskCX, maskCY + maskSize * 0.3);
+            ctx.stroke();
+            ctx.globalCompositeOperation = 'source-over';
+            break;
+        case 'scribble_corners':
+            ctx.strokeStyle = '#333333'; // Màu vẽ nguệch ngoạc
+            ctx.lineWidth = 3;
+            const scribbleSize = Math.min(w, h) * 0.1;
+            const scribble = (startX, startY, endX, endY) => {
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.quadraticCurveTo(
+                    startX + (endX - startX) * Math.random(), 
+                    startY + (endY - startY) * Math.random(), 
+                    endX, 
+                    endY
+                );
+                ctx.stroke();
+            };
+            // Top-Left
+            scribble(x, y, x + scribbleSize, y);
+            scribble(x, y, x, y + scribbleSize);
+            // Top-Right
+            scribble(x + w, y, x + w - scribbleSize, y);
+            scribble(x + w, y, x + w, y + scribbleSize);
+            // Bottom-Left
+            scribble(x, y + h, x + scribbleSize, y + h);
+            scribble(x, y + h, x, y + h - scribbleSize);
+            // Bottom-Right
+            scribble(x + w, y + h, x + w - scribbleSize, y + h);
+            scribble(x + w, y + h, x + w, y + h - scribbleSize);
+            break;
+        case 'tape_strip_top':
+            ctx.fillStyle = 'rgba(255,255,255,0.7)'; // White/transparent tape
+            const tapeHeight = h * 0.08;
+            ctx.fillRect(x, y, w, tapeHeight);
+            // Vẽ viền xước (Tape Edge simulation)
+            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+            ctx.lineWidth = 1;
+            for(let i = 0; i < w; i += 5) {
+                ctx.beginPath();
+                ctx.moveTo(x + i, y + tapeHeight - (Math.random() * 5));
+                ctx.lineTo(x + i + 5, y + tapeHeight - (Math.random() * 5));
+                ctx.stroke();
+            }
+            break;
+        
+        // ---------------------------------
+        // ──────── HIỆU ỨNG ĐẶC BIỆT ────────
+        // ---------------------------------
+        case 'holographic_glitch':
+            // Glitch effect: Dịch chuyển kênh màu
+            const imageDataGlitch = ctx.getImageData(x, y, w, h);
+            const dataGlitch = imageDataGlitch.data;
+            const offset = 5; 
+            // Dịch chuyển kênh Đỏ (R)
+            for (let i = 0; i < dataGlitch.length; i += 4) {
+                if ((i / 4) % w < w - offset) {
+                    dataGlitch[i] = dataGlitch[i + 4 * offset];
+                }
+            }
+            // Dịch chuyển kênh Xanh Lam (B)
+            for (let i = dataGlitch.length - 4; i >= 0; i -= 4) {
+                if ((i / 4) % w >= offset) {
+                    dataGlitch[i + 2] = dataGlitch[i - 4 * offset + 2];
+                }
+            }
+            ctx.putImageData(imageDataGlitch, x, y);
+            // Thêm vệt nhiễu Holographic (màu sắc)
+            ctx.globalCompositeOperation = 'screen';
+            ctx.globalAlpha = 0.3;
+            ctx.fillStyle = '#00FFFF'; // Cyan
+            ctx.fillRect(x + 2, y + h * 0.3, w, 5);
+            ctx.fillStyle = '#FF00FF'; // Magenta
+            ctx.fillRect(x - 2, y + h * 0.6, w, 5);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            break;
+        case 'half_tone_dots':
+            // Chấm mực (Halftone)
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            const dotGrid = w / 15;
+            for(let i=0; i<w; i+=dotGrid) {
+                for(let j=0; j<h; j+=dotGrid) {
+                    // Kích thước chấm dựa trên độ sáng (giả lập)
+                    const dotSize = Math.random() * (dotGrid / 2); 
+                    ctx.beginPath();
+                    ctx.arc(x + i, y + j, dotSize, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            break;
+        case 'glitter_sparkle':
+            // Lấp lánh (Giả)
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = 0.6;
+            const sparkleColors = ['#FFFF00', '#FFC0CB', '#FFFFFF'];
+            for(let i=0; i<80; i++) {
+                const cx = x + Math.random() * w;
+                const cy = y + Math.random() * h;
+                const size = Math.random() * 2 + 1;
+                ctx.fillStyle = sparkleColors[i % 3];
+                ctx.fillRect(cx, cy, size, size);
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            break;
+        default:
+            // Do nothing
+            break;
     }
+    
     ctx.restore();
 }
 
@@ -1498,404 +1540,583 @@ function loadImg(dataUrl) {
     });
 }
 
-// ---------------- BACKGROUNDS & MERGE LOGIC ----------------
+// NEW HELPER FUNCTIONS FOR BACKGROUNDS (Used in drawComplexBackground)
+function drawStripes(ctx, W, H, color1, color2) {
+    const stripeWidth = W / 10;
+    const numStripes = Math.ceil(W / stripeWidth);
+    for(let i=0; i<numStripes; i++) {
+        ctx.fillStyle = i % 2 === 0 ? color1 : color2;
+        ctx.fillRect(i * stripeWidth, 0, stripeWidth, H);
+    }
+}
 
-// Hàm vẽ background phức tạp (áp dụng cho toàn bộ strip)
-// Tùy chọn nền sẽ được vẽ trên toàn bộ canvas trước khi vẽ ảnh.
-// Hàm này giờ nhận YStart và TextH đã tính toán sẵn.
-function drawComplexBackground(ctx, W, H, backgroundId, layout, textStripYStart, textStripHeight){
+function drawDots(ctx, W, H, dotColor, dotSize, spacing, alpha) {
     ctx.save();
-    // Đảm bảo toàn bộ canvas được fill màu trắng hoặc màu nền chính
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, W, H);
-
-    if (backgroundId === 'soft_rose_gradient') {
-        const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#FFD1DC');
-        grad.addColorStop(1, '#FFEBCD');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-    } else if (backgroundId === 'romantic_red_velvet') {
-        ctx.fillStyle = '#8B0000'; // Dark Red
-        ctx.fillRect(0, 0, W, H);
-    } else if (backgroundId === 'lavender_haze_blur') {
-        const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#E6E6FA'); // Lavender
-        grad.addColorStop(1, '#B0E0E6'); // Powder Blue
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-    } else if (backgroundId === 'sweetheart_pink_dots') {
-        const patternCanvas = document.createElement('canvas');
-        const patternSize = 60;
-        patternCanvas.width = patternSize;
-        patternCanvas.height = patternSize;
-        const pCtx = patternCanvas.getContext('2d');
-        pCtx.fillStyle = '#FFFFFF';
-        pCtx.fillRect(0, 0, patternSize, patternSize);
-        const drawMiniHeart = (cx, cy, s) => {
-            pCtx.beginPath();
-            pCtx.moveTo(cx, cy + s * 0.3);
-            pCtx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
-            pCtx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
-            pCtx.fillStyle = '#FFC0CB';
-            pCtx.fill();
-        };
-        drawMiniHeart(patternSize * 0.25, patternSize * 0.25, patternSize * 0.15);
-        drawMiniHeart(patternSize * 0.75, patternSize * 0.75, patternSize * 0.15);
-        ctx.fillStyle = ctx.createPattern(patternCanvas, 'repeat');
-        ctx.fillRect(0, 0, W, H);
-    } else if (backgroundId === 'sunset_kiss_gradient') {
-        const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#FFDAB9'); // Peach
-        grad.addColorStop(1, '#FF7F50'); // Coral
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-    } else if (backgroundId === 'champagne_toast') {
-        ctx.fillStyle = '#FAEBD7'; // Antique White
-        ctx.fillRect(0, 0, W, H);
-        // Thêm ánh kim (glowing spots)
-        ctx.globalCompositeOperation = 'overlay';
-        const spots = [
-            { x: W * 0.2, y: H * 0.3, r: W * 0.1, color: 'rgba(255,255,160,0.5)' },
-            { x: W * 0.8, y: H * 0.6, r: W * 0.15, color: 'rgba(255,160,192,0.4)' },
-            { x: W * 0.4, y: H * 0.9, r: W * 0.08, color: 'rgba(255,105,180,0.3)' }
-        ];
-        spots.forEach(spot => {
-            const grad = ctx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, spot.r);
-            grad.addColorStop(0, spot.color);
-            grad.addColorStop(1, 'rgba(255,255,255,0)');
-            ctx.fillStyle = grad;
+    ctx.globalAlpha = alpha || 1;
+    ctx.fillStyle = dotColor;
+    for(let x = 0; x < W + spacing; x += spacing) {
+        for(let y = 0; y < H + spacing; y += spacing) {
             ctx.beginPath();
-            ctx.arc(spot.x, spot.y, spot.r, 0, 2 * Math.PI);
-            ctx.fill();
-        });
-        ctx.globalCompositeOperation = 'source-over';
-    } else if (backgroundId === 'blush_watercolor') {
-        ctx.fillStyle = '#F8F8FF'; // Ghost White
-        ctx.fillRect(0, 0, W, H);
-        // Thêm các vết màu nước hồng phớt
-        ctx.globalAlpha = 0.5;
-        ctx.globalCompositeOperation = 'multiply';
-        ctx.fillStyle = '#FFD1DC'; // Soft Pink
-        ctx.beginPath();
-        ctx.arc(W * 0.3, H * 0.4, W * 0.15, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.fillStyle = '#FFEBCD'; // Soft Peach
-        ctx.beginPath();
-        ctx.arc(W * 0.7, H * 0.6, W * 0.12, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        ctx.globalCompositeOperation = 'source-over';
-    } else if (backgroundId === 'mint_love_stripes') {
-        drawStripes(ctx, W, H, '#F0FFF0', '#C1EAD9'); // Mint
-    } else if (backgroundId === 'starry_night_light') {
-        ctx.fillStyle = '#191970'; // Midnight Blue
-        ctx.fillRect(0, 0, W, H);
-        // Thêm các chấm sáng
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        for (let i = 0; i < 100; i++) {
-            const cx = Math.random() * W;
-            const cy = Math.random() * H;
-            const r = Math.random() * 1.5 + 0.5;
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+            ctx.arc(x + Math.random() * (spacing/2), y + Math.random() * (spacing/2), dotSize, 0, 2 * Math.PI);
             ctx.fill();
         }
-    } else if (backgroundId === 'coral_dream') {
-        const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#FF7F50'); // Coral
-        grad.addColorStop(1, '#FF6B81'); // Pink
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-    } else if (backgroundId === 'berry_smoothie') {
-        ctx.fillStyle = '#FFC0CB'; // Pink
-        ctx.fillRect(0, 0, W, H);
-        // Thêm họa tiết xoáy tím/hồng
-        ctx.globalCompositeOperation = 'overlay';
-        ctx.globalAlpha = 0.6;
-        const berryGrad = ctx.createRadialGradient(W*0.5, H*0.5, W*0.1, W*0.5, H*0.5, W*0.4);
-        berryGrad.addColorStop(0, 'rgba(128,0,128,0.7)'); // Purple
-        berryGrad.addColorStop(1, 'rgba(255,105,180,0.5)'); // Hot Pink
-        ctx.fillStyle = berryGrad;
-        ctx.fillRect(0, 0, W, H);
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 1;
-    } else if (backgroundId === 'lilac_blossom_texture') {
-        ctx.fillStyle = '#E6E6FA'; // Lavender
-        ctx.fillRect(0, 0, W, H);
-        // Thêm noise giả lập texture vải
-        addGrain(0.2, 0, 0, W, H, ctx);
-    } else if (backgroundId === 'peachy_glow') {
-        const grad = ctx.createRadialGradient(W*0.5, H*0.5, W*0.1, W*0.5, H*0.5, W*0.4);
-        grad.addColorStop(0, '#FFDEAD'); // Navajo White (Bright Peach)
-        grad.addColorStop(1, '#FFDAB9'); // Peach Puff
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-    } else if (backgroundId === 'cotton_candy_swirl') {
-        const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#FFC0CB'); // Pink
-        grad.addColorStop(0.5, '#ADD8E6'); // Light Blue
-        grad.addColorStop(1, '#90EE90'); // Light Green
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-        // Thêm hiệu ứng xoáy nhẹ (noise)
-        addGrain(0.1, 0, 0, W, H, ctx);
-    } else if (backgroundId === 'valentines_day_hearts') {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, W, H);
-        ctx.globalAlpha = 0.5;
-        const heartSize = W / 10;
-        ctx.fillStyle = '#FF69B4';
-        for(let i = 0; i < W; i += heartSize * 1.5) {
-            for(let j = 0; j < H; j += heartSize * 1.5) {
-                const drawMiniHeart = (cx, cy, s) => {
-                    ctx.beginPath();
-                    ctx.moveTo(cx, cy + s * 0.3);
-                    ctx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
-                    ctx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
-                    ctx.fill();
-                };
-                drawMiniHeart(i + heartSize * 0.5, j + heartSize * 0.5, heartSize * 0.3);
-            }
-        }
-        ctx.globalAlpha = 1;
-    } else if (backgroundId === 'aurora_pink_blue') {
-        const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#FFC0CB'); // Pink
-        grad.addColorStop(0.3, '#ADD8E6'); // Light Blue
-        grad.addColorStop(0.6, '#90EE90'); // Light Green
-        grad.addColorStop(1, '#FF69B4'); // Hot Pink
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-        ctx.globalCompositeOperation = 'overlay';
-        ctx.globalAlpha = 0.5;
-        addGrain(0.3, 0, 0, W, H, ctx);
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 1;
-    } else if (backgroundId === 'lemonade_pink') {
-        const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#FFFFE0'); // Light Yellow
-        grad.addColorStop(1, '#FFB6C1'); // Light Pink
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-    } else if (backgroundId === 'dreamy_cloud_pastel') {
-        ctx.fillStyle = '#F0F8FF'; // Alice Blue
-        ctx.fillRect(0, 0, W, H);
-        ctx.globalAlpha = 0.6;
-        ctx.globalCompositeOperation = 'soft-light';
-        ctx.fillStyle = '#ADD8E6'; // Light Blue Cloud
-        ctx.beginPath();
-        ctx.arc(W * 0.2, H * 0.7, W * 0.15, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.fillStyle = '#FFC0CB'; // Pink Cloud
-        ctx.beginPath();
-        ctx.arc(W * 0.8, H * 0.3, W * 0.1, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        ctx.globalCompositeOperation = 'source-over';
-    } else if (backgroundId === 'minimal_white_texture') {
-        ctx.fillStyle = '#F8F8F8'; // Off-White
-        ctx.fillRect(0, 0, W, H);
-        addGrain(0.05, 0, 0, W, H, ctx); // Thêm noise siêu nhẹ
-    } else if (backgroundId === 'stripes_bw') {
-        drawStripes(ctx, W, H, '#333333', '#FFFFFF');
-    } else if (backgroundId === 'fuji_classic_clean') {
-        // 1. Đảm bảo toàn bộ nền là màu trắng (hoặc rất nhạt)
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, W, H);
-        // 2. Vẽ dải màu ở khu vực Footer/Text Strip (Màu xanh Fuji nhẹ nhàng)
-        const fujiFooterColor = '#B3D0FF'; // Màu xanh nhạt (Light Fuji Blue)
-        ctx.fillStyle = fujiFooterColor; 
-        // Sử dụng textStripHeight đã được tính toán chính xác
-        ctx.fillRect(0, textStripYStart, W, textStripHeight);
-    } else {
-        // Mặc định (default) - nền trắng
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, W, H);
     }
     ctx.restore();
 }
 
-function drawStripes(ctx, W, H, colorA, colorB) {
-    const stripeHeight = H / 25;
-    for (let i = 0; i < 25; i++) {
-        ctx.fillStyle = i % 2 === 0 ? colorA : colorB;
-        ctx.fillRect(0, i * stripeHeight, W, stripeHeight);
+function drawCheckerboard(ctx, W, H, color1, color2, size) {
+    ctx.save();
+    const numBlocksX = Math.ceil(W / size);
+    const numBlocksY = Math.ceil(H / size);
+    for (let i = 0; i < numBlocksX; i++) {
+        for (let j = 0; j < numBlocksY; j++) {
+            const color = (i + j) % 2 === 0 ? color1 : color2;
+            ctx.fillStyle = color;
+            ctx.fillRect(i * size, j * size, size, size);
+        }
     }
+    ctx.restore();
 }
 
-// Hàm lấy màu nền film Instax mặc định
-function getFilmColor(frameStyle, backgroundId) {
-    if (backgroundId !== 'default') return '#FFFFFF'; // Nếu là background mặc định, bây giờ sẽ dùng màu trắng vì đã bỏ viền Instax
-    return '#FFFFFF';
+function drawWatercolorHeart(ctx, cx, cy, s, color) {
+    ctx.save();
+    // Faking soft edge with radial gradient
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, s * 0.7);
+    grad.addColorStop(0, color);
+    // Note: Assuming color is in rgba() or r,g,b format where '1)' is the alpha part for simple string manipulation
+    const finalColor = color.includes('rgba') ? color.replace(/, 0\.9\)/, ', 0)') : color; 
+    grad.addColorStop(1, finalColor);
+    ctx.fillStyle = grad;
+    ctx.globalAlpha = 0.5;
+    
+    ctx.beginPath();
+    // Heart shape approximation
+    ctx.moveTo(cx, cy + s * 0.3);
+    ctx.bezierCurveTo(cx + s * 0.5, cy - s * 0.8, cx + s * 1.0, cy - s * 0.4, cx, cy + s * 0.6);
+    ctx.bezierCurveTo(cx - s * 1.0, cy - s * 0.4, cx - s * 0.5, cy - s * 0.8, cx, cy + s * 0.3);
+    ctx.fill();
+    ctx.restore();
+}
+// END NEW HELPER FUNCTIONS
+
+// ---------------- BACKGROUNDS & MERGE LOGIC ---------------- //
+// Hàm vẽ background phức tạp (áp dụng cho toàn bộ strip)
+function drawComplexBackground(ctx, W, H, backgroundId, layout, textStripYStart, textStripHeight){
+    ctx.save();
+    // 1. Đảm bảo toàn bộ canvas được fill màu trắng hoặc màu nền chính
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, W, H);
+    
+    // 2. Vẽ Background theo ID
+    switch(backgroundId) {
+        // ------------------------------ TẾT NGUYÊN ĐÁN 2026 ------------------------------
+        case 'tet_red_gold_silk': {
+            ctx.fillStyle = '#B31B1B'; // Deep Red
+            ctx.fillRect(0, 0, W, H);
+            
+            // Thêm hiệu ứng lụa/gold (simple)
+            ctx.globalCompositeOperation = 'overlay';
+            ctx.globalAlpha = 0.3;
+            const grad = ctx.createLinearGradient(0, 0, W, H);
+            grad.addColorStop(0, '#FFD700'); // Gold
+            grad.addColorStop(1, '#FFFFFF'); // White
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+            
+            // Thêm ánh kim lấp lánh nhẹ (simple noise)
+            addGrain(0.08, 0, 0, W, H, ctx);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            break;
+        }
+        case 'tet_cherry_blossom': {
+            ctx.fillStyle = '#FFF0F5'; // Lavender Blush
+            ctx.fillRect(0, 0, W, H);
+            // Họa tiết hoa mai/đào
+            ctx.globalAlpha = 0.6;
+            ctx.fillStyle = 'rgba(255, 192, 203, 0.4)'; // Pink petal
+            const petalSize = W / 20;
+            for(let i=0; i<80; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * W, Math.random() * H, petalSize, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            break;
+        }
+        case 'tet_banh_chung_green': {
+            ctx.fillStyle = '#38761D'; // Dark Forest Green (Lá chuối)
+            ctx.fillRect(0, 0, W, H);
+            // Thêm texture nhẹ
+            addGrain(0.1, 0, 0, W, H, ctx);
+            break;
+        }
+        case 'tet_firecracker_pattern': {
+            ctx.fillStyle = '#000080'; // Navy Blue
+            ctx.fillRect(0, 0, W, H);
+            // Họa tiết pháo bông (gold/red dots)
+            drawDots(ctx, W, H, '#FFD700', W/80, W/15, 0.7);
+            drawDots(ctx, W, H, '#FF0000', W/100, W/15, 0.7);
+            break;
+        }
+        case 'tet_lucky_money': {
+            const grad = ctx.createLinearGradient(0, 0, W, H);
+            grad.addColorStop(0, '#C93C37'); // Deep Red
+            grad.addColorStop(1, '#FF7F50'); // Coral (Goldish tone)
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+            // Thêm texture tiền lì xì (simple noise)
+            addGrain(0.15, 0, 0, W, H, ctx);
+            break;
+        }
+        case 'tet_golden_dragon': {
+            const grad = ctx.createLinearGradient(0, 0, W, H);
+            grad.addColorStop(0, '#FFD700'); // Gold
+            grad.addColorStop(1, '#FFA500'); // Orange
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+            // Faking scale texture
+            ctx.globalAlpha = 0.2;
+            ctx.fillStyle = '#000000';
+            const size = W / 15;
+            for(let x = 0; x < W; x += size) {
+                for(let y = 0; y < H; y += size) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, size/4, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            }
+            ctx.globalAlpha = 1;
+            break;
+        }
+        case 'tet_bamboo_stripes': {
+            drawStripes(ctx, W, H, '#D4F0C0', '#6B8E23'); // Pale Green / Olive Green
+            break;
+        }
+        case 'tet_lantern_glow': {
+            const grad = ctx.createRadialGradient(W*0.5, H*0.5, W*0.1, W*0.5, H*0.5, W*0.5);
+            grad.addColorStop(0, '#FFD700'); // Gold (Center)
+            grad.addColorStop(1, '#8B0000'); // Dark Red (Edge)
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+            break;
+        }
+        case 'tet_calligraphy_paper': {
+            ctx.fillStyle = '#8B0000'; // Dark Red
+            ctx.fillRect(0, 0, W, H);
+            // Texture giấy
+            addGrain(0.1, 0, 0, W, H, ctx);
+            break;
+        }
+        case 'tet_minimal_auspice': {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, W, H);
+            drawDots(ctx, W, H, 'rgba(255, 215, 0, 0.5)', W/100, W/10, 1);
+            drawDots(ctx, W, H, 'rgba(255, 0, 0, 0.5)', W/100, W/10, 1);
+            break;
+        }
+        
+        // ------------------------------ GIÁNG SINH ------------------------------
+        case 'xmas_red_white_stripes': {
+            drawStripes(ctx, W, H, '#FF0000', '#FFFFFF'); // Red / White
+            break;
+        }
+        case 'xmas_pine_forest_green': {
+            ctx.fillStyle = '#013220'; // Deep Forest Green
+            ctx.fillRect(0, 0, W, H);
+            break;
+        }
+        case 'xmas_snowy_bokeh': {
+            ctx.fillStyle = '#191970'; // Midnight Blue
+            ctx.fillRect(0, 0, W, H);
+            // Bokeh/Snow effect
+            ctx.globalAlpha = 0.6;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            for(let i=0; i<50; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * W, Math.random() * H, W/50, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            break;
+        }
+        case 'xmas_gold_glitter': {
+            ctx.fillStyle = '#B8860B'; // DarkGoldenrod
+            ctx.fillRect(0, 0, W, H);
+            // Glitter (heavy grain/noise)
+            addGrain(0.8, 0, 0, W, H, ctx);
+            break;
+        }
+        case 'xmas_cozy_knit': {
+            ctx.fillStyle = '#FAF0E6'; // Linen (Base Color)
+            ctx.fillRect(0, 0, W, H);
+            // Faking knit lines (simple diagonal)
+            ctx.globalAlpha = 0.3;
+            ctx.strokeStyle = '#8B0000'; // Dark Red
+            ctx.lineWidth = W / 80;
+            for(let x = 0; x < W + H; x += W/15) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x - H, H);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+            break;
+        }
+        case 'xmas_gingerbread': {
+            ctx.fillStyle = '#8B4513'; // Saddle Brown
+            ctx.fillRect(0, 0, W, H);
+            // Icing texture (light)
+            addGrain(0.1, 0, 0, W, H, ctx);
+            break;
+        }
+        case 'xmas_santa_suit': {
+            ctx.fillStyle = '#B22222'; // Firebrick Red
+            ctx.fillRect(0, 0, W, H);
+            // Nút trắng (simple)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(W/2 - W/20, H/2 - W/20, W/10, W/10);
+            break;
+        }
+        case 'xmas_holly_berries': {
+            ctx.fillStyle = '#F0FFF0'; // Honeydew
+            ctx.fillRect(0, 0, W, H);
+            drawDots(ctx, W, H, '#006400', W/50, W/10, 0.7); // Green Leaves (large dots)
+            drawDots(ctx, W, H, '#8B0000', W/100, W/10, 1); // Red Berries (small dots)
+            break;
+        }
+        case 'xmas_minimal_white': {
+            ctx.fillStyle = '#F5F5F5'; // White Smoke
+            ctx.fillRect(0, 0, W, H);
+            // Subtle snow effect (tiny white dots)
+            drawDots(ctx, W, H, 'rgba(255, 255, 255, 0.7)', 1, 10, 1);
+            break;
+        }
+        case 'xmas_twinkle_lights': {
+            ctx.fillStyle = '#1C1C1C'; // Dark Grey
+            ctx.fillRect(0, 0, W, H);
+            // Scattered colored lights
+            const lightColors = ['#FFD700', '#FF0000', '#00FF00', '#ADD8E6'];
+            ctx.globalAlpha = 0.8;
+            for(let i=0; i<30; i++) {
+                ctx.fillStyle = lightColors[i % lightColors.length];
+                ctx.beginPath();
+                ctx.arc(Math.random() * W, Math.random() * H, W/80, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            break;
+        }
+        
+        // ------------------------------ TÌNH YÊU ------------------------------
+        case 'love_hot_pink_blur': {
+            const grad = ctx.createRadialGradient(W*0.5, H*0.5, W*0.1, W*0.5, H*0.5, W*0.5);
+            grad.addColorStop(0, '#FF69B4'); // Hot Pink
+            grad.addColorStop(1, '#FFC0CB'); // Pink
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+            // Blur effect (simple noise/grain)
+            addGrain(0.2, 0, 0, W, H, ctx);
+            break;
+        }
+        case 'love_watercolor_hearts': {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, W, H);
+            const heartSize = W / 10;
+            const heartColors = ['rgba(255, 105, 180, 0.9)', 'rgba(255, 0, 0, 0.9)'];
+            // Draw hearts (less transparent to ensure visible)
+            for(let i=0; i<10; i++) {
+                drawWatercolorHeart(ctx, Math.random() * W, Math.random() * H, heartSize, heartColors[i % 2]);
+            }
+            break;
+        }
+        case 'love_rose_petals': {
+            const grad = ctx.createLinearGradient(0, 0, W, H);
+            grad.addColorStop(0, '#800000'); // Maroon
+            grad.addColorStop(1, '#FFC0CB'); // Pink
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+            break;
+        }
+        case 'love_scribble_lines': {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, W, H);
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = '#FF0000'; // Red
+            ctx.lineWidth = 1;
+            for(let i=0; i<20; i++) {
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * W, Math.random() * H);
+                ctx.lineTo(Math.random() * W, Math.random() * H);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+            break;
+        }
+        case 'love_velvet_magenta': {
+            ctx.fillStyle = '#800080'; // Purple
+            ctx.fillRect(0, 0, W, H);
+            // Velvet texture (soft grain)
+            addGrain(0.2, 0, 0, W, H, ctx);
+            break;
+        }
+        case 'love_couple_galaxy': {
+            ctx.fillStyle = '#191970'; // Midnight Blue
+            ctx.fillRect(0, 0, W, H);
+            // Starry/Nebula effect
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = 0.5;
+            const starColors = ['#FFC0CB', '#ADD8E6', '#FFFFFF'];
+            for(let i=0; i<50; i++) {
+                ctx.fillStyle = starColors[i % 3];
+                ctx.beginPath();
+                ctx.arc(Math.random() * W, Math.random() * H, Math.random() * 2, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            break;
+        }
+        case 'love_checkerboard_pink': {
+            drawCheckerboard(ctx, W, H, '#FFC0CB', '#FFFFFF', W / 10); // Pink / White
+            break;
+        }
+        case 'love_soft_peach_glow': {
+            const grad = ctx.createRadialGradient(W*0.5, H*0.5, W*0.1, W*0.5, H*0.5, W*0.4);
+            grad.addColorStop(0, '#FFDAB9'); // Peach Puff
+            grad.addColorStop(1, '#FAEBD7'); // Antique White
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+            break;
+        }
+        case 'love_minimal_line': {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, W, H);
+            ctx.strokeStyle = '#FF69B4'; // Hot Pink
+            ctx.lineWidth = W / 50;
+            // Simple inner border
+            ctx.strokeRect(W/20, H/20, W * 0.9, H * 0.9);
+            break;
+        }
+        case 'love_polaroid_tape': {
+            ctx.fillStyle = '#F5F5DC'; // Beige (Cream)
+            ctx.fillRect(0, 0, W, H);
+            // Simple tape simulation (two strips)
+            ctx.fillStyle = 'rgba(200, 200, 200, 0.4)';
+            const tapeHeight = H * 0.05;
+            ctx.fillRect(W/4 - 10, H*0.1, W/2, tapeHeight);
+            ctx.fillRect(W/4 + 10, H*0.9 - tapeHeight, W/2, tapeHeight);
+            break;
+        }
+
+        // --- Mặc định (Trắng Tối Giản) ---
+        case 'default':
+        default:
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, W, H);
+            break;
+    }
+    
+    ctx.restore();
 }
 
-async function mergeStrip(images){
+// Merge Strip Logic
+async function mergeStrip(images) {
+    if (images.length !== 4) return;
+    
+    const photoW = BASE_FRAME_H; 
+    const photoH = BASE_FRAME_H; 
+    const innerBorderColor = '#F0F0F0';
+    
     const layout = layoutSelect.value;
-    // Đã bỏ frameSelect. Cố định tỷ lệ ảnh chụp (photo area) là 1:1 (Square)
-    const frameStyle = 'square';
     const backgroundId = backgroundSelect.value;
     const overlayId = overlaySelect.value;
     const customText = customStripText.value.toUpperCase();
-    
-    // CONSTANTS cho strip/grid (Đã định nghĩa ở trên)
-    const innerBorderColor = '#F0F0F0'; // Màu viền trong ảnh strip
-    const photoW = BASE_FRAME_H; // Chiều rộng ảnh (và chiều cao ảnh)
-    const photoH = BASE_FRAME_H;
-    const stripMarginX = VERT_MARGIN_X; 
+
+    // Lấy các tham số kích thước dựa trên layout
+    const stripMarginX = VERT_MARGIN_X;
     const vertTextH = VERT_TEXT_H;
     const vertMarginY = VERT_MARGIN_Y;
-    const gridOuterPadding = GRID_OUTER_PADDING; 
+    const gridOuterPadding = GRID_OUTER_PADDING;
     const gridGap = GRID_GAP;
     const gridTextH = GRID_TEXT_H;
 
     let W, H;
     let textStripYStart, textStripTotalHeight;
     const numPhotos = images.length;
-    // const innerBorderColor = '#F0F0F0'; // Màu viền trong ảnh strip - Đã định nghĩa global/top
-
-    // Tính toán kích thước canvas cuối cùng (W, H)
+    
+    // 1. Tính toán kích thước canvas cuối cùng (W, H)
     if (layout === 'vertical') {
-        const numGaps = numPhotos - 1;
-        W = photoW + stripMarginX * 2; // 450 + 60 = 510
-        // CẬP NHẬT: Thêm VERT_MARGIN_Y vào chiều cao total H
-        H = numPhotos * photoH + numGaps * VERT_GAP + vertTextH + vertMarginY * 2; 
-
-        // CẬP NHẬT: textStripYStart = Lề trên + (Ảnh + Khoảng cách) * 4
-        textStripYStart = vertMarginY + numPhotos * photoH + numGaps * VERT_GAP;
-        textStripTotalHeight = vertTextH + vertMarginY; // Chiều cao khu vực chữ + lề dưới
-        stripSizeText.textContent = `Strip size: ${W} x ${H} pixels (Fixed 1:1 Photo)`;
+        const numPrevGaps = numPhotos - 1;
+        W = photoW + stripMarginX * 2; 
+        H = numPhotos * photoH + numPrevGaps * VERT_GAP + vertTextH + vertMarginY * 2; 
+        textStripYStart = vertMarginY + numPhotos * photoH + numPrevGaps * VERT_GAP;
+        textStripTotalHeight = vertTextH + vertMarginY; 
+        stripSizeText.textContent = `${W} x ${H} pixels (Fixed 1:1 Photo)`;
     } else { // Grid (2x2) - BORDERLESS
-        W = 2 * photoW + gridGap + 2 * gridOuterPadding; // 2*450 + 30 + 80 = 1010
-        H = 2 * photoH + gridGap + 2 * gridOuterPadding + gridTextH; // 2*450 + 30 + 80 + 250 = 1260
-        textStripYStart = 2 * photoH + gridGap + 2 * gridOuterPadding; // Y start of text area: 1010
-        textStripTotalHeight = gridTextH; // Chiều cao khu vực chữ
-        stripSizeText.textContent = `Grid size: ${W} x ${H} pixels (Fixed 1:1 Photo)`;
+        W = 2 * photoW + gridGap + 2 * gridOuterPadding; 
+        H = 2 * photoH + gridGap + 2 * gridOuterPadding + gridTextH; 
+        textStripYStart = 2 * photoH + gridGap + 2 * gridOuterPadding; 
+        textStripTotalHeight = gridTextH; 
+        stripSizeText.textContent = `${W} x ${H} pixels (Fixed 1:1 Photo)`;
     }
-
-    // NEW: Tính toán chính xác chiều cao khu vực chữ (Chỉ tính TextH, không tính Margin)
-    const finalTextH = layout === 'vertical' ? vertTextH : gridTextH; 
     
     const canvas = document.createElement('canvas');
     canvas.width = W;
     canvas.height = H;
     const ctx = canvas.getContext('2d');
     
-    // 1. Vẽ Background phức tạp (nếu có)
+    // 2. Vẽ Background
     drawComplexBackground(ctx, W, H, backgroundId, layout, textStripYStart, textStripTotalHeight);
-
-    // 2. Vẽ các ảnh đã chụp
-    const imagesToProcess = await Promise.all(images.map(loadImg));
-
-    for (let i=0; i < imagesToProcess.length; i++) {
-        const img = imagesToProcess[i];
+    
+    // 3. Vẽ 4 ảnh
+    const loadedImages = await Promise.all(images.map(loadImg));
+    
+    for (let i = 0; i < numPhotos; i++) {
+        const img = loadedImages[i];
         let finalImageX, finalImageY;
-
+        
         if (layout === 'vertical') {
+            const numPrevGaps = i;
             finalImageX = stripMarginX;
-            // CẬP NHẬT: Thêm vertMarginY (lề trên) vào công thức
-            finalImageY = vertMarginY + i * photoH + i * VERT_GAP;
-        } else { // Grid
+            finalImageY = vertMarginY + i * photoH + numPrevGaps * VERT_GAP; 
+        } else { // Grid (2x2)
             const col = i % 2;
             const row = Math.floor(i / 2);
             finalImageX = gridOuterPadding + col * (photoW + gridGap);
             finalImageY = gridOuterPadding + row * (photoH + gridGap);
         }
-
-        // DRAW Photo (Border-less) - Có thêm viền nội 3px
-        // Giữ lại logic này để fill khoảng trống giữa các ảnh bằng màu nhẹ (giống như viền nhẹ 3px)
+        
+        // DRAW Photo (Border-less)
         ctx.fillStyle = innerBorderColor;
         ctx.fillRect(finalImageX - INNER_BORDER, finalImageY - INNER_BORDER, photoW + 2*INNER_BORDER, photoH + 2*INNER_BORDER);
         
-        // [NEW LOGIC] Vẽ viền 1-2 line bao quanh ảnh
+        // [CẬP NHẬT LOGIC] Vẽ viền 4px bao quanh ảnh (Tăng độ nổi bật)
         ctx.strokeStyle = FINAL_PHOTO_BORDER_COLOR;
         ctx.lineWidth = FINAL_PHOTO_BORDER_WIDTH;
-        ctx.strokeRect(finalImageX, finalImageY, photoW, photoH); 
-
+        ctx.strokeRect(finalImageX, finalImageY, photoW, photoH);
+        
         ctx.drawImage(img, finalImageX, finalImageY, photoW, photoH);
-
-        // 3. Áp dụng Overlay/Filter cho từng ảnh (Nếu không phải là beauty_smooth_pink)
+        
+        // 3. Áp dụng Overlay/Filter cho từng ảnh
         drawOverlayFrame_ORIGINAL(ctx, finalImageX, finalImageY, photoW, photoH, overlayId);
     }
     
     // 4. Vẽ Header/Footer Text Strip
-    const instaxTextColor = (
-        backgroundId === 'romantic_red_velvet' || backgroundId === 'starry_night_light' || backgroundId === 'stripes_bw'
-        ? '#FFFFFF' // Nền đậm dùng chữ trắng
-        : '#333333'  // Nền nhạt dùng chữ đen
-    );
-    
-    // Đặc biệt cho Fuji Clean
-    if (backgroundId === 'fuji_classic_clean') {
-        // Nền chữ là màu xanh, chữ màu đen
-        ctx.fillStyle = '#333333'; 
+    // Điều chỉnh màu chữ cho các theme nền đậm
+    if (['tet_red_gold_silk', 'tet_firecracker_pattern', 'tet_lucky_money', 'tet_lantern_glow', 'tet_calligraphy_paper', 'xmas_pine_forest_green', 'xmas_snowy_bokeh', 'xmas_gold_glitter', 'xmas_gingerbread', 'xmas_santa_suit', 'love_rose_petals', 'love_velvet_magenta', 'love_couple_galaxy'].includes(backgroundId)) {
+        ctx.fillStyle = '#FFFFFF';
     } else {
-        ctx.fillStyle = instaxTextColor;
+        ctx.fillStyle = '#333333';
     }
 
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    
-    const centerX = W / 2;
-    const centerY = textStripYStart + finalTextH / 2;
-    
-    // Tự động điều chỉnh font size
-    let fontSize = layout === 'vertical' ? 50 : 60; // Font size khởi tạo
-    ctx.font = `800 ${fontSize}px Nunito, system-ui, sans-serif`;
-    
-    const maxTextWidth = W * 0.9; // Chiều rộng tối đa cho text
-    let textWidth = ctx.measureText(customText).width;
 
-    // Giảm font size nếu quá dài
-    if (textWidth > maxTextWidth) {
-        fontSize = Math.floor(fontSize * (maxTextWidth / textWidth));
-        ctx.font = `800 ${fontSize}px Nunito, system-ui, sans-serif`; 
+    // Vẽ text chính
+    ctx.font = `bold ${layout === 'vertical' ? 50 : 60}px Nunito, sans-serif`;
+    let textY = textStripYStart + (layout === 'vertical' ? vertTextH : gridTextH) / 2;
+    textY -= (layout === 'vertical' ? 20 : 30); 
+    
+    let finalFontSize = layout === 'vertical' ? 50 : 60;
+    if (customText.length > 20) {
+        finalFontSize = layout === 'vertical' ? 30 : 40;
+    } else if (customText.length > 15) {
+        finalFontSize = layout === 'vertical' ? 40 : 50;
     }
-    
-    // Vị trí y cho text (căn giữa theo font size)
-    const textY = centerY + fontSize * 0.3; // Dùng 0.3 để căn giữa tốt hơn
+    ctx.font = `bold ${finalFontSize}px Nunito, sans-serif`;
 
-    ctx.fillStyle = instaxTextColor; // Màu chữ
-    ctx.fillText(customText, centerX, textY);
-    
-    // ĐÃ XÓA: Logic vẽ sticker/date
-    
-    ctx.restore(); 
+    ctx.fillText(customText, W / 2, textY);
 
-    // 5. Vẽ Viền Ngoại Cùng
-    ctx.strokeStyle = '#444444'; 
-    ctx.lineWidth = 4;
-    ctx.strokeRect(2, 2, W-4, H-4); 
+    // Vẽ Sub-text (Date/Time)
+    ctx.font = `italic ${layout === 'vertical' ? 18 : 22}px Varela Round, sans-serif`;
+    // Set màu chữ mờ
+    ctx.fillStyle = (['tet_red_gold_silk', 'tet_firecracker_pattern', 'tet_lucky_money', 'tet_lantern_glow', 'tet_calligraphy_paper', 'xmas_pine_forest_green', 'xmas_snowy_bokeh', 'xmas_gold_glitter', 'xmas_gingerbread', 'xmas_santa_suit', 'love_rose_petals', 'love_velvet_magenta', 'love_couple_galaxy'].includes(backgroundId)
+        ? 'rgba(255,255,255,0.7)' : 'rgba(60,70,90,0.7)');
 
-    // 6. Vẽ Ngày Giờ ở dưới cùng
-    ctx.save();
-    ctx.font = '600 16px Nunito, system-ui, sans-serif';
-    ctx.fillStyle = (backgroundId === 'default' ? 'rgba(60,70,90,0.7)' : 'rgba(255,255,255,0.7)'); 
-
-    // Đặc biệt cho Fuji Clean hoặc nền đậm
-    if (backgroundId === 'fuji_classic_clean') {
-        ctx.fillStyle = 'rgba(60,70,90,0.7)'; // Chữ đen cho nền xanh nhạt
-    } else if (backgroundId === 'romantic_red_velvet' || backgroundId === 'starry_night_light') {
-         ctx.fillStyle = 'rgba(255,255,255,0.7)'; // Chữ trắng cho nền đậm
-    }
-
-    ctx.textAlign = 'right';
+    ctx.textAlign = 'center';
     const dateText = getFormattedNow();
+    let dateY = textStripYStart + (layout === 'vertical' ? vertTextH : gridTextH) / 2 + (layout === 'vertical' ? 15 : 20); 
     
-    // Vị trí vẽ date: Căn phải, dưới cùng của khu vực Text Strip
-    let dateY = textStripYStart + textStripTotalHeight - 10;
-    let dateX = W - 10;
-
-    ctx.fillText(dateText, dateX, dateY);
+    ctx.fillText(dateText, W / 2, dateY);
+    
     ctx.restore();
-
-    return { dataUrl: canvas.toDataURL('image/png'), W, H };
+    
+    return { dataUrl: canvas.toDataURL('image/png'), W: W, H: H };
 }
 
-// ---------------- EVENT LISTENERS ----------------
+
+function mergeAndShowFinal() {
+    mergeStrip(captures).then(result => {
+        showFinal(result);
+    }).catch(e => {
+        console.error('Lỗi khi ghép ảnh:', e);
+        finalPreview.innerHTML = '<div class="small" style="color:red">Lỗi khi ghép ảnh. Xem console.</div>';
+    });
+}
+
+function addThumbnail(imgDataUrl, index){
+    const wrapper = document.createElement('div');
+    wrapper.className = 'instax-thumb-frame';
+    wrapper.dataset.index = index;
+    wrapper.style.aspectRatio = getInstaxFilmRatio('square') + ' / 1';
+    const img = document.createElement('img');
+    img.src = imgDataUrl;
+    img.alt = `Pose ${index}`;
+    wrapper.appendChild(img);
+    wrapper.onclick = () => {
+        triggerDownload(imgDataUrl, `photobooth_pose_${index}_${dateForFilename()}.png`);
+    };
+    previewGrid.appendChild(wrapper);
+}
+
+function showFinal(result){
+    finalPreview.innerHTML = '';
+    finalImageDataUrl = result.dataUrl;
+    finalActionsEl.style.display = 'flex';
+    // Áp dụng tỷ lệ động đã tính toán
+    finalPreview.style.aspectRatio = `${result.W} / ${result.H}`;
+    const img = document.createElement('img');
+    img.src = result.dataUrl;
+    finalPreview.appendChild(img);
+    finalPreview.style.width = 'auto';
+    finalPreview.style.height = 'auto';
+}
+
+function resetAll(){
+    captures = [];
+    previewGrid.innerHTML = '';
+    finalPreview.innerHTML = '<div class="small">Chưa có ảnh</div>';
+    finalImageDataUrl = null;
+    finalActionsEl.style.display = 'none';
+    finalPreview.style.width = 'auto';
+    finalPreview.style.height = 'auto';
+    enableControls();
+}
+
+function triggerDownload(dataUrl, filename) {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function dateForFilename(){
+    const now = new Date();
+    const Y = now.getFullYear();
+    const M = String(now.getMonth() + 1).padStart(2, '0');
+    const D = String(now.getDate()).padStart(2, '0');
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    return `${Y}${M}${D}_${h}${m}${s}`;
+}
+
+
+// Khởi tạo
 window.onload = () => {
-    // Chỉ khởi tạo camera sau khi bấm nút "Bắt Đầu Chụp Ảnh"
     document.getElementById('startPhotoboothBtn').addEventListener('click', () => {
         showCaptureScreen();
         startCamera();
@@ -1920,6 +2141,15 @@ window.onload = () => {
     overlaySelect.addEventListener('change', () => {
         if (captures.length === 4) mergeAndShowFinal();
     });
+    // NEW: Thêm sự kiện cho beautyLevel
+    beautyLevel.addEventListener('change', () => { 
+        if (captures.length > 0) {
+            // Vì beauty filter áp dụng khi chụp, cần reset để chụp lại
+            alert('Làm mịn da là hiệu ứng được áp dụng ngay khi chụp. Vui lòng bấm "Reset Ảnh Chụp" và chụp lại để áp dụng cấp độ mới.');
+            // Vẫn cho phép người dùng thay đổi nhưng thông báo cần chụp lại
+        }
+    });
+    // END NEW
     layoutSelect.addEventListener('change', () => {
         if (captures.length === 4) mergeAndShowFinal();
     });
@@ -1930,5 +2160,3 @@ window.onload = () => {
     window.addEventListener('resize', resizeOverlay);
 };
 </script>
-</body>
-</html>
